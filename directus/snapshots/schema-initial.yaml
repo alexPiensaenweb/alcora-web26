@@ -1,0 +1,16 @@
+# Directus Schema Snapshot - Tienda Alcora B2B
+# Aplicar con: npx directus schema apply ./snapshots/schema-initial.yaml
+#
+# NOTA: Este archivo es una referencia. El schema real se crea via la API
+# de Directus o el admin UI. Usa el script setup-schema.ts para automatizar.
+#
+# Colecciones de negocio:
+# - categorias (con parent recursivo)
+# - productos (M2O a categorias)
+# - tarifas_especiales (M2O a productos y categorias)
+# - pedidos (M2O a directus_users)
+# - pedidos_items (M2O a pedidos y productos)
+#
+# Campos custom en directus_users:
+# - grupo_cliente, razon_social, cif_nif, telefono,
+#   direccion_facturacion, direccion_envio

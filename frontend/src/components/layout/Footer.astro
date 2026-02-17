@@ -1,0 +1,65 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-navy text-white mt-auto">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      {/* Brand */}
+      <div>
+        <img src="/logo-alcora.svg" alt="Alcora" class="h-10 brightness-0 invert mb-4" />
+        <p class="text-sm text-gray-300 leading-relaxed">
+          Alcora Salud Ambiental. Soluciones profesionales en higiene, desinfeccion y control de plagas.
+        </p>
+      </div>
+
+      {/* Categories */}
+      <div>
+        <h3 class="font-semibold mb-4 text-sm uppercase tracking-wider">Catalogo</h3>
+        <ul class="space-y-2 text-sm text-gray-300">
+          <li><a href="/categoria/productos-de-limpieza" class="hover:text-white transition-colors">Productos de Limpieza</a></li>
+          <li><a href="/categoria/control-de-plagas" class="hover:text-white transition-colors">Control de Plagas</a></li>
+          <li><a href="/categoria/epis" class="hover:text-white transition-colors">EPIs</a></li>
+          <li><a href="/categoria/agua" class="hover:text-white transition-colors">Agua</a></li>
+          <li><a href="/categoria/aire" class="hover:text-white transition-colors">Aire</a></li>
+        </ul>
+      </div>
+
+      {/* Company */}
+      <div>
+        <h3 class="font-semibold mb-4 text-sm uppercase tracking-wider">Empresa</h3>
+        <ul class="space-y-2 text-sm text-gray-300">
+          <li><a href="/registro" class="hover:text-white transition-colors">Crear cuenta B2B</a></li>
+          <li><a href="/login" class="hover:text-white transition-colors">Acceder</a></li>
+          <li><a href="https://alcora.es" target="_blank" rel="noopener" class="hover:text-white transition-colors">Web corporativa</a></li>
+        </ul>
+      </div>
+
+      {/* Contact */}
+      <div>
+        <h3 class="font-semibold mb-4 text-sm uppercase tracking-wider">Contacto</h3>
+        <ul class="space-y-2 text-sm text-gray-300">
+          <li>Pol. Malpica C/ F Oeste Nave 98</li>
+          <li>50016 Zaragoza, Espana</li>
+          <li>
+            <a href="tel:+34976291019" class="hover:text-white transition-colors">976 29 10 19</a>
+          </li>
+          <li>
+            <a href="mailto:central@alcora.es" class="hover:text-white transition-colors">central@alcora.es</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <p class="text-sm text-gray-400">
+        &copy; {currentYear} Alcora Salud Ambiental S.A. Todos los derechos reservados.
+      </p>
+      <div class="flex gap-4 text-sm text-gray-400">
+        <a href="/aviso-legal" class="hover:text-white transition-colors">Aviso Legal</a>
+        <a href="/politica-privacidad" class="hover:text-white transition-colors">Privacidad</a>
+        <a href="/politica-cookies" class="hover:text-white transition-colors">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>

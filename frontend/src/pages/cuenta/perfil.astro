@@ -1,0 +1,25 @@
+---
+import AccountLayout from "../../layouts/AccountLayout.astro";
+import ProfileForm from "../../components/account/ProfileForm";
+
+const user = Astro.locals.user!;
+---
+
+<AccountLayout title="Perfil - Tienda Alcora" activeTab="perfil">
+  <div>
+    <h2 class="text-xl font-bold text-navy mb-6">Mi Perfil</h2>
+    <ProfileForm
+      client:load
+      user={{
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        email: user.email,
+        razon_social: user.razon_social || "",
+        cif_nif: user.cif_nif || "",
+        telefono: user.telefono || "",
+        direccion_facturacion: user.direccion_facturacion || "",
+        direccion_envio: user.direccion_envio || "",
+      }}
+    />
+  </div>
+</AccountLayout>

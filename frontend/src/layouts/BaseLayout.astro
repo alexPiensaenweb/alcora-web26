@@ -1,0 +1,69 @@
+---
+import Header from "../components/layout/Header.astro";
+import Footer from "../components/layout/Footer.astro";
+import { ViewTransitions } from "astro:transitions";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = "Tienda Alcora", description = "Tienda B2B de Alcora Salud Ambiental - Productos de limpieza, control de plagas, desinfectantes y EPIs" } = Astro.props;
+const user = Astro.locals.user;
+const publicDirectusUrl =
+  import.meta.env.PUBLIC_DIRECTUS_URL || "http://localhost:8055";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <ViewTransitions />
+  </head>
+  <body class="min-h-screen flex flex-col bg-white text-navy font-sans">
+    <Header user={user} />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+
+    {/* Hydrate auth store from server data */}
+    <script define:vars={{ user: user ? { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, grupo_cliente: user.grupo_cliente, status: user.status } : null, publicDirectusUrl }}>
+      if (typeof window !== "undefined") {
+        window.__ALCORA_USER__ = user;
+        window.__PUBLIC_DIRECTUS_URL = publicDirectusUrl;
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --color-navy: #222d54;
+    --color-text-muted: #6b7589;
+    --color-border: #c0c4ce;
+    --color-action: #2970ff;
+    --color-action-hover: #6a9bff;
+    --color-bg-light: #f4f6f9;
+    --color-bg-accent: #eff4ff;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+</style>

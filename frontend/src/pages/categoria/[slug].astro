@@ -1,0 +1,132 @@
+---
+import CatalogLayout from "../../layouts/CatalogLayout.astro";
+import InfiniteProductGrid from "../../components/catalog/InfiniteProductGrid";
+import { getAssetUrl, getCategoriaBySlug, getCategorias, getProductos, getTarifasForGrupo } from "../../lib/directus";
+import { calculatePrice, resolveDiscount } from "../../lib/pricing";
+import { formatCategoryName } from "../../lib/utils";
+import type { TarifaEspecial, Categoria } from "../../lib/types";
+
+const { slug } = Astro.params;
+const categoria = await getCategoriaBySlug(slug!);
+
+if (!categoria) {
+  return Astro.redirect("/catalogo");
+}
+
+const url = Astro.url;
+const limit = 24;
+
+const allCategorias = await getCategorias();
+
+function collectDescendantIds(
+  rootId: number,
+  categorias: Categoria[]
+): number[] {
+  const ids: number[] = [rootId];
+  const queue: number[] = [rootId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const children = categorias.filter((cat) => {
+      const parentId = typeof cat.parent === "object" ? cat.parent?.id : cat.parent;
+      return parentId === current;
+    });
+
+    for (const child of children) {
+      if (!ids.includes(child.id)) {
+        ids.push(child.id);
+        queue.push(child.id);
+      }
+    }
+  }
+
+  return ids;
+}
+
+const categoriaIds = collectDescendantIds(categoria.id, allCategorias);
+const { data: products, meta } = await getProductos({
+  categoriaIds,
+  page: 1,
+  limit,
+});
+
+const user = Astro.locals.user;
+const token = Astro.locals.token;
+let tarifas: TarifaEspecial[] = [];
+
+if (user?.grupo_cliente && token) {
+  tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
+}
+
+const initialItems = products.map((product: any) => {
+  const categoriaId =
+    typeof product.categoria === "object"
+      ? product.categoria?.id
+      : product.categoria;
+
+  let price: number | null = null;
+  if (user) {
+    if (tarifas.length > 0) {
+      const descuento = resolveDiscount(tarifas, product.id, categoriaId || null);
+      price = calculatePrice(product.precio_base, descuento);
+    } else {
+      price = product.precio_base;
+    }
+  }
+
+  return {
+    id: product.id,
+    sku: product.sku,
+    nombre: product.nombre,
+    slug: product.slug,
+    extracto: product.extracto || null,
+    formato: product.formato || null,
+    imageUrl: getAssetUrl(product.imagen_principal, {
+      width: 480,
+      height: 480,
+      fit: "contain",
+    }),
+    price,
+  };
+});
+
+const apiUrl = `/api/products?limit=${limit}&categoria=${encodeURIComponent(slug!)}`;
+
+const parentCat = categoria.parent as Categoria | null;
+const breadcrumbs = [];
+if (parentCat) {
+  breadcrumbs.push({
+    label: formatCategoryName(parentCat.nombre),
+    href: `/categoria/${parentCat.slug}`,
+  });
+}
+breadcrumbs.push({ label: formatCategoryName(categoria.nombre) });
+---
+
+<CatalogLayout
+  title={`${formatCategoryName(categoria.nombre)} - Tienda Alcora`}
+  breadcrumbs={breadcrumbs}
+  sidebarMode="children"
+  currentCategorySlug={slug}
+>
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-bold text-navy">{formatCategoryName(categoria.nombre)}</h1>
+      <span class="text-sm text-text-muted">
+        {meta?.total_count || 0} productos
+      </span>
+    </div>
+
+    {categoria.descripcion && (
+      <div class="prose prose-sm max-w-none text-text-muted mb-6" set:html={categoria.descripcion} />
+    )}
+
+    <InfiniteProductGrid
+      client:load
+      apiUrl={apiUrl}
+      initialItems={initialItems}
+      initialPage={1}
+      initialHasMore={(meta?.total_count || 0) > limit}
+    />
+  </div>
+</CatalogLayout>

@@ -1,0 +1,39 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import CategorySidebar from "../components/catalog/CategorySidebar.astro";
+import Breadcrumb from "../components/ui/Breadcrumb.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  breadcrumbs?: { label: string; href?: string }[];
+  sidebarMode?: "root" | "children";
+  currentCategorySlug?: string;
+}
+
+const {
+  title,
+  description,
+  breadcrumbs = [],
+  sidebarMode,
+  currentCategorySlug,
+} = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+
+    <div class="flex flex-col lg:flex-row gap-8 mt-4">
+      {/* Sidebar */}
+      <aside class="w-full lg:w-64 flex-shrink-0">
+        <CategorySidebar mode={sidebarMode} currentCategorySlug={currentCategorySlug} />
+      </aside>
+
+      {/* Content */}
+      <div class="flex-1 min-w-0">
+        <slot />
+      </div>
+    </div>
+  </div>
+</BaseLayout>

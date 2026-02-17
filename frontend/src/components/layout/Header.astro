@@ -1,0 +1,192 @@
+---
+import CartIcon from "../cart/CartIcon";
+import UserMenu from "../auth/UserMenu";
+import type { DirectusUser } from "../../lib/types";
+
+interface Props {
+  user: DirectusUser | null;
+}
+
+const { user } = Astro.props;
+---
+
+<header class="sticky top-0 z-50 bg-white shadow-sm">
+  {/* Top Bar */}
+  <div class="bg-navy text-white text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
+      <span>Alcora Salud Ambiental | Pol. Malpica C/ F Oeste Nave 98, Zaragoza</span>
+      <div class="flex items-center gap-4">
+        <a href="tel:+34976291019" class="hover:text-action-hover transition-colors">976 29 10 19</a>
+        <a href="mailto:central@alcora.es" class="hover:text-action-hover transition-colors">central@alcora.es</a>
+      </div>
+    </div>
+  </div>
+
+  {/* Main Nav */}
+  <div class="border-b border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+      {/* Logo */}
+      <a href="/" class="flex-shrink-0">
+        <img src="/logo-alcora.svg" alt="Alcora" class="h-10" />
+      </a>
+
+      {/* Search */}
+      <form action="/catalogo" method="GET" class="hidden md:flex flex-1 max-w-lg mx-8" id="header-search-form">
+        <div class="relative w-full">
+          <input
+            type="search"
+            name="search"
+            autocomplete="on"
+            id="header-search-input"
+            placeholder="Buscar productos..."
+            class="w-full pl-4 pr-10 py-2 border border-border rounded-lg text-sm focus:outline-none focus:border-action focus:ring-1 focus:ring-action"
+          />
+          <div
+            id="header-search-dropdown"
+            class="absolute top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg hidden z-50 overflow-hidden"
+          ></div>
+          <button
+            type="submit"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-action"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </div>
+      </form>
+
+      {/* Right actions */}
+      <div class="flex items-center gap-3">
+        {user ? (
+          <UserMenu client:load user={user} />
+        ) : (
+          <a
+            href="/login"
+            class="flex items-center gap-2 text-sm font-medium text-navy hover:text-action transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span class="hidden sm:inline">Acceder</span>
+          </a>
+        )}
+        <CartIcon client:load />
+      </div>
+    </div>
+  </div>
+
+  {/* Category Nav */}
+  <nav class="bg-bg-light border-b border-border hidden md:block">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <ul class="flex items-center gap-6 h-10 text-sm font-medium">
+        <li><a href="/catalogo" class="text-navy hover:text-action transition-colors">Todos los productos</a></li>
+        <li><a href="/categoria/agua" class="text-text-muted hover:text-action transition-colors">Agua</a></li>
+        <li><a href="/categoria/aire" class="text-text-muted hover:text-action transition-colors">Aire</a></li>
+        <li><a href="/categoria/control-de-infecciones" class="text-text-muted hover:text-action transition-colors">Control de Infecciones</a></li>
+        <li><a href="/categoria/control-de-plagas" class="text-text-muted hover:text-action transition-colors">Control de Plagas</a></li>
+        <li><a href="/categoria/epis" class="text-text-muted hover:text-action transition-colors">EPIs</a></li>
+        <li><a href="/categoria/productos-de-limpieza" class="text-text-muted hover:text-action transition-colors">Productos de Limpieza</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  {/* Mobile menu toggle */}
+  <div class="md:hidden border-b border-border px-4 py-2">
+    <details class="group">
+      <summary class="flex items-center gap-2 text-sm font-medium text-navy cursor-pointer list-none">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        Categorias
+      </summary>
+      <ul class="mt-2 space-y-1 pb-2">
+        <li><a href="/catalogo" class="block py-1 text-sm text-navy hover:text-action">Todos los productos</a></li>
+        <li><a href="/categoria/agua" class="block py-1 text-sm text-text-muted hover:text-action">Agua</a></li>
+        <li><a href="/categoria/aire" class="block py-1 text-sm text-text-muted hover:text-action">Aire</a></li>
+        <li><a href="/categoria/control-de-infecciones" class="block py-1 text-sm text-text-muted hover:text-action">Control de Infecciones</a></li>
+        <li><a href="/categoria/control-de-plagas" class="block py-1 text-sm text-text-muted hover:text-action">Control de Plagas</a></li>
+        <li><a href="/categoria/epis" class="block py-1 text-sm text-text-muted hover:text-action">EPIs</a></li>
+        <li><a href="/categoria/productos-de-limpieza" class="block py-1 text-sm text-text-muted hover:text-action">Productos de Limpieza</a></li>
+      </ul>
+    </details>
+  </div>
+</header>
+
+<script>
+  function escapeHtml(value) {
+    return value
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function setupHeaderSuggest() {
+    const input = document.getElementById("header-search-input");
+    const dropdown = document.getElementById("header-search-dropdown");
+    const form = document.getElementById("header-search-form");
+    if (!input || !dropdown || !form || form.dataset.suggestReady === "1") return;
+
+    form.dataset.suggestReady = "1";
+    let timer;
+
+    const closeDropdown = () => {
+      dropdown.classList.add("hidden");
+      dropdown.innerHTML = "";
+    };
+
+    input.addEventListener("input", () => {
+      const term = input.value.trim();
+      clearTimeout(timer);
+
+      if (term.length < 2) {
+        closeDropdown();
+        return;
+      }
+
+      timer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(term)}`);
+          const payload = await res.json();
+          const items = payload.items || [];
+
+          if (items.length === 0) {
+            closeDropdown();
+            return;
+          }
+
+          dropdown.innerHTML = items
+            .map(
+              (item) => `
+                <a
+                  href="/catalogo/${item.slug}"
+                  class="block px-3 py-2 text-sm hover:bg-bg-light transition-colors border-b border-border last:border-b-0"
+                >
+                  <span class="font-medium text-navy">${escapeHtml(item.nombre)}</span>
+                  <span class="text-xs text-text-muted ml-2">${escapeHtml(item.sku)}</span>
+                </a>
+              `
+            )
+            .join("");
+
+          dropdown.classList.remove("hidden");
+        } catch {
+          closeDropdown();
+        }
+      }, 160);
+    });
+
+    input.addEventListener("focus", () => {
+      if (dropdown.innerHTML.trim()) dropdown.classList.remove("hidden");
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!form.contains(event.target)) closeDropdown();
+    });
+  }
+
+  setupHeaderSuggest();
+  document.addEventListener("astro:page-load", setupHeaderSuggest);
+</script>

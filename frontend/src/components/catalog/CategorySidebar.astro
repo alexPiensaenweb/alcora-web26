@@ -1,0 +1,103 @@
+---
+import { getCategorias } from "../../lib/directus";
+import type { Categoria } from "../../lib/types";
+import { formatCategoryName } from "../../lib/utils";
+import CategoryIcon from "./CategoryIcon.astro";
+
+interface Props {
+  mode?: "root" | "children";
+  currentCategorySlug?: string;
+}
+
+const { mode, currentCategorySlug } = Astro.props as Props;
+const allCategorias = await getCategorias();
+
+function getParentId(cat: Categoria): number | null {
+  const raw = typeof cat.parent === "object" ? cat.parent?.id : cat.parent;
+  if (raw === null || raw === undefined || raw === "") return null;
+  return Number(raw);
+}
+
+const currentPath = Astro.url.pathname;
+const routeCategorySlug = currentPath.startsWith("/categoria/")
+  ? currentPath.split("/")[2] || null
+  : null;
+const categorySlug = currentCategorySlug || routeCategorySlug;
+const isCatalogRoot =
+  mode === "root" ? true : mode === "children" ? false : currentPath.startsWith("/catalogo");
+
+function dedupeByName(cats: Categoria[]): Categoria[] {
+  return cats.filter((cat, index, all) => {
+    const key = formatCategoryName(cat.nombre).toLowerCase();
+    return (
+      all.findIndex(
+        (candidate) => formatCategoryName(candidate.nombre).toLowerCase() === key
+      ) === index
+    );
+  });
+}
+
+const topLevel = dedupeByName(
+  allCategorias.filter((c) => getParentId(c) === null)
+);
+
+const currentCategory = categorySlug
+  ? allCategorias.find((cat) => cat.slug === categorySlug) || null
+  : null;
+
+const childCategories = currentCategory
+  ? dedupeByName(
+      allCategorias.filter((cat) => getParentId(cat) === Number(currentCategory.id))
+    )
+  : [];
+
+const sidebarTitle = isCatalogRoot
+  ? "Categorias"
+  : currentCategory
+    ? `Subcategorias de ${formatCategoryName(currentCategory.nombre)}`
+    : "Categorias";
+
+const itemsToShow = isCatalogRoot ? topLevel : childCategories;
+---
+
+<nav class="bg-white border border-border rounded-lg overflow-hidden">
+  <h2 class="px-4 py-3 text-sm font-bold text-navy bg-bg-light border-b border-border">
+    {sidebarTitle}
+  </h2>
+  {itemsToShow.length > 0 ? (
+    <ul class="py-1">
+      {itemsToShow.map((cat) => {
+        const isActive = currentPath.includes(`/categoria/${cat.slug}`);
+        return (
+          <li>
+            <a
+              href={`/categoria/${cat.slug}`}
+              class:list={[
+                "flex items-center gap-2 px-4 py-2 text-sm transition-colors",
+                isActive
+                  ? "text-action font-medium bg-bg-accent"
+                  : "text-navy hover:text-action hover:bg-bg-light",
+              ]}
+            >
+              <CategoryIcon slug={cat.slug} className="w-4 h-4 text-action" />
+              <span>{formatCategoryName(cat.nombre)}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  ) : (
+    <div class="px-4 py-3 text-sm text-text-muted">
+      {isCatalogRoot
+        ? "No hay categorias disponibles."
+        : "Esta categoria no tiene subcategorias."}
+    </div>
+  )}
+  {!isCatalogRoot && (
+    <div class="px-4 py-3 border-t border-border bg-white">
+      <a href="/catalogo" class="text-sm text-action hover:underline">
+        Ver categorias principales
+      </a>
+    </div>
+  )}
+</nav>

@@ -1,0 +1,230 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ProductCard from "../components/catalog/ProductCard.astro";
+import CategoryIcon from "../components/catalog/CategoryIcon.astro";
+import { getCategorias, getProductos, getTarifasForGrupo, getAssetUrl } from "../lib/directus";
+import { resolveDiscount, calculatePrice } from "../lib/pricing";
+import { formatCategoryName } from "../lib/utils";
+import type { TarifaEspecial, Categoria } from "../lib/types";
+
+const categorias = await getCategorias();
+const rootRaw = categorias.filter((c) => {
+  const parentId = typeof c.parent === "object" ? c.parent?.id : c.parent;
+  return parentId === null;
+});
+
+const rootCategorias = rootRaw.filter((cat, index, all) => {
+  const current = formatCategoryName(cat.nombre).toLowerCase();
+  return (
+    all.findIndex(
+      (candidate) =>
+        formatCategoryName(candidate.nombre).toLowerCase() === current
+    ) === index
+  );
+});
+
+const { data: featuredProducts } = await getProductos({ limit: 8 });
+
+const user = Astro.locals.user;
+const token = Astro.locals.token;
+let tarifas: TarifaEspecial[] = [];
+
+if (user?.grupo_cliente && token) {
+  tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
+}
+
+function subcategoryCount(categoryId: number): number {
+  return categorias.filter((cat) => {
+    const parentId = typeof cat.parent === "object" ? cat.parent?.id : cat.parent;
+    return parentId === categoryId;
+  }).length;
+}
+---
+
+<BaseLayout title="Alcora Salud Ambiental - Tienda B2B">
+  {/* Hero */}
+  <section class="bg-navy text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+      <div class="max-w-2xl">
+        <h1 class="text-3xl lg:text-5xl font-bold leading-tight mb-4">
+          Productos profesionales de salud ambiental
+        </h1>
+        <p class="text-lg text-white/80 mb-8">
+          Distribuidor oficial de productos de control de plagas, limpieza profesional,
+          desinfeccion y equipos de proteccion. Precios exclusivos para profesionales.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a
+            href="/catalogo"
+            class="bg-action text-white px-6 py-3 rounded-lg font-medium hover:bg-action-hover transition-colors"
+          >
+            Ver catalogo
+          </a>
+          {!user && (
+            <a
+              href="/registro"
+              class="border border-white/30 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/10 transition-colors"
+            >
+              Solicitar acceso B2B
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* Features */}
+  <section class="bg-bg-light border-b border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-navy">Envio gratuito</p>
+            <p class="text-xs text-text-muted">Pedidos superiores a 500€</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-navy">Productos certificados</p>
+            <p class="text-xs text-text-muted">Fichas tecnicas disponibles</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-navy">Precios exclusivos</p>
+            <p class="text-xs text-text-muted">Descuentos por grupo de cliente</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-action" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-navy">Atencion personalizada</p>
+            <p class="text-xs text-text-muted">Asesoramiento tecnico</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* Categories */}
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-8">
+      <h2 class="text-2xl font-bold text-navy">Categorias de producto</h2>
+      <p class="text-sm text-text-muted mt-2">
+        Explore nuestra gama completa de productos profesionales
+      </p>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {rootCategorias.map((cat) => (
+        <a
+          href={`/categoria/${cat.slug}`}
+          class="group bg-white border border-border rounded-lg p-4 text-center hover:border-action hover:shadow-md transition-all"
+        >
+          {cat.imagen ? (
+            <div class="w-16 h-16 mx-auto mb-3 rounded-lg overflow-hidden bg-bg-light">
+              <img
+                src={getAssetUrl(cat.imagen, { width: 120, height: 120 })}
+                alt={formatCategoryName(cat.nombre)}
+                class="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div class="w-16 h-16 mx-auto mb-3 rounded-lg bg-bg-accent flex items-center justify-center">
+              <CategoryIcon slug={cat.slug} />
+            </div>
+          )}
+          <p class="text-sm font-semibold text-navy group-hover:text-action transition-colors">
+            {formatCategoryName(cat.nombre)}
+          </p>
+          {subcategoryCount(cat.id) > 0 && (
+            <p class="text-xs text-text-muted mt-1">
+              {subcategoryCount(cat.id)} subcategorías
+            </p>
+          )}
+        </a>
+      ))}
+    </div>
+  </section>
+
+  {/* Featured products */}
+  <section class="bg-bg-light border-t border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h2 class="text-2xl font-bold text-navy">Productos destacados</h2>
+          <p class="text-sm text-text-muted mt-1">Las novedades de nuestro catalogo</p>
+        </div>
+        <a
+          href="/catalogo"
+          class="text-sm text-action hover:underline font-medium"
+        >
+          Ver todos →
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {featuredProducts.map((product) => {
+          const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
+          const descuento = user ? resolveDiscount(tarifas, product.id, categoriaId ?? null) : 0;
+          const finalPrice = user ? calculatePrice(product.precio_base, descuento) : null;
+
+          return (
+            <ProductCard
+              product={product}
+              price={finalPrice}
+            />
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  {/* CTA */}
+  {!user && (
+    <section class="bg-navy text-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+        <h2 class="text-2xl font-bold mb-3">
+          Acceda a precios exclusivos para profesionales
+        </h2>
+        <p class="text-white/80 mb-6 max-w-lg mx-auto">
+          Registrese como cliente B2B y obtenga descuentos especiales segun su
+          tipo de empresa. Proceso de validacion rapido y seguro.
+        </p>
+        <div class="flex gap-3 justify-center">
+          <a
+            href="/registro"
+            class="bg-action text-white px-6 py-3 rounded-lg font-medium hover:bg-action-hover transition-colors"
+          >
+            Solicitar acceso
+          </a>
+          <a
+            href="/login"
+            class="border border-white/30 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/10 transition-colors"
+          >
+            Ya tengo cuenta
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+</BaseLayout>

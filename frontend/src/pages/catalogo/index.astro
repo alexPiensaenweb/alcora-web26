@@ -1,0 +1,80 @@
+---
+import CatalogLayout from "../../layouts/CatalogLayout.astro";
+import InfiniteProductGrid from "../../components/catalog/InfiniteProductGrid";
+import { getAssetUrl, getProductos, getTarifasForGrupo } from "../../lib/directus";
+import type { TarifaEspecial } from "../../lib/types";
+import { calculatePrice, resolveDiscount } from "../../lib/pricing";
+
+const url = Astro.url;
+const search = url.searchParams.get("search") || "";
+const limit = 24;
+
+const { data: products, meta } = await getProductos({ page: 1, limit, search });
+
+const user = Astro.locals.user;
+const token = Astro.locals.token;
+let tarifas: TarifaEspecial[] = [];
+
+if (user?.grupo_cliente && token) {
+  tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
+}
+
+const initialItems = products.map((product: any) => {
+  const categoriaId =
+    typeof product.categoria === "object"
+      ? product.categoria?.id
+      : product.categoria;
+
+  let price: number | null = null;
+  if (user) {
+    if (tarifas.length > 0) {
+      const descuento = resolveDiscount(tarifas, product.id, categoriaId || null);
+      price = calculatePrice(product.precio_base, descuento);
+    } else {
+      price = product.precio_base;
+    }
+  }
+
+  return {
+    id: product.id,
+    sku: product.sku,
+    nombre: product.nombre,
+    slug: product.slug,
+    extracto: product.extracto || null,
+    formato: product.formato || null,
+    imageUrl: getAssetUrl(product.imagen_principal, {
+      width: 480,
+      height: 480,
+      fit: "contain",
+    }),
+    price,
+  };
+});
+
+const apiUrl = `/api/products?limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ""}`;
+---
+
+<CatalogLayout
+  title="Catalogo - Tienda Alcora"
+  breadcrumbs={[{ label: "Catalogo" }]}
+  sidebarMode="root"
+>
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-bold text-navy">
+        {search ? `Resultados para "${search}"` : "Todos los productos"}
+      </h1>
+      <span class="text-sm text-text-muted">
+        {meta?.total_count || 0} productos
+      </span>
+    </div>
+
+    <InfiniteProductGrid
+      client:load
+      apiUrl={apiUrl}
+      initialItems={initialItems}
+      initialPage={1}
+      initialHasMore={(meta?.total_count || 0) > limit}
+    />
+  </div>
+</CatalogLayout>

@@ -1,0 +1,69 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  title?: string;
+  activeTab?: string;
+}
+
+const { title = "Mi Cuenta - Tienda Alcora", activeTab = "" } = Astro.props;
+const user = Astro.locals.user;
+
+const navItems = [
+  { href: "/cuenta", label: "Panel", icon: "dashboard", key: "panel" },
+  { href: "/cuenta/pedidos", label: "Mis Pedidos", icon: "orders", key: "pedidos" },
+  { href: "/cuenta/perfil", label: "Perfil", icon: "profile", key: "perfil" },
+];
+---
+
+<BaseLayout title={title}>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-2xl font-bold text-navy mb-6">Mi Cuenta</h1>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+      {/* Sidebar */}
+      <aside class="w-full lg:w-64 flex-shrink-0">
+        <nav class="bg-white border border-border rounded-lg overflow-hidden">
+          {navItems.map((item) => (
+            <a
+              href={item.href}
+              class:list={[
+                "block px-4 py-3 text-sm font-medium transition-colors border-b border-border last:border-b-0",
+                activeTab === item.key
+                  ? "bg-bg-accent text-action"
+                  : "text-navy hover:bg-bg-light",
+              ]}
+            >
+              {item.label}
+            </a>
+          ))}
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              class="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Cerrar sesion
+            </button>
+          </form>
+        </nav>
+
+        {user && (
+          <div class="mt-4 p-4 bg-bg-light rounded-lg text-sm">
+            <p class="font-medium text-navy">{user.razon_social || `${user.first_name} ${user.last_name}`}</p>
+            <p class="text-text-muted">{user.email}</p>
+            {user.grupo_cliente && (
+              <span class="inline-block mt-2 px-2 py-1 bg-bg-accent text-action text-xs rounded-full font-medium capitalize">
+                {user.grupo_cliente}
+              </span>
+            )}
+          </div>
+        )}
+      </aside>
+
+      {/* Content */}
+      <div class="flex-1 min-w-0">
+        <slot />
+      </div>
+    </div>
+  </div>
+</BaseLayout>

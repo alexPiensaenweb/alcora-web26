@@ -1,0 +1,36 @@
+---
+import ProductCard from "./ProductCard.astro";
+import type { Producto, TarifaEspecial } from "../../lib/types";
+import { resolveDiscount, calculatePrice } from "../../lib/pricing";
+
+interface Props {
+  products: Producto[];
+  tarifas?: TarifaEspecial[];
+  isLoggedIn?: boolean;
+}
+
+const { products, tarifas = [], isLoggedIn = false } = Astro.props;
+---
+
+{products.length === 0 ? (
+  <div class="text-center py-12 text-text-muted">
+    <svg class="w-16 h-16 mx-auto mb-4 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+    </svg>
+    <p class="text-sm">No se encontraron productos.</p>
+  </div>
+) : (
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    {products.map((product) => {
+      let price: number | null = null;
+      if (isLoggedIn && tarifas.length > 0) {
+        const categoriaId = typeof product.categoria === "object" ? product.categoria?.id : product.categoria;
+        const descuento = resolveDiscount(tarifas, product.id, categoriaId || null);
+        price = calculatePrice(product.precio_base, descuento);
+      } else if (isLoggedIn) {
+        price = product.precio_base;
+      }
+      return <ProductCard product={product} price={price} />;
+    })}
+  </div>
+)}

@@ -1,0 +1,33 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Breadcrumb from "../components/ui/Breadcrumb.astro";
+import CheckoutForm from "../components/checkout/CheckoutForm";
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/login?redirect=/checkout");
+}
+
+const iban = import.meta.env.IBAN || "ESXX XXXX XXXX XXXX XXXX XXXX";
+---
+
+<BaseLayout title="Checkout - Tienda Alcora">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Breadcrumb items={[{ label: "Carrito", href: "/carrito" }, { label: "Checkout" }]} />
+    <h1 class="text-2xl font-bold text-navy mt-4 mb-6">Finalizar pedido</h1>
+    <CheckoutForm
+      client:load
+      iban={iban}
+      user={{
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        razon_social: user.razon_social,
+        telefono: user.telefono,
+        direccion_envio: user.direccion_envio,
+        direccion_facturacion: user.direccion_facturacion,
+      }}
+    />
+  </div>
+</BaseLayout>

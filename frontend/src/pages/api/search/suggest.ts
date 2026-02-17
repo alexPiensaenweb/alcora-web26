@@ -1,0 +1,37 @@
+import type { APIRoute } from "astro";
+import { directusPublic } from "../../../lib/directus";
+
+export const GET: APIRoute = async ({ url }) => {
+  try {
+    const q = (url.searchParams.get("q") || "").trim();
+    if (q.length < 2) {
+      return new Response(JSON.stringify({ items: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const res = await directusPublic(
+      `/items/productos?filter[status][_eq]=published&search=${encodeURIComponent(
+        q
+      )}&fields=nombre,slug,sku&sort=nombre&limit=8`
+    );
+
+    const items = (res.data || []).map((item: any) => ({
+      nombre: item.nombre,
+      slug: item.slug,
+      sku: item.sku,
+    }));
+
+    return new Response(JSON.stringify({ items }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    return new Response(
+      JSON.stringify({ items: [], error: error.message || "Error" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+};
+

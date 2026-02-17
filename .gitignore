@@ -1,0 +1,54 @@
+# Environment files
+.env
+.env.production
+.env.local
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+
+# Directus uploads (large binary files)
+directus/uploads/*
+!directus/uploads/.gitkeep
+directus/extensions/.registry/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+nul
+
+# IDE
+.vscode/
+.idea/
+
+# Deploy artifacts (generated, not source)
+deploy-frontend/
+tienda-alcora-frontend.zip
+*.zip
+
+# Migration data exports (contain DB data, not code)
+migration/data/
+migration/exports/
+migration/*.json
+
+# Directus production snapshots
+directus/snapshots/schema-production.json
+
+# Client documents
+*.pdf
+*.xlsx
+
+# Large reference files
+Inicio - Tienda Alcora.html
+Inicio - Tienda Alcora_files/
+web26.zip
+tmp_catalogo.html
+
+# Claude project files
+.claude/

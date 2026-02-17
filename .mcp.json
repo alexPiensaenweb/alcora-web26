@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "directus": {
+      "url": "http://localhost:8055/mcp",
+      "headers": {
+        "Authorization": "Bearer zH7zNQCUU4EEV5Nh8I-yepbGw5vqTRWw"
+      }
+    }
+  }
+}

@@ -1,0 +1,147 @@
+---
+import AccountLayout from "../../../layouts/AccountLayout.astro";
+import { getPedidoById, getAssetUrl } from "../../../lib/directus";
+import { formatCurrency } from "../../../lib/pricing";
+import { estadoLabel, estadoColor, formatDate } from "../../../lib/utils";
+import type { Producto } from "../../../lib/types";
+
+const { id } = Astro.params;
+const token = Astro.locals.token!;
+
+const pedido = await getPedidoById(parseInt(id!), token);
+
+if (!pedido) {
+  return Astro.redirect("/cuenta/pedidos");
+}
+---
+
+<AccountLayout title={`Pedido #${pedido.id} - Tienda Alcora`} activeTab="pedidos">
+  <div class="space-y-6">
+    {/* Header */}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <a href="/cuenta/pedidos" class="text-sm text-action hover:underline mb-2 inline-block">
+          &larr; Volver a pedidos
+        </a>
+        <h2 class="text-xl font-bold text-navy">Pedido #{pedido.id}</h2>
+        <p class="text-sm text-text-muted">{formatDate(pedido.date_created)}</p>
+      </div>
+      <span class={`px-3 py-1.5 text-sm rounded-full font-medium ${estadoColor(pedido.estado)}`}>
+        {estadoLabel(pedido.estado)}
+      </span>
+    </div>
+
+    {/* Items */}
+    <div class="bg-white border border-border rounded-lg overflow-hidden">
+      <div class="p-4 border-b border-border">
+        <h3 class="font-semibold text-navy">Productos</h3>
+      </div>
+      <div class="divide-y divide-border">
+        {pedido.items.map((item) => {
+          const producto = typeof item.producto === "object" ? item.producto as Producto | null : null;
+          return (
+            <div class="flex items-center gap-4 p-4">
+              <div class="w-12 h-12 bg-bg-light rounded flex-shrink-0 overflow-hidden">
+                {producto?.imagen_principal ? (
+                  <img
+                    src={getAssetUrl(producto.imagen_principal, { width: 80, height: 80 })}
+                    alt={item.nombre_producto}
+                    class="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center text-border">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-navy">{item.nombre_producto}</p>
+                <p class="text-xs text-text-muted">SKU: {item.sku}</p>
+              </div>
+              <div class="text-sm text-text-muted text-right">
+                {item.cantidad} x {formatCurrency(item.precio_unitario)}
+              </div>
+              <div class="text-sm font-semibold text-navy w-24 text-right">
+                {formatCurrency(item.subtotal)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+    {/* Totals + Details */}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Totals */}
+      <div class="bg-white border border-border rounded-lg p-6">
+        <h3 class="font-semibold text-navy mb-4">Resumen</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-text-muted">Subtotal</span>
+            <span class="font-medium">{formatCurrency(pedido.subtotal)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-text-muted">Envio</span>
+            <span class={`font-medium ${pedido.costo_envio === 0 ? "text-green-600" : ""}`}>
+              {pedido.costo_envio === 0 ? "Gratis" : formatCurrency(pedido.costo_envio)}
+            </span>
+          </div>
+          <hr class="border-border" />
+          <div class="flex justify-between text-base font-bold">
+            <span>Total</span>
+            <span class="text-action">{formatCurrency(pedido.total)}</span>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-border space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-text-muted">Metodo de pago</span>
+            <span class="font-medium capitalize">{pedido.metodo_pago || "—"}</span>
+          </div>
+          {pedido.referencia_pago && (
+            <div class="flex justify-between">
+              <span class="text-text-muted">Ref. pago</span>
+              <span class="font-mono text-xs">{pedido.referencia_pago}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Addresses */}
+      <div class="bg-white border border-border rounded-lg p-6">
+        <h3 class="font-semibold text-navy mb-4">Direcciones</h3>
+
+        <div class="space-y-4 text-sm">
+          <div>
+            <p class="font-medium text-navy mb-1">Envio</p>
+            <p class="text-text-muted whitespace-pre-line">
+              {pedido.direccion_envio || "No especificada"}
+            </p>
+          </div>
+          <div>
+            <p class="font-medium text-navy mb-1">Facturacion</p>
+            <p class="text-text-muted whitespace-pre-line">
+              {pedido.direccion_facturacion || "No especificada"}
+            </p>
+          </div>
+        </div>
+
+        {pedido.notas_cliente && (
+          <div class="mt-4 pt-4 border-t border-border">
+            <p class="font-medium text-navy text-sm mb-1">Notas del cliente</p>
+            <p class="text-sm text-text-muted">{pedido.notas_cliente}</p>
+          </div>
+        )}
+
+        {pedido.notas_admin && (
+          <div class="mt-4 pt-4 border-t border-border">
+            <p class="font-medium text-navy text-sm mb-1">Notas del administrador</p>
+            <p class="text-sm text-text-muted">{pedido.notas_admin}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</AccountLayout>

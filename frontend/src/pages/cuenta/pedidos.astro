@@ -1,0 +1,101 @@
+---
+import AccountLayout from "../../layouts/AccountLayout.astro";
+import { getPedidosForUser } from "../../lib/directus";
+import { formatCurrency } from "../../lib/pricing";
+import { estadoLabel, estadoColor, formatDate } from "../../lib/utils";
+
+const token = Astro.locals.token!;
+const pedidos = await getPedidosForUser(token);
+---
+
+<AccountLayout title="Mis Pedidos - Tienda Alcora" activeTab="pedidos">
+  <div>
+    <h2 class="text-xl font-bold text-navy mb-6">Mis Pedidos</h2>
+
+    {pedidos.length > 0 ? (
+      <div class="bg-white border border-border rounded-lg overflow-hidden">
+        {/* Desktop table */}
+        <div class="hidden md:block">
+          <table class="w-full text-sm">
+            <thead class="bg-bg-light text-left">
+              <tr>
+                <th class="px-4 py-3 font-medium text-text-muted">Pedido</th>
+                <th class="px-4 py-3 font-medium text-text-muted">Fecha</th>
+                <th class="px-4 py-3 font-medium text-text-muted">Estado</th>
+                <th class="px-4 py-3 font-medium text-text-muted">Productos</th>
+                <th class="px-4 py-3 font-medium text-text-muted text-right">Total</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              {pedidos.map((pedido) => (
+                <tr class="hover:bg-bg-light transition-colors">
+                  <td class="px-4 py-3 font-medium text-navy">#{pedido.id}</td>
+                  <td class="px-4 py-3 text-text-muted">
+                    {formatDate(pedido.date_created)}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class={`px-2 py-1 text-xs rounded-full font-medium ${estadoColor(pedido.estado)}`}>
+                      {estadoLabel(pedido.estado)}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-text-muted">
+                    {pedido.items?.length || 0} art.
+                  </td>
+                  <td class="px-4 py-3 text-right font-semibold text-navy">
+                    {formatCurrency(pedido.total)}
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <a
+                      href={`/cuenta/pedidos/${pedido.id}`}
+                      class="text-action hover:underline text-sm"
+                    >
+                      Ver detalle
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div class="md:hidden divide-y divide-border">
+          {pedidos.map((pedido) => (
+            <a
+              href={`/cuenta/pedidos/${pedido.id}`}
+              class="block p-4 hover:bg-bg-light transition-colors"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium text-navy">Pedido #{pedido.id}</span>
+                <span class={`px-2 py-1 text-xs rounded-full font-medium ${estadoColor(pedido.estado)}`}>
+                  {estadoLabel(pedido.estado)}
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-text-muted">{formatDate(pedido.date_created)}</span>
+                <span class="font-semibold text-navy">{formatCurrency(pedido.total)}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    ) : (
+      <div class="bg-white border border-border rounded-lg p-12 text-center">
+        <svg class="w-16 h-16 mx-auto mb-4 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <h3 class="text-lg font-semibold text-navy mb-2">No tiene pedidos</h3>
+        <p class="text-sm text-text-muted mb-6">
+          Explore nuestro catalogo y realice su primer pedido.
+        </p>
+        <a
+          href="/catalogo"
+          class="inline-block bg-action text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-action-hover transition-colors"
+        >
+          Ver catalogo
+        </a>
+      </div>
+    )}
+  </div>
+</AccountLayout>
