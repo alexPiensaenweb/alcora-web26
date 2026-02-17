@@ -9,7 +9,7 @@ if (!user) {
   return Astro.redirect("/login?redirect=/checkout");
 }
 
-const iban = import.meta.env.IBAN || "ESXX XXXX XXXX XXXX XXXX XXXX";
+const iban = process.env.IBAN || import.meta.env.IBAN || "ESXX XXXX XXXX XXXX XXXX XXXX";
 ---
 
 <BaseLayout title="Checkout - Tienda Alcora">
@@ -24,6 +24,7 @@ const iban = import.meta.env.IBAN || "ESXX XXXX XXXX XXXX XXXX XXXX";
         last_name: user.last_name,
         email: user.email,
         razon_social: user.razon_social,
+        cif_nif: user.cif_nif,
         telefono: user.telefono,
         direccion_envio: user.direccion_envio,
         direccion_facturacion: user.direccion_facturacion,

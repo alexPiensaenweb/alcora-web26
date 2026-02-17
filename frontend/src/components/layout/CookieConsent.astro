@@ -1,0 +1,106 @@
+---
+// Cookie Consent banner using vanilla-cookieconsent v3
+// Only necessary cookies are used by default (session cookies for auth)
+---
+
+<script>
+  import "vanilla-cookieconsent/dist/cookieconsent.css";
+  import * as CookieConsent from "vanilla-cookieconsent";
+
+  function setupCookieConsent() {
+    if (document.querySelector("#cc-main")) return; // Already initialized
+
+    CookieConsent.run({
+      guiOptions: {
+        consentModal: {
+          layout: "box",
+          position: "bottom left",
+        },
+        preferencesModal: {
+          layout: "box",
+        },
+      },
+
+      categories: {
+        necessary: {
+          enabled: true,
+          readOnly: true,
+        },
+        analytics: {
+          enabled: false,
+          readOnly: false,
+        },
+      },
+
+      language: {
+        default: "es",
+        translations: {
+          es: {
+            consentModal: {
+              title: "Utilizamos cookies",
+              description:
+                'Esta web utiliza cookies esenciales para su funcionamiento (autenticacion y sesion). No utilizamos cookies de seguimiento ni publicidad. Puede consultar nuestra <a href="/politica-cookies">Politica de Cookies</a> para mas informacion.',
+              acceptAllBtn: "Aceptar",
+              acceptNecessaryBtn: "Solo necesarias",
+              showPreferencesBtn: "Configurar",
+            },
+            preferencesModal: {
+              title: "Preferencias de cookies",
+              acceptAllBtn: "Aceptar todas",
+              acceptNecessaryBtn: "Solo necesarias",
+              savePreferencesBtn: "Guardar preferencias",
+              sections: [
+                {
+                  title: "Uso de cookies",
+                  description:
+                    "Utilizamos cookies para garantizar el correcto funcionamiento de la tienda. A continuacion puede activar o desactivar cada categoria.",
+                },
+                {
+                  title: "Cookies estrictamente necesarias",
+                  description:
+                    "Estas cookies son esenciales para el funcionamiento de la web: sesion de usuario, carrito de compras y preferencias de cookies. No pueden desactivarse.",
+                  linkedCategory: "necessary",
+                },
+                {
+                  title: "Cookies de analisis",
+                  description:
+                    "Estas cookies nos permiten analizar el uso de la web para mejorar su rendimiento y contenido. Son anonimas y no identifican al usuario.",
+                  linkedCategory: "analytics",
+                },
+                {
+                  title: "Mas informacion",
+                  description:
+                    'Para cualquier consulta sobre nuestra politica de cookies, puede contactarnos en <a href="mailto:central@alcora.es">central@alcora.es</a>.',
+                },
+              ],
+            },
+          },
+        },
+      },
+    });
+  }
+
+  setupCookieConsent();
+  document.addEventListener("astro:page-load", setupCookieConsent);
+</script>
+
+<style is:global>
+  /* Override vanilla-cookieconsent colors to match Alcora palette */
+  :root {
+    --cc-bg: #fff;
+    --cc-text: #222d54;
+    --cc-btn-primary-bg: #2970ff;
+    --cc-btn-primary-text: #fff;
+    --cc-btn-primary-hover-bg: #6a9bff;
+    --cc-btn-secondary-bg: #f4f6f9;
+    --cc-btn-secondary-text: #222d54;
+    --cc-btn-secondary-hover-bg: #e8ecf2;
+    --cc-toggle-bg-off: #c0c4ce;
+    --cc-toggle-bg-on: #2970ff;
+    --cc-toggle-bg-readonly: #6b7589;
+    --cc-overlay-bg: rgba(34, 45, 84, 0.5);
+    --cc-separator-border-color: #c0c4ce;
+    --cc-cookie-category-block-bg: #f4f6f9;
+    --cc-cookie-category-block-bg-hover: #eff4ff;
+  }
+</style>

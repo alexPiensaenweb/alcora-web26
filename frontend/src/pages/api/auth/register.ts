@@ -4,12 +4,42 @@ import { directusAdmin } from "../../../lib/directus";
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { email, password, first_name, last_name, razon_social, cif_nif, telefono, direccion_facturacion } = body;
+    const {
+      email,
+      password,
+      first_name,
+      last_name,
+      razon_social,
+      cif_nif,
+      telefono,
+      cargo,
+      tipo_negocio,
+      direccion_facturacion,
+      ciudad,
+      provincia,
+      codigo_postal,
+      acepta_proteccion_datos,
+      acepta_comunicaciones,
+    } = body;
 
     // Validate required fields
-    if (!email || !password || !first_name || !razon_social || !cif_nif) {
+    if (!email || !password || !first_name || !last_name) {
       return new Response(
-        JSON.stringify({ error: "Todos los campos obligatorios deben ser completados" }),
+        JSON.stringify({ error: "Nombre, apellidos, email y contrasena son obligatorios" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!razon_social || !cif_nif) {
+      return new Response(
+        JSON.stringify({ error: "La razon social y CIF/NIF son obligatorios" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!tipo_negocio) {
+      return new Response(
+        JSON.stringify({ error: "Seleccione el tipo de negocio" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -17,6 +47,13 @@ export const POST: APIRoute = async ({ request }) => {
     if (password.length < 8) {
       return new Response(
         JSON.stringify({ error: "La contrasena debe tener al menos 8 caracteres" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!acepta_proteccion_datos) {
+      return new Response(
+        JSON.stringify({ error: "Debe aceptar la politica de proteccion de datos" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -33,7 +70,16 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Create user with status: suspended
+    // Build full address string from components
+    const fullAddress = [
+      direccion_facturacion,
+      [codigo_postal, ciudad].filter(Boolean).join(" "),
+      provincia,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    // Create user with status: suspended (pending admin approval)
     await directusAdmin("/users", {
       method: "POST",
       body: JSON.stringify({
@@ -46,7 +92,15 @@ export const POST: APIRoute = async ({ request }) => {
         razon_social,
         cif_nif,
         telefono: telefono || "",
-        direccion_facturacion: direccion_facturacion || "",
+        cargo: cargo || "",
+        tipo_negocio: tipo_negocio || "",
+        direccion_facturacion: fullAddress,
+        direccion_envio: fullAddress, // Same address by default
+        ciudad: ciudad || "",
+        provincia: provincia || "",
+        codigo_postal: codigo_postal || "",
+        acepta_proteccion_datos: !!acepta_proteccion_datos,
+        acepta_comunicaciones: !!acepta_comunicaciones,
       }),
     });
 
@@ -68,8 +122,9 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    console.error("Registration error:", message);
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "Error al procesar el registro. Intentelo de nuevo." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
