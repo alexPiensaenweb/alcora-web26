@@ -45,6 +45,7 @@ export interface Producto {
   categoria: number | Categoria | null;
   formato: string | null;
   unidad_venta: string | null;
+  marca: string | null;
 }
 
 export interface TarifaEspecial {

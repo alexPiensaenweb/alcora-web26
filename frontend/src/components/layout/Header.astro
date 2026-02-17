@@ -79,14 +79,16 @@ const { user } = Astro.props;
   {/* Category Nav */}
   <nav class="bg-bg-light border-b border-border hidden md:block">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <ul class="flex items-center gap-6 h-10 text-sm font-medium">
-        <li><a href="/catalogo" class="text-navy hover:text-action transition-colors">Todos los productos</a></li>
-        <li><a href="/categoria/agua" class="text-text-muted hover:text-action transition-colors">Agua</a></li>
-        <li><a href="/categoria/aire" class="text-text-muted hover:text-action transition-colors">Aire</a></li>
-        <li><a href="/categoria/control-de-infecciones" class="text-text-muted hover:text-action transition-colors">Control de Infecciones</a></li>
-        <li><a href="/categoria/control-de-plagas" class="text-text-muted hover:text-action transition-colors">Control de Plagas</a></li>
-        <li><a href="/categoria/epis" class="text-text-muted hover:text-action transition-colors">EPIs</a></li>
-        <li><a href="/categoria/productos-de-limpieza" class="text-text-muted hover:text-action transition-colors">Productos de Limpieza</a></li>
+      <ul class="flex items-center gap-4 h-10 text-sm font-medium overflow-x-auto">
+        <li class="flex-shrink-0"><a href="/catalogo" class="text-navy hover:text-action transition-colors">Todos</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/productos-de-limpieza" class="text-text-muted hover:text-action transition-colors">Limpieza</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/agua" class="text-text-muted hover:text-action transition-colors">Agua</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/aire" class="text-text-muted hover:text-action transition-colors">Aire</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/control-de-plagas" class="text-text-muted hover:text-action transition-colors">Control de Plagas</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/control-de-infecciones" class="text-text-muted hover:text-action transition-colors">Control Infecciones</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/epis" class="text-text-muted hover:text-action transition-colors">EPIs</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/cosmetica" class="text-text-muted hover:text-action transition-colors">Cosmetica</a></li>
+        <li class="flex-shrink-0"><a href="/categoria/gestion-de-residuos" class="text-text-muted hover:text-action transition-colors">Gestion Residuos</a></li>
       </ul>
     </div>
   </nav>
@@ -102,12 +104,14 @@ const { user } = Astro.props;
       </summary>
       <ul class="mt-2 space-y-1 pb-2">
         <li><a href="/catalogo" class="block py-1 text-sm text-navy hover:text-action">Todos los productos</a></li>
+        <li><a href="/categoria/productos-de-limpieza" class="block py-1 text-sm text-text-muted hover:text-action">Productos de Limpieza</a></li>
         <li><a href="/categoria/agua" class="block py-1 text-sm text-text-muted hover:text-action">Agua</a></li>
         <li><a href="/categoria/aire" class="block py-1 text-sm text-text-muted hover:text-action">Aire</a></li>
-        <li><a href="/categoria/control-de-infecciones" class="block py-1 text-sm text-text-muted hover:text-action">Control de Infecciones</a></li>
         <li><a href="/categoria/control-de-plagas" class="block py-1 text-sm text-text-muted hover:text-action">Control de Plagas</a></li>
+        <li><a href="/categoria/control-de-infecciones" class="block py-1 text-sm text-text-muted hover:text-action">Control de Infecciones</a></li>
         <li><a href="/categoria/epis" class="block py-1 text-sm text-text-muted hover:text-action">EPIs</a></li>
-        <li><a href="/categoria/productos-de-limpieza" class="block py-1 text-sm text-text-muted hover:text-action">Productos de Limpieza</a></li>
+        <li><a href="/categoria/cosmetica" class="block py-1 text-sm text-text-muted hover:text-action">Cosmetica</a></li>
+        <li><a href="/categoria/gestion-de-residuos" class="block py-1 text-sm text-text-muted hover:text-action">Gestion de Residuos</a></li>
       </ul>
     </details>
   </div>
@@ -123,6 +127,12 @@ const { user } = Astro.props;
       .replaceAll("'", "&#39;");
   }
 
+  function getAssetUrl(fileId) {
+    if (!fileId) return null;
+    const base = window.__PUBLIC_DIRECTUS_URL || "";
+    return `${base}/assets/${fileId}`;
+  }
+
   function setupHeaderSuggest() {
     const input = document.getElementById("header-search-input");
     const dropdown = document.getElementById("header-search-dropdown");
@@ -131,11 +141,39 @@ const { user } = Astro.props;
 
     form.dataset.suggestReady = "1";
     let timer;
+    let selectedIndex = -1;
 
     const closeDropdown = () => {
       dropdown.classList.add("hidden");
       dropdown.innerHTML = "";
+      selectedIndex = -1;
     };
+
+    const highlightItem = (index) => {
+      const items = dropdown.querySelectorAll("a");
+      items.forEach((el, i) => {
+        el.classList.toggle("bg-bg-light", i === index);
+      });
+      selectedIndex = index;
+    };
+
+    input.addEventListener("keydown", (e) => {
+      const items = dropdown.querySelectorAll("a");
+      if (!items.length || dropdown.classList.contains("hidden")) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        highlightItem(selectedIndex < items.length - 1 ? selectedIndex + 1 : 0);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        highlightItem(selectedIndex > 0 ? selectedIndex - 1 : items.length - 1);
+      } else if (e.key === "Enter" && selectedIndex >= 0) {
+        e.preventDefault();
+        items[selectedIndex].click();
+      } else if (e.key === "Escape") {
+        closeDropdown();
+      }
+    });
 
     input.addEventListener("input", () => {
       const term = input.value.trim();
@@ -153,24 +191,44 @@ const { user } = Astro.props;
           const items = payload.items || [];
 
           if (items.length === 0) {
-            closeDropdown();
+            dropdown.innerHTML = `
+              <div class="px-4 py-3 text-sm text-text-muted text-center">
+                No se encontraron resultados
+              </div>`;
+            dropdown.classList.remove("hidden");
             return;
           }
 
           dropdown.innerHTML = items
             .map(
-              (item) => `
-                <a
-                  href="/catalogo/${item.slug}"
-                  class="block px-3 py-2 text-sm hover:bg-bg-light transition-colors border-b border-border last:border-b-0"
-                >
-                  <span class="font-medium text-navy">${escapeHtml(item.nombre)}</span>
-                  <span class="text-xs text-text-muted ml-2">${escapeHtml(item.sku)}</span>
-                </a>
-              `
+              (item) => {
+                const imgUrl = getAssetUrl(item.imagen_principal);
+                const imgHtml = imgUrl
+                  ? `<img src="${imgUrl}" alt="" class="w-10 h-10 object-contain rounded" loading="lazy" />`
+                  : `<div class="w-10 h-10 bg-bg-light rounded flex items-center justify-center">
+                       <svg class="w-5 h-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                       </svg>
+                     </div>`;
+                const marcaHtml = item.marca
+                  ? `<span class="text-[10px] font-semibold text-action/70 uppercase tracking-wide">${escapeHtml(item.marca)}</span>`
+                  : "";
+
+                return `
+                  <a href="/catalogo/${escapeHtml(item.slug)}"
+                     class="flex items-center gap-3 px-3 py-2.5 hover:bg-bg-light transition-colors border-b border-border last:border-b-0">
+                    <div class="flex-shrink-0">${imgHtml}</div>
+                    <div class="flex-1 min-w-0">
+                      ${marcaHtml}
+                      <p class="text-sm font-medium text-navy truncate">${escapeHtml(item.nombre)}</p>
+                      <p class="text-[11px] text-text-muted">${escapeHtml(item.sku)}</p>
+                    </div>
+                  </a>`;
+              }
             )
             .join("");
 
+          selectedIndex = -1;
           dropdown.classList.remove("hidden");
         } catch {
           closeDropdown();

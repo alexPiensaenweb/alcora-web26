@@ -14,13 +14,15 @@ export const GET: APIRoute = async ({ url }) => {
     const res = await directusPublic(
       `/items/productos?filter[status][_eq]=published&search=${encodeURIComponent(
         q
-      )}&fields=nombre,slug,sku&sort=nombre&limit=8`
+      )}&fields=nombre,slug,sku,imagen_principal,marca&sort=nombre&limit=8`
     );
 
     const items = (res.data || []).map((item: any) => ({
       nombre: item.nombre,
       slug: item.slug,
       sku: item.sku,
+      imagen_principal: item.imagen_principal || null,
+      marca: item.marca || null,
     }));
 
     return new Response(JSON.stringify({ items }), {
@@ -34,4 +36,3 @@ export const GET: APIRoute = async ({ url }) => {
     );
   }
 };
-

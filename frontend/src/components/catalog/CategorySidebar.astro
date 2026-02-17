@@ -51,13 +51,46 @@ const childCategories = currentCategory
     )
   : [];
 
-const sidebarTitle = isCatalogRoot
-  ? "Categorias"
-  : currentCategory
-    ? `Subcategorias de ${formatCategoryName(currentCategory.nombre)}`
-    : "Categorias";
+// When no subcategories, find sibling categories (same parent)
+const parentId = currentCategory ? getParentId(currentCategory) : null;
+const parentCategory = parentId
+  ? allCategorias.find((c) => Number(c.id) === parentId) || null
+  : null;
 
-const itemsToShow = isCatalogRoot ? topLevel : childCategories;
+const siblingCategories = parentId
+  ? dedupeByName(
+      allCategorias.filter((cat) => getParentId(cat) === parentId)
+    )
+  : [];
+
+// Determine what to show
+const hasChildren = childCategories.length > 0;
+const hasSiblings = siblingCategories.length > 0;
+
+let sidebarTitle: string;
+let itemsToShow: Categoria[];
+let backLink: { label: string; href: string } | null = null;
+
+if (isCatalogRoot) {
+  sidebarTitle = "Categorias";
+  itemsToShow = topLevel;
+} else if (hasChildren) {
+  // Current category has subcategories → show them
+  sidebarTitle = `Subcategorias de ${formatCategoryName(currentCategory!.nombre)}`;
+  itemsToShow = childCategories;
+  backLink = parentCategory
+    ? { label: `← ${formatCategoryName(parentCategory.nombre)}`, href: `/categoria/${parentCategory.slug}` }
+    : { label: "← Todas las categorias", href: "/catalogo" };
+} else if (hasSiblings && parentCategory) {
+  // No subcategories but has siblings → show sibling categories
+  sidebarTitle = formatCategoryName(parentCategory.nombre);
+  itemsToShow = siblingCategories;
+  backLink = { label: "← Todas las categorias", href: "/catalogo" };
+} else {
+  // Top-level category with no children → show all top-level
+  sidebarTitle = "Categorias";
+  itemsToShow = topLevel;
+}
 ---
 
 <nav class="bg-white border border-border rounded-lg overflow-hidden">
@@ -88,12 +121,17 @@ const itemsToShow = isCatalogRoot ? topLevel : childCategories;
     </ul>
   ) : (
     <div class="px-4 py-3 text-sm text-text-muted">
-      {isCatalogRoot
-        ? "No hay categorias disponibles."
-        : "Esta categoria no tiene subcategorias."}
+      No hay categorias disponibles.
     </div>
   )}
-  {!isCatalogRoot && (
+  {backLink && (
+    <div class="px-4 py-3 border-t border-border bg-white">
+      <a href={backLink.href} class="text-sm text-action hover:underline">
+        {backLink.label}
+      </a>
+    </div>
+  )}
+  {!isCatalogRoot && !backLink && (
     <div class="px-4 py-3 border-t border-border bg-white">
       <a href="/catalogo" class="text-sm text-action hover:underline">
         Ver categorias principales
