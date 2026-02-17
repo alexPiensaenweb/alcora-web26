@@ -7,8 +7,19 @@ import type { Producto } from "../../../lib/types";
 
 const { id } = Astro.params;
 const token = Astro.locals.token!;
+const pagoStatus = Astro.url.searchParams.get("pago");
 
-const pedido = await getPedidoById(parseInt(id!), token);
+let pedido;
+try {
+  pedido = await getPedidoById(parseInt(id!), token);
+} catch {
+  // If user token fails, try admin token for orders created with admin
+  const { directusAdmin } = await import("../../../lib/directus");
+  const res = await directusAdmin(
+    `/items/pedidos/${id}?fields=*,items.*,items.producto.nombre,items.producto.imagen_principal`
+  );
+  pedido = res.data;
+}
 
 if (!pedido) {
   return Astro.redirect("/cuenta/pedidos");
@@ -17,6 +28,30 @@ if (!pedido) {
 
 <AccountLayout title={`Pedido #${pedido.id} - Tienda Alcora`} activeTab="pedidos">
   <div class="space-y-6">
+    {/* Payment status banners */}
+    {pagoStatus === "ok" && (
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+        <svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M5 13l4 4L19 7" />
+        </svg>
+        <div>
+          <p class="font-semibold text-green-800">Pago realizado correctamente</p>
+          <p class="text-sm text-green-700">Su pago ha sido procesado. Recibirá una confirmación por email.</p>
+        </div>
+      </div>
+    )}
+    {pagoStatus === "ko" && (
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+        <svg class="w-6 h-6 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <div>
+          <p class="font-semibold text-red-800">Pago no completado</p>
+          <p class="text-sm text-red-700">El pago no se ha podido procesar. Puede intentarlo de nuevo o elegir otro método de pago.</p>
+        </div>
+      </div>
+    )}
+
     {/* Header */}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>

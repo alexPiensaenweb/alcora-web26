@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { createPaymentForm } from "../../../lib/redsys";
-import { directusAuth } from "../../../lib/directus";
+import { directusAuth, directusAdmin } from "../../../lib/directus";
 
 /**
  * POST /api/checkout/redsys-signature
@@ -29,11 +29,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Verificar que el pedido existe y pertenece al usuario
-    const pedidoRes = await directusAuth(
-      `/items/pedidos/${pedidoId}?fields=id,total,estado,user_created`,
-      locals.token
-    );
-    const pedido = pedidoRes.data;
+    let pedido: any;
+    try {
+      const pedidoRes = await directusAuth(
+        `/items/pedidos/${pedidoId}?fields=id,total,estado,user_created`,
+        locals.token
+      );
+      pedido = pedidoRes.data;
+    } catch {
+      // Fallback to admin token if user can't read their own pedido
+      const pedidoRes = await directusAdmin(
+        `/items/pedidos/${pedidoId}?fields=id,total,estado,user_created`
+      );
+      pedido = pedidoRes.data;
+      // Verify ownership
+      if (pedido && pedido.user_created !== locals.user.id) {
+        return new Response(
+          JSON.stringify({ error: "No tiene permiso para este pedido" }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     if (!pedido) {
       return new Response(

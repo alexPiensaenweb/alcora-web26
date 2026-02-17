@@ -16,11 +16,11 @@ import { Redsys } from "node-redsys-api";
 
 // ─── Config ───
 
-const REDSYS_SECRET = import.meta.env.REDSYS_SECRET || "";
-const REDSYS_MERCHANT_CODE = import.meta.env.REDSYS_MERCHANT_CODE || "";
-const REDSYS_TERMINAL = import.meta.env.REDSYS_TERMINAL || "1";
-const REDSYS_ENV = import.meta.env.REDSYS_ENV || "test";
-const SITE_URL = import.meta.env.PUBLIC_SITE_URL || "http://localhost:4321";
+const REDSYS_SECRET = process.env.REDSYS_SECRET || import.meta.env.REDSYS_SECRET || "";
+const REDSYS_MERCHANT_CODE = process.env.REDSYS_MERCHANT_CODE || import.meta.env.REDSYS_MERCHANT_CODE || "";
+const REDSYS_TERMINAL = process.env.REDSYS_TERMINAL || import.meta.env.REDSYS_TERMINAL || "1";
+const REDSYS_ENV = process.env.REDSYS_ENV || import.meta.env.REDSYS_ENV || "test";
+const SITE_URL = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "http://localhost:4321";
 
 /** URL del formulario de pago Redsys */
 export const REDSYS_FORM_URL =
