@@ -93,22 +93,36 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const costoEnvio = calculateShipping(subtotal);
     const total = Math.round((subtotal + costoEnvio) * 100) / 100;
 
-    // Create pedido in Directus using admin token (ensures permissions)
-    const pedidoRes = await directusAdmin("/items/pedidos", {
-      method: "POST",
-      body: JSON.stringify({
-        estado: "aprobado_pendiente_pago",
-        subtotal,
-        costo_envio: costoEnvio,
-        total,
-        metodo_pago: metodo_pago || "transferencia",
-        direccion_envio: direccion_envio || locals.user.direccion_envio,
-        direccion_facturacion:
-          direccion_facturacion || locals.user.direccion_facturacion,
-        notas_cliente: notas_cliente || null,
-        user_created: locals.user.id,
-      }),
-    });
+    // Create pedido using user's token (so user_created is set correctly)
+    // Fall back to admin token if user token fails (permission issues)
+    let pedidoRes: any;
+    const pedidoData = {
+      estado: "aprobado_pendiente_pago",
+      subtotal,
+      costo_envio: costoEnvio,
+      total,
+      metodo_pago: metodo_pago || "transferencia",
+      direccion_envio: direccion_envio || locals.user.direccion_envio,
+      direccion_facturacion:
+        direccion_facturacion || locals.user.direccion_facturacion,
+      notas_cliente: notas_cliente || null,
+    };
+
+    try {
+      pedidoRes = await directusAuth("/items/pedidos", locals.token, {
+        method: "POST",
+        body: JSON.stringify(pedidoData),
+      });
+    } catch {
+      // Fallback: use admin token but set user_created explicitly
+      pedidoRes = await directusAdmin("/items/pedidos", {
+        method: "POST",
+        body: JSON.stringify({
+          ...pedidoData,
+          user_created: locals.user.id,
+        }),
+      });
+    }
 
     const pedidoId = pedidoRes.data.id;
 

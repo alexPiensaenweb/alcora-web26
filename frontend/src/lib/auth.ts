@@ -30,6 +30,9 @@ export function setAuthCookies(
 }
 
 export function clearAuthCookies(cookies: AstroCookies): void {
+  // Set cookies to empty with immediate expiry to ensure deletion
+  cookies.set(COOKIE_SESSION, "", { ...COOKIE_OPTIONS, maxAge: 0 });
+  cookies.set(COOKIE_REFRESH, "", { ...COOKIE_OPTIONS, maxAge: 0 });
   cookies.delete(COOKIE_SESSION, { path: "/" });
   cookies.delete(COOKIE_REFRESH, { path: "/" });
 }
