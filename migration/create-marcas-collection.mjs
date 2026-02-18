@@ -146,25 +146,18 @@ async function main() {
   // 3. Set public read permissions for marcas
   console.log("3. Setting public permissions...");
   try {
-    const permsRes = await directus(
-      "/permissions?filter[collection][_eq]=marcas&filter[role][_null]=true&filter[action][_eq]=read"
-    );
-    if (permsRes.data && permsRes.data.length > 0) {
-      console.log("   Public read permission already exists.");
-    } else {
-      await directus("/permissions", {
-        method: "POST",
-        body: JSON.stringify({
-          role: null,
-          collection: "marcas",
-          action: "read",
-          fields: ["*"],
-        }),
-      });
-      console.log("   Public read permission created.");
-    }
+    await directus("/permissions", {
+      method: "POST",
+      body: JSON.stringify({
+        role: null,
+        collection: "marcas",
+        action: "read",
+        fields: ["*"],
+      }),
+    });
+    console.log("   Public read permission created.");
   } catch (err) {
-    console.log("   Could not set permissions:", err.message);
+    console.log("   Could not set permissions (may need to set manually in Directus admin):", err.message.substring(0, 120));
   }
 
   // 4. Extract unique brands from existing products
@@ -233,6 +226,31 @@ async function main() {
     await directus("/fields/productos/marca_id");
     console.log("   Field 'marca_id' already exists.");
   } catch {
+    // Step 1: Create the field first as integer
+    await directus("/fields/productos", {
+      method: "POST",
+      body: JSON.stringify({
+        field: "marca_id",
+        type: "integer",
+        schema: {
+          is_nullable: true,
+          foreign_key_table: "marcas",
+          foreign_key_column: "id",
+        },
+        meta: {
+          interface: "select-dropdown-m2o",
+          display: "related-values",
+          display_options: {
+            template: "{{nombre}}",
+          },
+          width: "half",
+          note: "Marca/fabricante del producto",
+          special: ["m2o"],
+        },
+      }),
+    });
+
+    // Step 2: Create the relation
     await directus("/relations", {
       method: "POST",
       body: JSON.stringify({
@@ -244,22 +262,6 @@ async function main() {
         },
         schema: {
           on_delete: "SET NULL",
-        },
-      }),
-    });
-
-    // Update the field meta for a nice interface
-    await directus("/fields/productos/marca_id", {
-      method: "PATCH",
-      body: JSON.stringify({
-        meta: {
-          interface: "select-dropdown-m2o",
-          display: "related-values",
-          display_options: {
-            template: "{{nombre}}",
-          },
-          width: "half",
-          note: "Marca/fabricante del producto",
         },
       }),
     });
