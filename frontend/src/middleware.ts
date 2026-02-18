@@ -26,7 +26,6 @@ const LOGIN_ROUTE = "/login";
 
 const IS_PRODUCTION =
   (process.env.NODE_ENV === "production") ||
-  (process.env.REDSYS_ENV === "production") ||
   (process.env.PUBLIC_SITE_URL || "").startsWith("https");
 
 const PUBLIC_DIRECTUS_URL =
@@ -45,10 +44,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const origin = context.request.headers.get("origin");
     const host = context.request.headers.get("host");
 
-    // Allow Redsys webhook (server-to-server, no Origin header)
-    const isWebhook = pathname.startsWith("/api/webhooks/");
-
-    if (!isWebhook && origin && host) {
+    if (origin && host) {
       try {
         const originHost = new URL(origin).host;
         if (originHost !== host) {
@@ -155,10 +151,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       `img-src ${imgSrc}`,
       "connect-src 'self'",
-      "frame-src https://challenges.cloudflare.com https://sis-t.redsys.es https://sis.redsys.es",
+      "frame-src https://challenges.cloudflare.com",
       "font-src 'self' https://fonts.gstatic.com",
       "base-uri 'self'",
-      "form-action 'self' https://sis-t.redsys.es https://sis.redsys.es",
+      "form-action 'self'",
       "frame-ancestors 'none'",
     ].join("; ")
   );

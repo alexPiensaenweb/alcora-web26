@@ -84,7 +84,7 @@ export interface Pedido {
   subtotal: number;
   costo_envio: number;
   total: number;
-  metodo_pago: "transferencia" | "tarjeta" | "pendiente" | null;
+  metodo_pago: "transferencia" | "pendiente" | null;
   referencia_pago: string | null;
   direccion_envio: string | null;
   direccion_facturacion: string | null;

@@ -30,7 +30,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       items: CartItem[];
       direccion_envio: string;
       direccion_facturacion: string;
-      metodo_pago: "transferencia" | "tarjeta" | "pendiente";
+      metodo_pago: "transferencia" | "pendiente";
       notas_cliente?: string;
     };
 
@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Validate metodo_pago enum
-    const VALID_METODOS = ["transferencia", "tarjeta", "pendiente"];
+    const VALID_METODOS = ["transferencia", "pendiente"];
     if (metodo_pago && !VALID_METODOS.includes(metodo_pago)) {
       return new Response(
         JSON.stringify({ error: "Metodo de pago no valido" }),

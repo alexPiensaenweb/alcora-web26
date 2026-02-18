@@ -11,7 +11,6 @@ const COOKIE_REFRESH = "alcora_refresh";
 
 const IS_PRODUCTION =
   (process.env.NODE_ENV === "production") ||
-  (process.env.REDSYS_ENV === "production") ||
   (process.env.PUBLIC_SITE_URL || "").startsWith("https");
 
 const COOKIE_OPTIONS = {

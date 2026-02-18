@@ -202,7 +202,7 @@ const { user } = Astro.props;
           dropdown.innerHTML = items
             .map(
               (item) => {
-                const imgUrl = getAssetUrl(item.imagen_principal);
+                const imgUrl = item.imageUrl || getAssetUrl(item.imagen_principal);
                 const imgHtml = imgUrl
                   ? `<img src="${imgUrl}" alt="" class="w-10 h-10 object-contain rounded" loading="lazy" />`
                   : `<div class="w-10 h-10 bg-bg-light rounded flex items-center justify-center">

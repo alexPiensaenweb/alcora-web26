@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusPublic } from "../../../lib/directus";
+import { directusPublic, getPublicAssetUrl } from "../../../lib/directus";
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -22,6 +22,7 @@ export const GET: APIRoute = async ({ url }) => {
       slug: item.slug,
       sku: item.sku,
       imagen_principal: item.imagen_principal || null,
+      imageUrl: item.imagen_principal ? getPublicAssetUrl(item.imagen_principal) : null,
       marca: item.marca_id?.nombre || item.marca || null,
     }));
 
