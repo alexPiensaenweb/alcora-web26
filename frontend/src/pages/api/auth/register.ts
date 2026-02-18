@@ -45,13 +45,6 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    if (!numero_roesb) {
-      return new Response(
-        JSON.stringify({ error: "El numero en el ROESB es obligatorio" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
     if (password.length < 8) {
       return new Response(
         JSON.stringify({ error: "La contrasena debe tener al menos 8 caracteres" }),

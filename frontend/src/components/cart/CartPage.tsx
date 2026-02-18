@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   $cartList,
@@ -17,11 +18,21 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+function getDirectusUrl(): string {
+  if (typeof document !== "undefined") {
+    return document.body?.dataset?.directusUrl || (window as any).__PUBLIC_DIRECTUS_URL || "";
+  }
+  return "";
+}
+
 export default function CartPage() {
   const items = useStore($cartList);
   const subtotal = useStore($cartSubtotal);
   const shipping = useStore($shippingCost);
   const total = useStore($cartTotal);
+  const [presupuestoLoading, setPresupuestoLoading] = useState(false);
+  const [presupuestoSent, setPresupuestoSent] = useState(false);
+  const [presupuestoError, setPresupuestoError] = useState("");
 
   if (items.length === 0) {
     return (
@@ -81,7 +92,7 @@ export default function CartPage() {
               <div className="w-16 h-16 bg-[var(--color-bg-light)] rounded flex-shrink-0 overflow-hidden">
                 {item.imagen ? (
                   <img
-                    src={`${(window as any).__PUBLIC_DIRECTUS_URL || "http://localhost:8055"}/assets/${item.imagen}`}
+                    src={`${getDirectusUrl()}/assets/${item.imagen}`}
                     alt={item.nombre}
                     className="w-full h-full object-contain"
                   />
@@ -185,8 +196,58 @@ export default function CartPage() {
             href="/checkout"
             className="block mt-6 w-full bg-[var(--color-action)] text-white text-center py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors"
           >
-            Solicitar Presupuesto
+            Tramitar Pedido
           </a>
+
+          <button
+            onClick={async () => {
+              setPresupuestoError("");
+              setPresupuestoLoading(true);
+              try {
+                const res = await fetch("/api/cart/presupuesto", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    items: items.map((i) => ({
+                      productoId: i.productoId,
+                      nombre: i.nombre,
+                      sku: i.sku,
+                      cantidad: i.cantidad,
+                      precioUnitario: i.precioUnitario,
+                      formato: i.formato,
+                    })),
+                  }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Error al solicitar presupuesto");
+                setPresupuestoSent(true);
+              } catch (err: any) {
+                setPresupuestoError(err.message || "Error desconocido");
+              } finally {
+                setPresupuestoLoading(false);
+              }
+            }}
+            disabled={presupuestoLoading || presupuestoSent}
+            className="block mt-3 w-full border border-[var(--color-action)] text-[var(--color-action)] text-center py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-bg-accent)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {presupuestoLoading
+              ? "Enviando..."
+              : presupuestoSent
+                ? "✓ Presupuesto solicitado"
+                : "Solicitar Presupuesto Personalizado"}
+          </button>
+
+          {presupuestoSent && (
+            <p className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-2 text-center">
+              Hemos recibido su solicitud. Le enviaremos el presupuesto por email a la mayor brevedad.
+            </p>
+          )}
+
+          {presupuestoError && (
+            <p className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+              {presupuestoError}
+            </p>
+          )}
 
           <a
             href="/catalogo"

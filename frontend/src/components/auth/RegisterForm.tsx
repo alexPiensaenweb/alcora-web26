@@ -36,7 +36,6 @@ export default function RegisterForm() {
     telefono: "",
     cargo: "",
     tipo_negocio: "",
-    numero_roesb: "",
     direccion_facturacion: "",
     ciudad: "",
     provincia: "",
@@ -81,11 +80,6 @@ export default function RegisterForm() {
       return;
     }
 
-    if (!form.numero_roesb) {
-      setError("El numero en el ROESB es obligatorio");
-      return;
-    }
-
     if (!form.acepta_proteccion_datos) {
       setError("Debe aceptar la politica de proteccion de datos");
       return;
@@ -107,7 +101,6 @@ export default function RegisterForm() {
           telefono: form.telefono,
           cargo: form.cargo,
           tipo_negocio: form.tipo_negocio,
-          numero_roesb: form.numero_roesb,
           direccion_facturacion: form.direccion_facturacion,
           ciudad: form.ciudad,
           provincia: form.provincia,
@@ -232,13 +225,6 @@ export default function RegisterForm() {
                   <label className={labelClass}>Cargo</label>
                   <input type="text" value={form.cargo} onChange={(e) => updateField("cargo", e.target.value)} className={inputClass} placeholder="Responsable de compras" />
                 </div>
-              </div>
-              <div>
-                <label className={labelClass}>N.o en el ROESB *</label>
-                <input type="text" required value={form.numero_roesb} onChange={(e) => updateField("numero_roesb", e.target.value)} className={inputClass} placeholder="Ej: ES-AND-2024-001234" />
-                <p className="text-xs text-[var(--color-text-muted)] mt-1.5">
-                  Registro Oficial de Establecimientos y Servicios Biocidas
-                </p>
               </div>
             </div>
           </section>

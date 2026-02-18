@@ -68,6 +68,7 @@ export interface TarifaEspecial {
 
 export type EstadoPedido =
   | "solicitado"
+  | "presupuesto_solicitado"
   | "aprobado_pendiente_pago"
   | "pagado"
   | "enviado"
@@ -83,7 +84,7 @@ export interface Pedido {
   subtotal: number;
   costo_envio: number;
   total: number;
-  metodo_pago: "transferencia" | "tarjeta" | null;
+  metodo_pago: "transferencia" | "tarjeta" | "pendiente" | null;
   referencia_pago: string | null;
   direccion_envio: string | null;
   direccion_facturacion: string | null;

@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       items: CartItem[];
       direccion_envio: string;
       direccion_facturacion: string;
-      metodo_pago: "transferencia" | "tarjeta";
+      metodo_pago: "transferencia" | "tarjeta" | "pendiente";
       notas_cliente?: string;
     };
 
@@ -97,11 +97,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Fall back to admin token if user token fails (permission issues)
     let pedidoRes: any;
     const pedidoData = {
-      estado: "aprobado_pendiente_pago",
+      estado: "solicitado",
       subtotal,
       costo_envio: costoEnvio,
       total,
-      metodo_pago: metodo_pago || "transferencia",
+      metodo_pago: metodo_pago || "pendiente",
       direccion_envio: direccion_envio || locals.user.direccion_envio,
       direccion_facturacion:
         direccion_facturacion || locals.user.direccion_facturacion,
@@ -143,7 +143,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         pedido: {
           id: pedidoId,
           total,
-          estado: "aprobado_pendiente_pago",
+          estado: "solicitado",
         },
       }),
       { status: 201, headers: { "Content-Type": "application/json" } }

@@ -129,7 +129,7 @@ const { user } = Astro.props;
 
   function getAssetUrl(fileId) {
     if (!fileId) return null;
-    const base = window.__PUBLIC_DIRECTUS_URL || "";
+    const base = document.body?.dataset?.directusUrl || window.__PUBLIC_DIRECTUS_URL || "";
     return `${base}/assets/${fileId}`;
   }
 

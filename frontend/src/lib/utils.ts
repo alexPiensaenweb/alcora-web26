@@ -27,6 +27,7 @@ export function formatDate(dateString: string): string {
 export function estadoLabel(estado: string): string {
   const labels: Record<string, string> = {
     solicitado: "Solicitado",
+    presupuesto_solicitado: "Presupuesto solicitado",
     aprobado_pendiente_pago: "Aprobado - Pendiente de pago",
     pagado: "Pagado",
     enviado: "Enviado",
@@ -38,6 +39,7 @@ export function estadoLabel(estado: string): string {
 export function estadoColor(estado: string): string {
   const colors: Record<string, string> = {
     solicitado: "bg-yellow-100 text-yellow-800",
+    presupuesto_solicitado: "bg-amber-100 text-amber-800",
     aprobado_pendiente_pago: "bg-blue-100 text-blue-800",
     pagado: "bg-green-100 text-green-800",
     enviado: "bg-green-200 text-green-900",

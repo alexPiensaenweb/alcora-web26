@@ -31,7 +31,7 @@ const publicDirectusUrl =
     />
     <ViewTransitions />
   </head>
-  <body class="min-h-screen flex flex-col bg-white text-navy font-sans">
+  <body class="min-h-screen flex flex-col bg-white text-navy font-sans" data-directus-url={publicDirectusUrl}>
     <Header user={user} />
     <main class="flex-1">
       <slot />
