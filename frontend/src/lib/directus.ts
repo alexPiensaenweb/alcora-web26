@@ -146,7 +146,7 @@ export async function getProductoBySlug(
   slug: string
 ): Promise<Producto | null> {
   const res = await directusPublic(
-    `/items/productos?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&fields=*,categoria.id,categoria.nombre,categoria.slug,categoria.parent.*&limit=1`
+    `/items/productos?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&fields=*,categoria.id,categoria.nombre,categoria.slug,categoria.parent.*,marca_id.id,marca_id.nombre,marca_id.slug,marca_id.logo&limit=1`
   );
   return res.data?.[0] || null;
 }

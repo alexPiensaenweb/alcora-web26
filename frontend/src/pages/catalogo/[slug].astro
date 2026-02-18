@@ -26,6 +26,7 @@ if (user?.grupo_cliente && token) {
 
 const imageUrl = getAssetUrl(product.imagen_principal, { width: 600, height: 600 });
 const categoria = product.categoria as Categoria | null;
+const marcaNombre = typeof product.marca_id === "object" && product.marca_id ? product.marca_id.nombre : product.marca;
 
 const breadcrumbs = [];
 if (categoria) {
@@ -59,6 +60,9 @@ breadcrumbs.push({ label: product.nombre });
       {/* Details */}
       <div>
         <p class="text-sm text-text-muted mb-1">SKU: {product.sku}</p>
+        {marcaNombre && (
+          <p class="text-xs font-semibold text-action/80 uppercase tracking-wide mb-1">{marcaNombre}</p>
+        )}
         <h1 class="text-2xl font-bold text-navy mb-4">{product.nombre}</h1>
 
         {product.formato && (
@@ -98,7 +102,7 @@ breadcrumbs.push({ label: product.nombre });
                 {" "}para ver precios y realizar pedidos.
               </p>
               <p class="text-xs text-text-muted mt-1">
-                No tiene cuenta? <a href="/registro" class="text-action hover:underline">Solicite acceso B2B</a>
+                No tiene cuenta? <a href="/registro" class="text-action hover:underline">Solicite acceso</a>
               </p>
             </div>
           )}
@@ -216,6 +220,18 @@ breadcrumbs.push({ label: product.nombre });
         precioUnitario: parseFloat(section.dataset.productPrice!),
         formato: section.dataset.productFormato || null,
       });
+
+      // Show toast notification
+      const productName = section.dataset.productName || "Producto";
+      const qty = parseInt(qtyInput.value) || 1;
+      if (window.showToast) {
+        window.showToast(
+          qty > 1
+            ? `${qty} x ${productName} anadido al carrito`
+            : `${productName} anadido al carrito`,
+          "success"
+        );
+      }
 
       btn.textContent = "Anadido!";
       btn.classList.add("bg-green-600");

@@ -87,7 +87,7 @@ export default function LoginForm() {
       <p className="text-center text-sm text-[var(--color-text-muted)]">
         No tiene cuenta?{" "}
         <a href="/registro" className="text-[var(--color-action)] hover:underline font-medium">
-          Solicitar acceso B2B
+          Solicitar acceso
         </a>
       </p>
     </form>

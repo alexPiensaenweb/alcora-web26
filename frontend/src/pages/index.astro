@@ -41,7 +41,7 @@ function subcategoryCount(categoryId: number): number {
 }
 ---
 
-<BaseLayout title="Alcora Salud Ambiental - Tienda B2B">
+<BaseLayout title="Alcora Salud Ambiental - Tienda para Profesionales">
   {/* Hero */}
   <section class="bg-navy text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
@@ -65,7 +65,7 @@ function subcategoryCount(categoryId: number): number {
               href="/registro"
               class="border border-white/30 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/10 transition-colors"
             >
-              Solicitar acceso B2B
+              Solicitar acceso
             </a>
           )}
         </div>
@@ -135,34 +135,36 @@ function subcategoryCount(categoryId: number): number {
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      {rootCategorias.map((cat) => (
-        <a
-          href={`/categoria/${cat.slug}`}
-          class="group bg-white border border-border rounded-lg p-4 text-center hover:border-action hover:shadow-md transition-all"
-        >
-          {cat.imagen ? (
-            <div class="w-16 h-16 mx-auto mb-3 rounded-lg overflow-hidden bg-bg-light">
-              <img
-                src={getAssetUrl(cat.imagen, { width: 120, height: 120 })}
-                alt={formatCategoryName(cat.nombre)}
-                class="w-full h-full object-contain"
-              />
+      {rootCategorias.map((cat) => {
+        const subCount = subcategoryCount(cat.id);
+        return (
+          <a
+            href={`/categoria/${cat.slug}`}
+            class="group relative bg-white border border-border rounded-xl p-5 text-center hover:border-action hover:shadow-lg transition-all duration-200"
+          >
+            <div class="w-14 h-14 mx-auto mb-3 rounded-xl bg-bg-accent flex items-center justify-center group-hover:bg-[#dbeaff] transition-colors">
+              {cat.imagen ? (
+                <img
+                  src={getAssetUrl(cat.imagen, { width: 120, height: 120 })}
+                  alt={formatCategoryName(cat.nombre)}
+                  class="w-10 h-10 object-contain"
+                />
+              ) : (
+                <CategoryIcon slug={cat.slug} className="w-7 h-7 text-action" />
+              )}
             </div>
-          ) : (
-            <div class="w-16 h-16 mx-auto mb-3 rounded-lg bg-bg-accent flex items-center justify-center">
-              <CategoryIcon slug={cat.slug} />
-            </div>
-          )}
-          <p class="text-sm font-semibold text-navy group-hover:text-action transition-colors">
-            {formatCategoryName(cat.nombre)}
-          </p>
-          {subcategoryCount(cat.id) > 0 && (
-            <p class="text-xs text-text-muted mt-1">
-              {subcategoryCount(cat.id)} subcategorías
+            <p class="text-sm font-semibold text-navy group-hover:text-action transition-colors leading-tight">
+              {formatCategoryName(cat.nombre)}
             </p>
-          )}
-        </a>
-      ))}
+            {subCount > 0 && (
+              <p class="text-xs text-text-muted mt-1">
+                {subCount} subcategorias
+              </p>
+            )}
+            <span class="absolute bottom-2 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-action text-xs font-medium">→</span>
+          </a>
+        );
+      })}
     </div>
   </section>
 
@@ -207,7 +209,7 @@ function subcategoryCount(categoryId: number): number {
           Acceda a precios exclusivos para profesionales
         </h2>
         <p class="text-white/80 mb-6 max-w-lg mx-auto">
-          Registrese como cliente B2B y obtenga descuentos especiales segun su
+          Registrese como cliente profesional y obtenga descuentos especiales segun su
           tipo de empresa. Proceso de validacion rapido y seguro.
         </p>
         <div class="flex gap-3 justify-center">

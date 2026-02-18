@@ -79,6 +79,18 @@ async function main() {
     },
   });
 
+  await createFieldIfNotExists("directus_users", "numero_roesb", {
+    field: "numero_roesb",
+    type: "string",
+    schema: { max_length: 50, is_nullable: true },
+    meta: {
+      interface: "input",
+      display: "raw",
+      note: "Numero en el Registro Oficial de Establecimientos y Servicios Biocidas",
+      width: "half",
+    },
+  });
+
   await createFieldIfNotExists("directus_users", "ciudad", {
     field: "ciudad",
     type: "string",

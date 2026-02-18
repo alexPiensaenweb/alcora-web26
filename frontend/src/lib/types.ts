@@ -46,6 +46,16 @@ export interface Producto {
   formato: string | null;
   unidad_venta: string | null;
   marca: string | null;
+  marca_id: number | Marca | null;
+}
+
+export interface Marca {
+  id: number;
+  status: "published" | "draft" | "archived";
+  nombre: string;
+  slug: string;
+  logo: string | null;
+  web: string | null;
 }
 
 export interface TarifaEspecial {

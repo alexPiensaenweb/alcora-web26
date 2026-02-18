@@ -36,6 +36,7 @@ export default function RegisterForm() {
     telefono: "",
     cargo: "",
     tipo_negocio: "",
+    numero_roesb: "",
     direccion_facturacion: "",
     ciudad: "",
     provincia: "",
@@ -81,6 +82,11 @@ export default function RegisterForm() {
       return;
     }
 
+    if (!form.numero_roesb) {
+      setError("El numero en el ROESB es obligatorio");
+      return;
+    }
+
     if (!form.acepta_proteccion_datos) {
       setError("Debe aceptar la politica de proteccion de datos");
       return;
@@ -102,6 +108,7 @@ export default function RegisterForm() {
           telefono: form.telefono,
           cargo: form.cargo,
           tipo_negocio: form.tipo_negocio,
+          numero_roesb: form.numero_roesb,
           direccion_facturacion: form.direccion_facturacion,
           ciudad: form.ciudad,
           provincia: form.provincia,
@@ -154,7 +161,7 @@ export default function RegisterForm() {
       )}
 
       <div className="bg-[var(--color-bg-accent)] p-4 rounded-lg text-sm text-[var(--color-navy)]">
-        <strong>Registro B2B:</strong> Complete el formulario con los datos de su empresa.
+        <strong>Registro profesional:</strong> Complete el formulario con los datos de su empresa.
         Un administrador validara su informacion y activara su cuenta.
       </div>
 
@@ -210,6 +217,14 @@ export default function RegisterForm() {
               <label className={labelClass}>Cargo</label>
               <input type="text" value={form.cargo} onChange={(e) => updateField("cargo", e.target.value)} className={inputClass} placeholder="Ej: Responsable de compras" />
             </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Numero en el ROESB *</label>
+            <input type="text" required value={form.numero_roesb} onChange={(e) => updateField("numero_roesb", e.target.value)} className={inputClass} placeholder="Registro Oficial de Establecimientos y Servicios Biocidas" />
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              Numero de inscripcion en el Registro Oficial de Establecimientos y Servicios Biocidas
+            </p>
           </div>
         </div>
       </div>
@@ -304,7 +319,7 @@ export default function RegisterForm() {
         <p className="text-xs text-[var(--color-text-muted)] leading-relaxed mt-2">
           Los datos personales facilitados a traves de este formulario seran tratados por
           Alcora Salud Ambiental S.L. con la finalidad de gestionar su solicitud de registro
-          como cliente B2B. Puede ejercer sus derechos de acceso, rectificacion o supresion
+          como cliente profesional. Puede ejercer sus derechos de acceso, rectificacion o supresion
           dirigiendose a{" "}
           <a href="mailto:central@alcora.es" className="text-[var(--color-action)]">
             central@alcora.es
@@ -318,7 +333,7 @@ export default function RegisterForm() {
         disabled={loading}
         className="w-full bg-[var(--color-action)] text-white py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? "Enviando solicitud..." : "Solicitar acceso B2B"}
+        {loading ? "Enviando solicitud..." : "Solicitar acceso profesional"}
       </button>
 
       <p className="text-center text-sm text-[var(--color-text-muted)]">

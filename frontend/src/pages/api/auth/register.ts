@@ -14,6 +14,7 @@ export const POST: APIRoute = async ({ request }) => {
       telefono,
       cargo,
       tipo_negocio,
+      numero_roesb,
       direccion_facturacion,
       ciudad,
       provincia,
@@ -40,6 +41,13 @@ export const POST: APIRoute = async ({ request }) => {
     if (!tipo_negocio) {
       return new Response(
         JSON.stringify({ error: "Seleccione el tipo de negocio" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!numero_roesb) {
+      return new Response(
+        JSON.stringify({ error: "El numero en el ROESB es obligatorio" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -94,6 +102,7 @@ export const POST: APIRoute = async ({ request }) => {
         telefono: telefono || "",
         cargo: cargo || "",
         tipo_negocio: tipo_negocio || "",
+        numero_roesb: numero_roesb || "",
         direccion_facturacion: fullAddress,
         direccion_envio: fullAddress, // Same address by default
         ciudad: ciudad || "",
