@@ -39,9 +39,9 @@ const imageUrl = getAssetUrl(product.imagen_principal, {
     {/* Info */}
     <div class="p-4">
       <p class="text-xs text-text-muted mb-1">{product.sku}</p>
-      <h3 class="text-sm font-semibold text-navy line-clamp-2 mb-2 group-hover:text-action transition-colors">
+      <p class="text-sm font-semibold text-navy line-clamp-2 mb-2 group-hover:text-action transition-colors">
         {product.nombre}
-      </h3>
+      </p>
       {product.extracto && (
         <p class="text-xs text-text-muted line-clamp-2 mb-3">{product.extracto}</p>
       )}

@@ -108,9 +108,9 @@ export default function InfiniteProductGrid({
               </div>
               <div className="p-4">
                 <p className="text-xs text-text-muted mb-1">{product.sku}</p>
-                <h3 className="text-sm font-semibold text-navy line-clamp-2 mb-2">
+                <p className="text-sm font-semibold text-navy line-clamp-2 mb-2">
                   {product.nombre}
-                </h3>
+                </p>
                 {product.extracto && (
                   <p className="text-xs text-text-muted line-clamp-2 mb-3">{product.extracto}</p>
                 )}
