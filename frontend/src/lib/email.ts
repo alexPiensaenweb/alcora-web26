@@ -41,6 +41,15 @@ export async function sendMail({ to, subject, html }: SendMailOptions): Promise<
   }
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 /**
  * Build presupuesto email HTML
  */
@@ -61,9 +70,9 @@ export function buildPresupuestoHtml(data: {
     .map(
       (item) => `
       <tr>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${item.nombre}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#6b7589;">${item.sku}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${item.formato || "—"}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${escapeHtml(item.nombre)}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#6b7589;">${escapeHtml(item.sku)}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${item.formato ? escapeHtml(item.formato) : "—"}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:center;">${item.cantidad}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;">${item.precioUnitario.toFixed(2)} €</td>
       </tr>`
@@ -85,10 +94,10 @@ export function buildPresupuestoHtml(data: {
     <div style="padding:24px 32px;">
       <h2 style="color:#222d54;font-size:16px;margin:0 0 16px;">Datos del cliente</h2>
       <table style="width:100%;font-size:14px;margin-bottom:24px;">
-        <tr><td style="padding:4px 0;color:#6b7589;width:120px;">Nombre:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${data.userName}</td></tr>
-        <tr><td style="padding:4px 0;color:#6b7589;">Empresa:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${data.userCompany}</td></tr>
-        <tr><td style="padding:4px 0;color:#6b7589;">Email:</td><td style="padding:4px 0;"><a href="mailto:${data.userEmail}" style="color:#2970ff;">${data.userEmail}</a></td></tr>
-        <tr><td style="padding:4px 0;color:#6b7589;">Telefono:</td><td style="padding:4px 0;color:#222d54;">${data.userPhone || "—"}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;width:120px;">Nombre:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${escapeHtml(data.userName)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Empresa:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${escapeHtml(data.userCompany)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Email:</td><td style="padding:4px 0;"><a href="mailto:${escapeHtml(data.userEmail)}" style="color:#2970ff;">${escapeHtml(data.userEmail)}</a></td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Telefono:</td><td style="padding:4px 0;color:#222d54;">${data.userPhone ? escapeHtml(data.userPhone) : "—"}</td></tr>
       </table>
 
       <h2 style="color:#222d54;font-size:16px;margin:0 0 12px;">Productos solicitados</h2>

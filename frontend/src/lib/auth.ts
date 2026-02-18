@@ -8,9 +8,15 @@ import { getDirectusUrl } from "./directus";
 
 const COOKIE_SESSION = "alcora_session";
 const COOKIE_REFRESH = "alcora_refresh";
+
+const IS_PRODUCTION =
+  (process.env.NODE_ENV === "production") ||
+  (process.env.REDSYS_ENV === "production") ||
+  (process.env.PUBLIC_SITE_URL || "").startsWith("https");
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: false, // Set to true in production with HTTPS
+  secure: IS_PRODUCTION,
   sameSite: "lax" as const,
   path: "/",
 };

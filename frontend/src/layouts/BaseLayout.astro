@@ -13,6 +13,8 @@ const { title = "Tienda Alcora", description = "Tienda Alcora Salud Ambiental - 
 const user = Astro.locals.user;
 const publicDirectusUrl =
   import.meta.env.PUBLIC_DIRECTUS_URL || "http://localhost:8055";
+const turnstileSiteKey =
+  import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 ---
 
 <!doctype html>
@@ -43,10 +45,11 @@ const publicDirectusUrl =
     <div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
     {/* Hydrate auth store from server data */}
-    <script define:vars={{ user: user ? { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, grupo_cliente: user.grupo_cliente, status: user.status } : null, publicDirectusUrl }}>
+    <script define:vars={{ user: user ? { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, grupo_cliente: user.grupo_cliente, status: user.status } : null, publicDirectusUrl, turnstileSiteKey }}>
       if (typeof window !== "undefined") {
         window.__ALCORA_USER__ = user;
         window.__PUBLIC_DIRECTUS_URL = publicDirectusUrl;
+        window.__TURNSTILE_SITE_KEY = turnstileSiteKey;
       }
     </script>
 

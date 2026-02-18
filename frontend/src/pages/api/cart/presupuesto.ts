@@ -1,10 +1,16 @@
 import type { APIRoute } from "astro";
 import { sendMail, buildPresupuestoHtml } from "../../../lib/email";
+import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
 
 const COMPANY_EMAILS = ["central@alcora.es", "madriz@alcora.es"];
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    // Rate limit: 3 presupuesto requests per 5 minutes per IP
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rl = rateLimit(`presupuesto:${clientIp}`, 3, 300_000);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
     if (!locals.user || !locals.token) {
       return new Response(
         JSON.stringify({ error: "Debe iniciar sesion para solicitar un presupuesto" }),
@@ -80,9 +86,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("Presupuesto error:", err);
+    console.error("Presupuesto error:", err instanceof Error ? err.message : "Unknown");
     return new Response(
-      JSON.stringify({ error: err.message || "Error al enviar la solicitud de presupuesto" }),
+      JSON.stringify({ error: "Error al enviar la solicitud de presupuesto" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

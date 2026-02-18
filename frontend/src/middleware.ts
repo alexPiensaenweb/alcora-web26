@@ -1,5 +1,5 @@
 /**
- * Astro Middleware - Auth guard + user injection
+ * Astro Middleware - Auth guard + user injection + security
  *
  * Runs on every SSR request:
  * 1. Reads session cookie
@@ -7,6 +7,8 @@
  * 3. Auto-refreshes if expired
  * 4. Injects user into Astro.locals
  * 5. Protects specific routes
+ * 6. Adds security headers
+ * 7. CSRF protection on state-changing requests
  */
 
 import { defineMiddleware } from "astro:middleware";
@@ -22,6 +24,14 @@ import {
 const PROTECTED_ROUTES = ["/cuenta", "/checkout"];
 const LOGIN_ROUTE = "/login";
 
+const IS_PRODUCTION =
+  (process.env.NODE_ENV === "production") ||
+  (process.env.REDSYS_ENV === "production") ||
+  (process.env.PUBLIC_SITE_URL || "").startsWith("https");
+
+const PUBLIC_DIRECTUS_URL =
+  process.env.PUBLIC_DIRECTUS_URL || import.meta.env.PUBLIC_DIRECTUS_URL || "";
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { cookies, url, redirect } = context;
   const pathname = url.pathname;
@@ -30,7 +40,39 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.user = null;
   context.locals.token = null;
 
-  // Try to authenticate from session cookie
+  // ─── CSRF Protection: verify Origin on state-changing requests ───
+  if (context.request.method !== "GET" && context.request.method !== "HEAD") {
+    const origin = context.request.headers.get("origin");
+    const host = context.request.headers.get("host");
+
+    // Allow Redsys webhook (server-to-server, no Origin header)
+    const isWebhook = pathname.startsWith("/api/webhooks/");
+
+    if (!isWebhook && origin && host) {
+      try {
+        const originHost = new URL(origin).host;
+        if (originHost !== host) {
+          return new Response(
+            JSON.stringify({ error: "Solicitud no autorizada" }),
+            {
+              status: 403,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "Solicitud no autorizada" }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+  }
+
+  // ─── Authentication ───
   let token = getSessionToken(cookies);
 
   if (token) {
@@ -61,7 +103,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // Route protection
+  // ─── Route protection ───
   const isProtected = PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
@@ -80,5 +122,46 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect("/catalogo");
   }
 
-  return next();
+  // ─── Process request ───
+  const response = await next();
+
+  // ─── Security Headers ───
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=(self)"
+  );
+
+  if (IS_PRODUCTION) {
+    response.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains"
+    );
+  }
+
+  // Content Security Policy
+  const imgSrc = PUBLIC_DIRECTUS_URL
+    ? `'self' data: blob: ${PUBLIC_DIRECTUS_URL}`
+    : "'self' data: blob:";
+
+  response.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      `img-src ${imgSrc}`,
+      "connect-src 'self'",
+      "frame-src https://challenges.cloudflare.com https://sis-t.redsys.es https://sis.redsys.es",
+      "font-src 'self' https://fonts.gstatic.com",
+      "base-uri 'self'",
+      "form-action 'self' https://sis-t.redsys.es https://sis.redsys.es",
+      "frame-ancestors 'none'",
+    ].join("; ")
+  );
+
+  return response;
 });

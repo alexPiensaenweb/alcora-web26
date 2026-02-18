@@ -2,10 +2,16 @@ import type { APIRoute } from "astro";
 import { directusAuth, directusAdmin, getTarifasForGrupo } from "../../../lib/directus";
 import { resolveDiscount, calculatePrice } from "../../../lib/pricing";
 import { calculateShipping } from "../../../lib/shipping";
+import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
 import type { CartItem } from "../../../lib/types";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    // Rate limit: 10 order submissions per minute per IP
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rl = rateLimit(`submit:${clientIp}`, 10, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
     if (!locals.user || !locals.token) {
       return new Response(
         JSON.stringify({ error: "Debe iniciar sesion para realizar un pedido" }),
@@ -31,6 +37,38 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!items || items.length === 0) {
       return new Response(
         JSON.stringify({ error: "El carrito esta vacio" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate metodo_pago enum
+    const VALID_METODOS = ["transferencia", "tarjeta", "pendiente"];
+    if (metodo_pago && !VALID_METODOS.includes(metodo_pago)) {
+      return new Response(
+        JSON.stringify({ error: "Metodo de pago no valido" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate item quantities
+    for (const item of items) {
+      if (
+        typeof item.cantidad !== "number" ||
+        !Number.isInteger(item.cantidad) ||
+        item.cantidad < 1 ||
+        item.cantidad > 10000
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Cantidad no valida. Debe ser un numero entero entre 1 y 10.000" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Limit max items per order
+    if (items.length > 100) {
+      return new Response(
+        JSON.stringify({ error: "Demasiados productos en el pedido (maximo 100)" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -149,9 +187,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 201, headers: { "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("Order submission error:", err);
+    console.error("Order submission error:", err instanceof Error ? err.message : "Unknown");
     return new Response(
-      JSON.stringify({ error: err.message || "Error al procesar el pedido" }),
+      JSON.stringify({ error: "Error al procesar el pedido" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

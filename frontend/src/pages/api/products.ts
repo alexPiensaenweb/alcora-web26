@@ -118,8 +118,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error: any) {
+    console.error("Products API error:", error instanceof Error ? error.message : "Unknown");
     return new Response(
-      JSON.stringify({ error: error.message || "Error cargando productos" }),
+      JSON.stringify({ error: "Error cargando productos" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

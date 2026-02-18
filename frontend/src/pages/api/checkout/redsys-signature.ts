@@ -89,9 +89,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("Redsys signature error:", err);
+    console.error("Redsys signature error:", err instanceof Error ? err.message : "Unknown");
     return new Response(
-      JSON.stringify({ error: err.message || "Error generando firma Redsys" }),
+      JSON.stringify({ error: "Error generando firma de pago" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

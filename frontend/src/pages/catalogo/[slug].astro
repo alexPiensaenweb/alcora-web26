@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import { getProductoBySlug, getAssetUrl, getTarifasForGrupo } from "../../lib/directus";
+import { sanitizeHtml } from "../../lib/sanitize";
 import { resolveDiscount, calculatePrice, formatCurrency } from "../../lib/pricing";
 import type { TarifaEspecial, Categoria } from "../../lib/types";
 
@@ -237,7 +238,7 @@ const seoDescription = product.extracto
     {product.descripcion && (
       <div class="mt-12 border-t border-border pt-8">
         <h2 class="text-lg font-bold text-navy mb-4">Descripcion</h2>
-        <div class="prose prose-sm max-w-none text-text-muted" set:html={product.descripcion} />
+        <div class="prose prose-sm max-w-none text-text-muted" set:html={sanitizeHtml(product.descripcion)} />
       </div>
     )}
   </div>

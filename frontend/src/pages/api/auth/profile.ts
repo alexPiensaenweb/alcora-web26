@@ -37,9 +37,9 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("Profile update error:", err);
+    console.error("Profile update error:", err instanceof Error ? err.message : "Unknown");
     return new Response(
-      JSON.stringify({ error: err.message || "Error al actualizar perfil" }),
+      JSON.stringify({ error: "Error al actualizar perfil" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

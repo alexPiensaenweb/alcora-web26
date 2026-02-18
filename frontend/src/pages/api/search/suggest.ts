@@ -3,7 +3,7 @@ import { directusPublic } from "../../../lib/directus";
 
 export const GET: APIRoute = async ({ url }) => {
   try {
-    const q = (url.searchParams.get("q") || "").trim();
+    const q = (url.searchParams.get("q") || "").trim().slice(0, 100);
     if (q.length < 2) {
       return new Response(JSON.stringify({ items: [] }), {
         status: 200,
@@ -30,8 +30,9 @@ export const GET: APIRoute = async ({ url }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    console.error("Search suggest error:", error instanceof Error ? error.message : "Unknown");
     return new Response(
-      JSON.stringify({ items: [], error: error.message || "Error" }),
+      JSON.stringify({ items: [] }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

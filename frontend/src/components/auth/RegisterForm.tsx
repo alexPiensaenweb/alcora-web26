@@ -1,4 +1,7 @@
 import { useState } from "react";
+import Turnstile from "react-turnstile";
+
+const TURNSTILE_SITE_KEY = (typeof window !== "undefined" && (window as any).__TURNSTILE_SITE_KEY) || "1x00000000000000000000AA";
 
 const TIPO_NEGOCIO_OPTIONS = [
   { value: "", label: "Seleccione tipo de negocio..." },
@@ -46,6 +49,7 @@ export default function RegisterForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   function updateField(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -62,6 +66,11 @@ export default function RegisterForm() {
 
     if (form.password.length < 8) {
       setError("La contrasena debe tener al menos 8 caracteres");
+      return;
+    }
+
+    if (!/[A-Z]/.test(form.password) || !/[a-z]/.test(form.password) || !/[0-9]/.test(form.password)) {
+      setError("La contrasena debe incluir al menos una mayuscula, una minuscula y un numero");
       return;
     }
 
@@ -92,6 +101,7 @@ export default function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          turnstileToken,
           first_name: form.first_name,
           last_name: form.last_name,
           email: form.email,
@@ -275,7 +285,7 @@ export default function RegisterForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Contrasena *</label>
-                  <input type="password" required minLength={8} value={form.password} onChange={(e) => updateField("password", e.target.value)} className={inputClass} placeholder="Min. 8 caracteres" />
+                  <input type="password" required minLength={8} value={form.password} onChange={(e) => updateField("password", e.target.value)} className={inputClass} placeholder="Min. 8 car., mayus., minus. y num." />
                 </div>
                 <div>
                   <label className={labelClass}>Confirmar contrasena *</label>
@@ -326,6 +336,12 @@ export default function RegisterForm() {
           </a>.
         </p>
       </div>
+
+      <Turnstile
+        sitekey={TURNSTILE_SITE_KEY}
+        onVerify={(token: string) => setTurnstileToken(token)}
+        onExpire={() => setTurnstileToken("")}
+      />
 
       <button
         type="submit"

@@ -1,10 +1,18 @@
 import type { APIRoute } from "astro";
 import { directusAdmin } from "../../../lib/directus";
+import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
+import { verifyTurnstile } from "../../../lib/turnstile";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Rate limit: 3 registrations per 5 minutes per IP
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rl = rateLimit(`register:${clientIp}`, 3, 300_000);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
     const body = await request.json();
     const {
+      turnstileToken,
       email,
       password,
       first_name,
@@ -22,6 +30,17 @@ export const POST: APIRoute = async ({ request }) => {
       acepta_proteccion_datos,
       acepta_comunicaciones,
     } = body;
+
+    // Verify Turnstile CAPTCHA
+    if (turnstileToken) {
+      const turnstileOk = await verifyTurnstile(turnstileToken);
+      if (!turnstileOk) {
+        return new Response(
+          JSON.stringify({ error: "Verificacion de seguridad fallida. Recargue la pagina." }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // Validate required fields
     if (!email || !password || !first_name || !last_name) {
@@ -52,6 +71,43 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    // Password complexity: at least one uppercase, one lowercase, one digit
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      return new Response(
+        JSON.stringify({ error: "La contrasena debe incluir al menos una mayuscula, una minuscula y un numero" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Input format validations
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ error: "Formato de email no valido" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // CIF/NIF format: letter + 8 digits, or 8 digits + letter
+    const cifNifRegex = /^[A-Za-z]\d{7,8}[A-Za-z0-9]?$|^\d{8}[A-Za-z]$/;
+    if (!cifNifRegex.test(cif_nif.trim())) {
+      return new Response(
+        JSON.stringify({ error: "Formato de CIF/NIF no valido (ej: B12345678, 12345678A)" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Postal code: exactly 5 digits
+    if (codigo_postal && !/^\d{5}$/.test(codigo_postal.trim())) {
+      return new Response(
+        JSON.stringify({ error: "El codigo postal debe tener 5 digitos" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Strip HTML tags from text fields to prevent stored XSS
+    const stripHtml = (s: string) => (s || "").replace(/<[^>]*>/g, "").trim();
+
     if (!acepta_proteccion_datos) {
       return new Response(
         JSON.stringify({ error: "Debe aceptar la politica de proteccion de datos" }),
@@ -71,11 +127,23 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    // Sanitize text inputs
+    const cleanFirstName = stripHtml(first_name);
+    const cleanLastName = stripHtml(last_name);
+    const cleanRazonSocial = stripHtml(razon_social);
+    const cleanCifNif = stripHtml(cif_nif);
+    const cleanTelefono = stripHtml(telefono);
+    const cleanCargo = stripHtml(cargo);
+    const cleanDireccion = stripHtml(direccion_facturacion);
+    const cleanCiudad = stripHtml(ciudad);
+    const cleanProvincia = stripHtml(provincia);
+    const cleanCodigoPostal = stripHtml(codigo_postal);
+
     // Build full address string from components
     const fullAddress = [
-      direccion_facturacion,
-      [codigo_postal, ciudad].filter(Boolean).join(" "),
-      provincia,
+      cleanDireccion,
+      [cleanCodigoPostal, cleanCiudad].filter(Boolean).join(" "),
+      cleanProvincia,
     ]
       .filter(Boolean)
       .join(", ");
@@ -84,23 +152,23 @@ export const POST: APIRoute = async ({ request }) => {
     await directusAdmin("/users", {
       method: "POST",
       body: JSON.stringify({
-        email,
+        email: email.trim().toLowerCase(),
         password,
-        first_name,
-        last_name: last_name || "",
+        first_name: cleanFirstName,
+        last_name: cleanLastName,
         status: "suspended",
         role: clienteRoleId,
-        razon_social,
-        cif_nif,
-        telefono: telefono || "",
-        cargo: cargo || "",
+        razon_social: cleanRazonSocial,
+        cif_nif: cleanCifNif.toUpperCase(),
+        telefono: cleanTelefono,
+        cargo: cleanCargo,
         tipo_negocio: tipo_negocio || "",
-        numero_roesb: numero_roesb || "",
+        numero_roesb: stripHtml(numero_roesb),
         direccion_facturacion: fullAddress,
         direccion_envio: fullAddress, // Same address by default
-        ciudad: ciudad || "",
-        provincia: provincia || "",
-        codigo_postal: codigo_postal || "",
+        ciudad: cleanCiudad,
+        provincia: cleanProvincia,
+        codigo_postal: cleanCodigoPostal,
         acepta_proteccion_datos: !!acepta_proteccion_datos,
         acepta_comunicaciones: !!acepta_comunicaciones,
       }),

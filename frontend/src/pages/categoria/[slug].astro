@@ -4,6 +4,7 @@ import InfiniteProductGrid from "../../components/catalog/InfiniteProductGrid";
 import { getAssetUrl, getCategoriaBySlug, getCategorias, getProductos, getTarifasForGrupo } from "../../lib/directus";
 import { calculatePrice, resolveDiscount } from "../../lib/pricing";
 import { formatCategoryName } from "../../lib/utils";
+import { sanitizeHtml } from "../../lib/sanitize";
 import type { TarifaEspecial, Categoria } from "../../lib/types";
 
 const { slug } = Astro.params;
@@ -178,7 +179,7 @@ const breadcrumbSchema = {
     </div>
 
     {categoria.descripcion && (
-      <div class="prose prose-sm max-w-none text-text-muted mb-6" set:html={categoria.descripcion} />
+      <div class="prose prose-sm max-w-none text-text-muted mb-6" set:html={sanitizeHtml(categoria.descripcion)} />
     )}
 
     {/* Subcategories links */}

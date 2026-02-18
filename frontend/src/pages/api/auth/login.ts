@@ -1,9 +1,27 @@
 import type { APIRoute } from "astro";
 import { loginWithCredentials, setAuthCookies, getCurrentUser } from "../../../lib/auth";
+import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
+import { verifyTurnstile } from "../../../lib/turnstile";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    const { email, password } = await request.json();
+    // Rate limit: 5 login attempts per minute per IP
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rl = rateLimit(`login:${clientIp}`, 5, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
+
+    const { email, password, turnstileToken } = await request.json();
+
+    // Verify Turnstile CAPTCHA
+    if (turnstileToken) {
+      const turnstileOk = await verifyTurnstile(turnstileToken);
+      if (!turnstileOk) {
+        return new Response(
+          JSON.stringify({ error: "Verificacion de seguridad fallida. Recargue la pagina." }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     if (!email || !password) {
       return new Response(
@@ -47,8 +65,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err: any) {
+    console.error("Login error:", err instanceof Error ? err.message : "Unknown");
     return new Response(
-      JSON.stringify({ error: err.message || "Credenciales invalidas" }),
+      JSON.stringify({ error: "Credenciales invalidas" }),
       { status: 401, headers: { "Content-Type": "application/json" } }
     );
   }

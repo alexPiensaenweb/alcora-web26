@@ -1,11 +1,15 @@
 import { useState } from "react";
+import Turnstile from "react-turnstile";
 import { setUser } from "../../stores/auth";
+
+const TURNSTILE_SITE_KEY = (typeof window !== "undefined" && (window as any).__TURNSTILE_SITE_KEY) || "1x00000000000000000000AA";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -16,7 +20,7 @@ export default function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, turnstileToken }),
       });
 
       const data = await res.json();
@@ -28,9 +32,14 @@ export default function LoginForm() {
 
       setUser(data.user);
 
-      // Redirect to intended page or catalog
+      // Redirect to intended page or catalog (prevent open redirect)
       const params = new URLSearchParams(window.location.search);
-      window.location.href = params.get("redirect") || "/catalogo";
+      const rawRedirect = params.get("redirect") || "/catalogo";
+      const safeRedirect =
+        rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+          ? rawRedirect
+          : "/catalogo";
+      window.location.href = safeRedirect;
     } catch {
       setError("Error de conexion. Intentelo de nuevo.");
     } finally {
@@ -75,6 +84,12 @@ export default function LoginForm() {
           placeholder="••••••••"
         />
       </div>
+
+      <Turnstile
+        sitekey={TURNSTILE_SITE_KEY}
+        onVerify={(token: string) => setTurnstileToken(token)}
+        onExpire={() => setTurnstileToken("")}
+      />
 
       <button
         type="submit"

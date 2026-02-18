@@ -11,8 +11,8 @@ export const POST: APIRoute = async ({ cookies }) => {
     headers: {
       "Content-Type": "application/json",
       "Set-Cookie": [
-        `alcora_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=${expireDate}`,
-        `alcora_refresh=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=${expireDate}`,
+        `alcora_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Expires=${expireDate}`,
+        `alcora_refresh=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Expires=${expireDate}`,
       ].join(", "),
     },
   });

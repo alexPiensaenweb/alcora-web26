@@ -56,10 +56,47 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     if (result.isPaymentOk) {
-      // El orderId de Redsys es el pedidoId con padding (ej: "0042")
       const pedidoId = parseInt(result.orderId, 10);
 
       if (pedidoId) {
+        // Fetch order to verify amount and state
+        let pedido: any;
+        try {
+          const pedidoRes = await directusAdmin(
+            `/items/pedidos/${pedidoId}?fields=id,total,estado`
+          );
+          pedido = pedidoRes.data;
+        } catch {
+          console.error(`Redsys webhook: could not fetch pedido ${pedidoId}`);
+          return new Response("Order not found", { status: 404 });
+        }
+
+        if (!pedido) {
+          console.error(`Redsys webhook: pedido ${pedidoId} not found`);
+          return new Response("Order not found", { status: 404 });
+        }
+
+        // Verify order is in correct state
+        if (pedido.estado !== "aprobado_pendiente_pago") {
+          console.error(`Redsys webhook: pedido ${pedidoId} in unexpected state: ${pedido.estado}`);
+          return new Response("Invalid order state", { status: 400 });
+        }
+
+        // Verify amount matches (compare in cents to avoid floating-point issues)
+        const expectedCents = Math.round(parseFloat(pedido.total) * 100);
+        const paidCents = Math.round(result.amount * 100);
+        if (expectedCents !== paidCents) {
+          console.error(`Redsys webhook: amount mismatch for pedido ${pedidoId}: expected ${expectedCents} cents, received ${paidCents} cents`);
+          return new Response("Amount mismatch", { status: 400 });
+        }
+
+        // Verify merchant code
+        const expectedMerchantCode = process.env.REDSYS_MERCHANT_CODE || import.meta.env.REDSYS_MERCHANT_CODE || "";
+        if (expectedMerchantCode && result.merchantCode !== expectedMerchantCode) {
+          console.error(`Redsys webhook: merchant code mismatch`);
+          return new Response("Invalid merchant code", { status: 403 });
+        }
+
         await directusAdmin(`/items/pedidos/${pedidoId}`, {
           method: "PATCH",
           body: JSON.stringify({

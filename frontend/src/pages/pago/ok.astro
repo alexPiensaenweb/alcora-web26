@@ -6,16 +6,25 @@ import { formatDate, estadoLabel, estadoColor } from "../../lib/utils";
 import type { Producto } from "../../lib/types";
 
 const pedidoId = Astro.url.searchParams.get("pedido");
+const user = Astro.locals.user;
+
+if (pedidoId && !user) {
+  return Astro.redirect(`/login?redirect=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
+}
 
 let pedido: any = null;
-if (pedidoId) {
+if (pedidoId && user) {
   try {
     const res = await directusAdmin(
       `/items/pedidos/${pedidoId}?fields=*,items.*,items.producto.nombre,items.producto.imagen_principal`
     );
     pedido = res.data;
+    // Verify ownership - do not expose other users' orders
+    if (pedido && pedido.user_created !== user.id) {
+      pedido = null;
+    }
   } catch (err) {
-    console.error("Error fetching pedido for pago/ok:", err);
+    console.error("Error fetching pedido for pago/ok:", err instanceof Error ? err.message : "Unknown");
   }
 }
 ---
