@@ -20,9 +20,9 @@ echo "========================================="
 
 cd "$HTTPDOCS"
 
-# Step 1: Build frontend
+# Step 1: Build frontend (npm ci installs ALL deps including build tools)
 echo ""
-echo "[1/4] Installing build dependencies..."
+echo "[1/3] Installing dependencies and building..."
 cd frontend
 npm ci
 echo ""
@@ -34,36 +34,38 @@ cd "$HTTPDOCS"
 
 # Step 2: Copy runtime files to httpdocs root
 echo ""
-echo "[2/4] Setting up runtime files..."
+echo "[2/3] Setting up runtime files..."
 
 # Copy dist from frontend build
 rm -rf "$HTTPDOCS/dist"
 cp -r "$HTTPDOCS/frontend/dist" "$HTTPDOCS/dist"
 
-# Copy runtime config from deploy-frontend
+# Copy app.js from deploy-frontend
 cp "$HTTPDOCS/deploy-frontend/app.js" "$HTTPDOCS/app.js"
-cp "$HTTPDOCS/deploy-frontend/package.json" "$HTTPDOCS/package.json"
 
-# .env should already exist, but copy if missing
-if [ ! -f "$HTTPDOCS/.env" ] || [ "$HTTPDOCS/deploy-frontend/.env" -nt "$HTTPDOCS/.env" ]; then
-  cp "$HTTPDOCS/deploy-frontend/.env" "$HTTPDOCS/.env"
-  echo "  Updated .env from deploy-frontend"
+# Symlink node_modules from frontend (has all deps the SSR server needs)
+rm -rf "$HTTPDOCS/node_modules"
+ln -s "$HTTPDOCS/frontend/node_modules" "$HTTPDOCS/node_modules"
+
+# .env: only copy if it doesn't exist yet (never overwrite production secrets)
+if [ ! -f "$HTTPDOCS/.env" ]; then
+  if [ -f "$HTTPDOCS/deploy-frontend/.env" ]; then
+    cp "$HTTPDOCS/deploy-frontend/.env" "$HTTPDOCS/.env"
+    echo "  Copied .env from deploy-frontend"
+  else
+    cp "$HTTPDOCS/deploy-frontend/.env.example" "$HTTPDOCS/.env"
+    echo "  WARNING: Created .env from .env.example - edit with real values!"
+  fi
 fi
-
-# Step 3: Install runtime dependencies
-echo ""
-echo "[3/4] Installing runtime dependencies..."
-rm -rf "$HTTPDOCS/node_modules" "$HTTPDOCS/package-lock.json"
-npm install --production
 
 # Fix ownership
 OWNER=$(stat -c '%U' "$HTTPDOCS")
-chown -R "$OWNER:psaserv" "$HTTPDOCS/node_modules"
 chown -R "$OWNER:psaserv" "$HTTPDOCS/dist"
+chown -R "$OWNER:psaserv" "$HTTPDOCS/frontend/node_modules"
 
-# Step 4: Restart PM2
+# Step 3: Restart PM2
 echo ""
-echo "[4/4] Restarting PM2..."
+echo "[3/3] Restarting PM2..."
 pm2 restart astro-alcora 2>/dev/null || pm2 start "$HTTPDOCS/app.js" --name astro-alcora
 sleep 2
 pm2 logs astro-alcora --lines 15 --nostream
