@@ -1,8 +1,15 @@
-import { useState } from "react";
-import Turnstile from "react-turnstile";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { setUser } from "../../stores/auth";
 
-const TURNSTILE_SITE_KEY = (typeof window !== "undefined" && (window as any).__TURNSTILE_SITE_KEY) || "1x00000000000000000000AA";
+// Lazy-load Turnstile only on client to avoid SSR "window is not defined" issues
+const Turnstile = lazy(() => import("react-turnstile"));
+
+function getTurnstileSiteKey(): string {
+  if (typeof window !== "undefined" && (window as any).__TURNSTILE_SITE_KEY) {
+    return (window as any).__TURNSTILE_SITE_KEY;
+  }
+  return "1x00000000000000000000AA";
+}
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -10,6 +17,11 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,11 +97,15 @@ export default function LoginForm() {
         />
       </div>
 
-      <Turnstile
-        sitekey={TURNSTILE_SITE_KEY}
-        onVerify={(token: string) => setTurnstileToken(token)}
-        onExpire={() => setTurnstileToken("")}
-      />
+      {isClient && (
+        <Suspense fallback={<div className="h-[65px]" />}>
+          <Turnstile
+            sitekey={getTurnstileSiteKey()}
+            onVerify={(token: string) => setTurnstileToken(token)}
+            onExpire={() => setTurnstileToken("")}
+          />
+        </Suspense>
+      )}
 
       <button
         type="submit"

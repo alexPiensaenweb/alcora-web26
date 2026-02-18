@@ -1,7 +1,14 @@
-import { useState } from "react";
-import Turnstile from "react-turnstile";
+import { useState, useEffect, lazy, Suspense } from "react";
 
-const TURNSTILE_SITE_KEY = (typeof window !== "undefined" && (window as any).__TURNSTILE_SITE_KEY) || "1x00000000000000000000AA";
+// Lazy-load Turnstile only on client to avoid SSR issues
+const Turnstile = lazy(() => import("react-turnstile"));
+
+function getTurnstileSiteKey(): string {
+  if (typeof window !== "undefined" && (window as any).__TURNSTILE_SITE_KEY) {
+    return (window as any).__TURNSTILE_SITE_KEY;
+  }
+  return "1x00000000000000000000AA";
+}
 
 const TIPO_NEGOCIO_OPTIONS = [
   { value: "", label: "Seleccione tipo de negocio..." },
@@ -28,6 +35,9 @@ const PROVINCIAS = [
 ];
 
 export default function RegisterForm() {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
+
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -337,11 +347,15 @@ export default function RegisterForm() {
         </p>
       </div>
 
-      <Turnstile
-        sitekey={TURNSTILE_SITE_KEY}
-        onVerify={(token: string) => setTurnstileToken(token)}
-        onExpire={() => setTurnstileToken("")}
-      />
+      {isClient && (
+        <Suspense fallback={<div className="h-[65px]" />}>
+          <Turnstile
+            sitekey={getTurnstileSiteKey()}
+            onVerify={(token: string) => setTurnstileToken(token)}
+            onExpire={() => setTurnstileToken("")}
+          />
+        </Suspense>
+      )}
 
       <button
         type="submit"
