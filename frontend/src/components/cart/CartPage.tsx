@@ -25,7 +25,11 @@ function getDirectusUrl(): string {
   return "";
 }
 
-export default function CartPage() {
+interface CartPageProps {
+  isLoggedIn?: boolean;
+}
+
+export default function CartPage({ isLoggedIn = false }: CartPageProps) {
   const items = useStore($cartList);
   const subtotal = useStore($cartSubtotal);
   const shipping = useStore($shippingCost);
@@ -33,6 +37,51 @@ export default function CartPage() {
   const [presupuestoLoading, setPresupuestoLoading] = useState(false);
   const [presupuestoSent, setPresupuestoSent] = useState(false);
   const [presupuestoError, setPresupuestoError] = useState("");
+
+  // If not logged in, don't show cart with prices - clear stale data
+  if (!isLoggedIn) {
+    // Clear any stale cart data from localStorage (prices are user-specific)
+    if (items.length > 0) {
+      clearCart();
+    }
+    return (
+      <div className="text-center py-16">
+        <svg
+          className="w-20 h-20 mx-auto mb-4 text-[var(--color-border)]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1}
+            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+          />
+        </svg>
+        <h2 className="text-xl font-semibold text-[var(--color-navy)] mb-2">
+          Acceda para ver su carrito
+        </h2>
+        <p className="text-sm text-[var(--color-text-muted)] mb-6">
+          Los precios son exclusivos para clientes profesionales registrados.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <a
+            href="/login"
+            className="inline-block bg-[var(--color-action)] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors"
+          >
+            Iniciar sesion
+          </a>
+          <a
+            href="/registro"
+            className="inline-block border border-[var(--color-border)] text-[var(--color-navy)] px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[var(--color-bg-light)] transition-colors"
+          >
+            Crear cuenta
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

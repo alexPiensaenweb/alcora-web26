@@ -27,6 +27,10 @@ export async function logout(): Promise<void> {
   } catch {
     // Ignore errors
   }
+  // Clear cart on logout - prices are user-specific, must not persist
+  try {
+    localStorage.removeItem("alcora-cart");
+  } catch {}
   clearUser();
   window.location.href = "/login";
 }

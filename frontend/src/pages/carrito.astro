@@ -2,12 +2,14 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Breadcrumb from "../components/ui/Breadcrumb.astro";
 import CartPage from "../components/cart/CartPage";
+
+const isLoggedIn = !!Astro.locals.user;
 ---
 
 <BaseLayout title="Carrito - Tienda Alcora">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <Breadcrumb items={[{ label: "Carrito" }]} />
     <h1 class="text-2xl font-bold text-navy mt-4 mb-6">Carrito de compra</h1>
-    <CartPage client:load />
+    <CartPage client:load isLoggedIn={isLoggedIn} />
   </div>
 </BaseLayout>
