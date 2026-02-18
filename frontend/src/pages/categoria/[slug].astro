@@ -8,7 +8,12 @@ import { sanitizeHtml } from "../../lib/sanitize";
 import type { TarifaEspecial, Categoria } from "../../lib/types";
 
 const { slug } = Astro.params;
-const categoria = await getCategoriaBySlug(slug!);
+let categoria;
+try {
+  categoria = await getCategoriaBySlug(slug!);
+} catch (error) {
+  console.error("[categoria/slug] Error fetching categoria:", error);
+}
 
 if (!categoria) {
   return Astro.redirect("/catalogo");
@@ -17,7 +22,12 @@ if (!categoria) {
 const url = Astro.url;
 const limit = 24;
 
-const allCategorias = await getCategorias();
+let allCategorias: Categoria[] = [];
+try {
+  allCategorias = await getCategorias();
+} catch (error) {
+  console.error("[categoria/slug] Error fetching all categorias:", error);
+}
 
 function collectDescendantIds(
   rootId: number,
@@ -45,11 +55,19 @@ function collectDescendantIds(
 }
 
 const categoriaIds = collectDescendantIds(categoria.id, allCategorias);
-const { data: products, meta } = await getProductos({
-  categoriaIds,
-  page: 1,
-  limit,
-});
+let products: any[] = [];
+let meta: { total_count: number } = { total_count: 0 };
+try {
+  const result = await getProductos({
+    categoriaIds,
+    page: 1,
+    limit,
+  });
+  products = result.data;
+  meta = result.meta;
+} catch (error) {
+  console.error("[categoria/slug] Error fetching products:", error);
+}
 
 const user = Astro.locals.user;
 const token = Astro.locals.token;
@@ -111,7 +129,7 @@ const childCats = allCategorias.filter((cat) => {
 
 const totalProducts = meta?.total_count || 0;
 const categoryName = formatCategoryName(categoria.nombre);
-const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 
 // SEO description
 const seoDescription = categoria.descripcion

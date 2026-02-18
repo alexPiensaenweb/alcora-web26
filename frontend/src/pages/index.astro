@@ -7,7 +7,13 @@ import { resolveDiscount, calculatePrice } from "../lib/pricing";
 import { formatCategoryName } from "../lib/utils";
 import type { TarifaEspecial, Categoria } from "../lib/types";
 
-const categorias = await getCategorias();
+let categorias: Categoria[] = [];
+try {
+  categorias = await getCategorias();
+} catch (error) {
+  console.error("[index] Error fetching categorias:", error);
+}
+
 const rootRaw = categorias.filter((c) => {
   const parentId = typeof c.parent === "object" ? c.parent?.id : c.parent;
   return parentId === null;
@@ -23,7 +29,13 @@ const rootCategorias = rootRaw.filter((cat, index, all) => {
   );
 });
 
-const { data: featuredProducts } = await getProductos({ limit: 8 });
+let featuredProducts: any[] = [];
+try {
+  const result = await getProductos({ limit: 8 });
+  featuredProducts = result.data;
+} catch (error) {
+  console.error("[index] Error fetching featured products:", error);
+}
 
 const user = Astro.locals.user;
 const token = Astro.locals.token;

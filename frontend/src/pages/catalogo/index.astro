@@ -9,7 +9,15 @@ const url = Astro.url;
 const search = url.searchParams.get("search") || "";
 const limit = 24;
 
-const { data: products, meta } = await getProductos({ page: 1, limit, search });
+let products: any[] = [];
+let meta: { total_count: number } = { total_count: 0 };
+try {
+  const result = await getProductos({ page: 1, limit, search });
+  products = result.data;
+  meta = result.meta;
+} catch (error) {
+  console.error("[catalogo] Error fetching products:", error);
+}
 
 const user = Astro.locals.user;
 const token = Astro.locals.token;

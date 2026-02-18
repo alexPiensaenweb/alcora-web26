@@ -7,7 +7,12 @@ import { resolveDiscount, calculatePrice, formatCurrency } from "../../lib/prici
 import type { TarifaEspecial, Categoria } from "../../lib/types";
 
 const { slug } = Astro.params;
-const product = await getProductoBySlug(slug!);
+let product;
+try {
+  product = await getProductoBySlug(slug!);
+} catch (error) {
+  console.error("[catalogo/slug] Error fetching product:", error);
+}
 
 if (!product) {
   return Astro.redirect("/catalogo");
@@ -35,7 +40,7 @@ if (categoria) {
 }
 breadcrumbs.push({ label: product.nombre });
 
-const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 const marcaObj = typeof product.marca_id === "object" && product.marca_id ? product.marca_id : null;
 
 // JSON-LD Product schema

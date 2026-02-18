@@ -2,8 +2,13 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getMarcas, getPublicAssetUrl } from "../lib/directus";
 
-const marcas = await getMarcas();
-const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+let marcas: Awaited<ReturnType<typeof getMarcas>> = [];
+try {
+  marcas = await getMarcas();
+} catch (error) {
+  console.error("[marcas] Error fetching marcas:", error);
+}
+const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 
 const pageSchema = {
   "@context": "https://schema.org",

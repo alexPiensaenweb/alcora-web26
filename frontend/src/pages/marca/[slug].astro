@@ -6,18 +6,31 @@ import { calculatePrice, resolveDiscount } from "../../lib/pricing";
 import type { TarifaEspecial } from "../../lib/types";
 
 const { slug } = Astro.params;
-const marca = await getMarcaBySlug(slug!);
+let marca;
+try {
+  marca = await getMarcaBySlug(slug!);
+} catch (error) {
+  console.error("[marca] Error fetching marca:", error);
+}
 
 if (!marca) {
   return Astro.redirect("/catalogo");
 }
 
 const limit = 24;
-const { data: products, meta } = await getProductos({
-  marcaId: marca.id,
-  page: 1,
-  limit,
-});
+let products: any[] = [];
+let meta: { total_count: number } = { total_count: 0 };
+try {
+  const result = await getProductos({
+    marcaId: marca.id,
+    page: 1,
+    limit,
+  });
+  products = result.data;
+  meta = result.meta;
+} catch (error) {
+  console.error("[marca] Error fetching products for marca:", error);
+}
 
 const user = Astro.locals.user;
 const token = Astro.locals.token;
@@ -61,7 +74,7 @@ const initialItems = products.map((product: any) => {
 
 const apiUrl = `/api/products?limit=${limit}&marca_id=${marca.id}`;
 const totalProducts = meta?.total_count || 0;
-const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 
 // JSON-LD Brand schema
 const brandSchema = {
