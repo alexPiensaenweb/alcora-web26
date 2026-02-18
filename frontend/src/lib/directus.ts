@@ -5,22 +5,31 @@
  * NO importar en componentes React client-side.
  */
 
-const DIRECTUS_URL =
-  process.env.DIRECTUS_URL ||
-  import.meta.env.DIRECTUS_URL ||
-  "http://localhost:8055";
-const PUBLIC_DIRECTUS_URL =
-  process.env.PUBLIC_DIRECTUS_URL ||
-  import.meta.env.PUBLIC_DIRECTUS_URL ||
-  "http://localhost:8055";
+// Runtime resolution - process.env works in Astro SSR (Node adapter)
+// import.meta.env.PUBLIC_* is resolved at build time by Vite
+function resolveDirectusUrl(): string {
+  return process.env.DIRECTUS_URL ||
+    import.meta.env.DIRECTUS_URL ||
+    "http://localhost:8055";
+}
+
+function resolvePublicDirectusUrl(): string {
+  return process.env.PUBLIC_DIRECTUS_URL ||
+    import.meta.env.PUBLIC_DIRECTUS_URL ||
+    "http://localhost:8055";
+}
 
 export function getDirectusUrl(): string {
-  return DIRECTUS_URL;
+  return resolveDirectusUrl();
+}
+
+export function getPublicDirectusUrl(): string {
+  return resolvePublicDirectusUrl();
 }
 
 export function getPublicAssetUrl(fileId: string | null): string {
   if (!fileId) return "/placeholder.svg";
-  return `${PUBLIC_DIRECTUS_URL}/assets/${fileId}`;
+  return `${resolvePublicDirectusUrl()}/assets/${fileId}`;
 }
 
 export function getAssetUrl(
@@ -29,7 +38,7 @@ export function getAssetUrl(
 ): string {
   void params;
   if (!fileId) return "/placeholder.svg";
-  return `${PUBLIC_DIRECTUS_URL}/assets/${fileId}`;
+  return `${resolvePublicDirectusUrl()}/assets/${fileId}`;
 }
 
 // ─── Generic fetch helpers ───
@@ -38,7 +47,7 @@ async function directusFetch(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> {
-  const res = await fetch(`${DIRECTUS_URL}${endpoint}`, {
+  const res = await fetch(`${resolveDirectusUrl()}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",

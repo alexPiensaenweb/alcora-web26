@@ -12,7 +12,7 @@ interface Props {
 const { title = "Tienda Alcora", description = "Tienda Alcora Salud Ambiental - Productos de limpieza, control de plagas, desinfectantes y EPIs para profesionales" } = Astro.props;
 const user = Astro.locals.user;
 const publicDirectusUrl =
-  import.meta.env.PUBLIC_DIRECTUS_URL || "http://localhost:8055";
+  process.env.PUBLIC_DIRECTUS_URL || import.meta.env.PUBLIC_DIRECTUS_URL || "http://localhost:8055";
 const turnstileSiteKey =
   import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 ---
