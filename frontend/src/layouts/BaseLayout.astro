@@ -61,8 +61,8 @@ const turnstileSiteKey =
     <Footer />
     <CookieConsent />
 
-    {/* Toast notification container - bottom on mobile (above tab bar), top-right on desktop */}
-    <div id="toast-container" class="fixed bottom-20 left-4 right-4 md:bottom-auto md:left-auto md:top-4 md:right-4 z-[9999] flex flex-col gap-2 pointer-events-none items-center md:items-end"></div>
+    {/* Toast notification container - always bottom */}
+    <div id="toast-container" class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none items-center"></div>
 
     {/* Hydrate auth store from server data */}
     <script define:vars={{ user: user ? { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, grupo_cliente: user.grupo_cliente, status: user.status } : null, publicDirectusUrl, turnstileSiteKey }}>

@@ -3,6 +3,7 @@ import { directusAuth, directusAdmin, getTarifasForGrupo } from "../../../lib/di
 import { resolveDiscount, calculatePrice } from "../../../lib/pricing";
 import { calculateShipping } from "../../../lib/shipping";
 import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
+import { sendMail, buildPedidoHtml, COMPANY_EMAILS } from "../../../lib/email";
 import type { CartItem } from "../../../lib/types";
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -173,6 +174,56 @@ export const POST: APIRoute = async ({ request, locals }) => {
           ...lineItem,
         }),
       });
+    }
+
+    // Send email notification to company + confirmation to client
+    const user = locals.user;
+    const userName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Cliente";
+    const userEmail = user.email;
+    const userPhone = user.telefono || "";
+    const userCompany = user.razon_social || "";
+
+    const emailHtml = buildPedidoHtml({
+      pedidoId,
+      userName,
+      userEmail,
+      userPhone,
+      userCompany,
+      direccionEnvio: pedidoData.direccion_envio || "",
+      direccionFacturacion: pedidoData.direccion_facturacion || "",
+      metodoPago: pedidoData.metodo_pago,
+      notasCliente: pedidoData.notas_cliente,
+      items: pedidoItems.map((i) => ({
+        nombre: i.nombre_producto,
+        sku: i.sku,
+        cantidad: i.cantidad,
+        precioUnitario: i.precio_unitario,
+      })),
+      subtotal,
+      costoEnvio,
+      total,
+    });
+
+    // Send to company (don't fail the order if email fails)
+    try {
+      await sendMail({
+        to: COMPANY_EMAILS,
+        subject: `Nuevo pedido #${pedidoId} - ${userCompany || userName}`,
+        html: emailHtml,
+      });
+    } catch (emailErr) {
+      console.error("Error sending order notification to company:", emailErr);
+    }
+
+    // Send confirmation copy to client
+    try {
+      await sendMail({
+        to: userEmail,
+        subject: `Su pedido #${pedidoId} - Alcora Salud Ambiental`,
+        html: emailHtml,
+      });
+    } catch (emailErr) {
+      console.error("Error sending order confirmation to client:", emailErr);
     }
 
     return new Response(
