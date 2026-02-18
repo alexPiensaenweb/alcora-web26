@@ -1,0 +1,99 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getMarcas, getPublicAssetUrl } from "../lib/directus";
+
+const marcas = await getMarcas();
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+
+const pageSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Marcas profesionales - Alcora Salud Ambiental",
+  description: "Catalogo de marcas de productos profesionales para control de plagas, desinfeccion e higiene ambiental. Distribuidor oficial.",
+  url: `${siteUrl}/marcas`,
+  numberOfItems: marcas.length,
+  provider: {
+    "@type": "Organization",
+    name: "Alcora Salud Ambiental",
+    url: siteUrl,
+  },
+};
+---
+
+<BaseLayout
+  title="Marcas profesionales - Tienda Alcora"
+  description="Descubre todas las marcas de productos profesionales para control de plagas, desinfeccion, limpieza e higiene ambiental que distribuimos. Stock inmediato y condiciones para empresas."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {/* Breadcrumb */}
+    <nav class="text-sm text-text-muted mb-6" aria-label="Breadcrumb">
+      <ol class="flex items-center gap-2" itemscope itemtype="https://schema.org/BreadcrumbList">
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/" itemprop="item" class="hover:text-action"><span itemprop="name">Inicio</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <li class="text-border">/</li>
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <span itemprop="name" class="font-medium text-navy">Marcas</span>
+          <meta itemprop="position" content="2" />
+        </li>
+      </ol>
+    </nav>
+
+    {/* Header */}
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-navy mb-2">Nuestras marcas</h1>
+      <p class="text-text-muted max-w-2xl">
+        Trabajamos con los principales fabricantes del sector para ofrecer productos de
+        maxima calidad para profesionales del control de plagas, desinfeccion y limpieza industrial.
+      </p>
+    </div>
+
+    {/* Brand grid */}
+    {marcas.length > 0 ? (
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {marcas.map((marca) => (
+          <a
+            href={`/marca/${marca.slug}`}
+            class="group bg-white border border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-action hover:shadow-md transition-all"
+          >
+            {marca.logo ? (
+              <div class="w-24 h-16 flex items-center justify-center mb-3">
+                <img
+                  src={getPublicAssetUrl(marca.logo)}
+                  alt={`Logo ${marca.nombre}`}
+                  class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform"
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div class="w-24 h-16 flex items-center justify-center mb-3 bg-bg-light rounded-lg">
+                <span class="text-lg font-bold text-navy/40">{marca.nombre.charAt(0)}</span>
+              </div>
+            )}
+            <span class="text-sm font-semibold text-navy group-hover:text-action transition-colors">
+              {marca.nombre}
+            </span>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-12 text-text-muted">
+        <p>No hay marcas disponibles en este momento.</p>
+      </div>
+    )}
+
+    {/* SEO text */}
+    <div class="mt-12 prose prose-sm max-w-none text-text-muted">
+      <h2 class="text-lg font-semibold text-navy">Distribuidor de marcas profesionales para sanidad ambiental</h2>
+      <p>
+        En Alcora Salud Ambiental somos distribuidores oficiales de las principales marcas
+        de productos para control de plagas, desinfeccion, limpieza profesional e higiene ambiental.
+        Ofrecemos stock inmediato, precios competitivos y asesoramiento tecnico especializado para
+        empresas del sector en toda Espana.
+      </p>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify(pageSchema)} />
+</BaseLayout>

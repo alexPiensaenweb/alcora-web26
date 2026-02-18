@@ -71,8 +71,8 @@ export function createPaymentForm(params: RedsysPaymentParams): RedsysFormData {
     DS_MERCHANT_TRANSACTIONTYPE: "0", // Autorizacion
     DS_MERCHANT_TERMINAL: REDSYS_TERMINAL,
     DS_MERCHANT_MERCHANTURL: `${SITE_URL}/api/webhooks/redsys`,
-    DS_MERCHANT_URLOK: `${SITE_URL}/cuenta/pedidos/${params.pedidoId}?pago=ok`,
-    DS_MERCHANT_URLKO: `${SITE_URL}/cuenta/pedidos/${params.pedidoId}?pago=ko`,
+    DS_MERCHANT_URLOK: `${SITE_URL}/pago/ok?pedido=${params.pedidoId}`,
+    DS_MERCHANT_URLKO: `${SITE_URL}/pago/ko?pedido=${params.pedidoId}`,
     DS_MERCHANT_MERCHANTNAME: "Alcora Salud Ambiental",
     DS_MERCHANT_CONSUMERLANGUAGE: "1", // Espanol
     DS_MERCHANT_PRODUCTDESCRIPTION: params.description || `Pedido #${params.pedidoId}`,

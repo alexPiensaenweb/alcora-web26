@@ -33,9 +33,60 @@ if (categoria) {
   breadcrumbs.push({ label: categoria.nombre, href: `/categoria/${categoria.slug}` });
 }
 breadcrumbs.push({ label: product.nombre });
+
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+const marcaObj = typeof product.marca_id === "object" && product.marca_id ? product.marca_id : null;
+
+// JSON-LD Product schema
+const productSchema: Record<string, any> = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: product.nombre,
+  description: product.extracto || product.descripcion?.replace(/<[^>]+>/g, "").slice(0, 200) || `${product.nombre} - producto profesional`,
+  sku: product.sku,
+  url: `${siteUrl}/catalogo/${product.slug}`,
+  ...(product.imagen_principal ? { image: getAssetUrl(product.imagen_principal, { width: 800, height: 800 }) } : {}),
+  ...(marcaNombre ? { brand: { "@type": "Brand", name: marcaNombre } } : {}),
+  ...(categoria ? { category: categoria.nombre } : {}),
+  offers: {
+    "@type": "Offer",
+    priceCurrency: "EUR",
+    availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    seller: {
+      "@type": "Organization",
+      name: "Alcora Salud Ambiental",
+    },
+  },
+};
+
+// BreadcrumbList schema
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Catalogo", item: `${siteUrl}/catalogo` },
+    ...(categoria ? [{
+      "@type": "ListItem",
+      position: 3,
+      name: categoria.nombre,
+      item: `${siteUrl}/categoria/${categoria.slug}`,
+    }] : []),
+    {
+      "@type": "ListItem",
+      position: categoria ? 4 : 3,
+      name: product.nombre,
+      item: `${siteUrl}/catalogo/${product.slug}`,
+    },
+  ],
+};
+
+const seoDescription = product.extracto
+  || product.descripcion?.replace(/<[^>]+>/g, "").slice(0, 155)
+  || `${product.nombre} - Comprar online para profesionales. ${marcaNombre ? `Marca ${marcaNombre}.` : ""} Stock inmediato - Alcora Salud Ambiental`;
 ---
 
-<BaseLayout title={`${product.nombre} - Tienda Alcora`}>
+<BaseLayout title={`${product.nombre}${marcaNombre ? ` - ${marcaNombre}` : ""} | Tienda Alcora`} description={seoDescription}>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <Breadcrumb items={breadcrumbs} />
 
@@ -61,7 +112,11 @@ breadcrumbs.push({ label: product.nombre });
       <div>
         <p class="text-sm text-text-muted mb-1">SKU: {product.sku}</p>
         {marcaNombre && (
-          <p class="text-xs font-semibold text-action/80 uppercase tracking-wide mb-1">{marcaNombre}</p>
+          <p class="text-xs font-semibold text-action/80 uppercase tracking-wide mb-1">
+            {marcaObj ? (
+              <a href={`/marca/${marcaObj.slug}`} class="hover:underline">{marcaNombre}</a>
+            ) : marcaNombre}
+          </p>
         )}
         <h1 class="text-2xl font-bold text-navy mb-4">{product.nombre}</h1>
 
@@ -186,6 +241,10 @@ breadcrumbs.push({ label: product.nombre });
       </div>
     )}
   </div>
+
+  {/* Schema.org structured data */}
+  <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 </BaseLayout>
 
 <script>

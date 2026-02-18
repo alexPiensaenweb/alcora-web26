@@ -41,6 +41,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     );
     const search = (url.searchParams.get("search") || "").trim();
     const categoriaSlug = (url.searchParams.get("categoria") || "").trim();
+    const marcaId = url.searchParams.get("marca_id") ? parseInt(url.searchParams.get("marca_id")!, 10) : undefined;
 
     let categoriaIds: number[] | undefined;
     if (categoriaSlug) {
@@ -61,6 +62,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
     const { data: products, meta } = await getProductos({
       categoriaIds,
+      marcaId,
       page,
       limit,
       search,

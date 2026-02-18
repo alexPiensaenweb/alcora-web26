@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import {
   $cartList,
@@ -58,8 +58,25 @@ export default function CheckoutForm({ user, iban }: CheckoutFormProps) {
   const [orderId, setOrderId] = useState<number | null>(null);
   const [orderTotal, setOrderTotal] = useState<number>(0);
 
-  // Hidden form ref para redirect a Redsys
+  // Redsys form data and ref
   const redsysFormRef = useRef<HTMLFormElement>(null);
+  const [redsysData, setRedsysData] = useState<{
+    redsysUrl: string;
+    Ds_SignatureVersion: string;
+    Ds_MerchantParameters: string;
+    Ds_Signature: string;
+  } | null>(null);
+
+  // Auto-submit Redsys form once data is set and form is rendered
+  useEffect(() => {
+    if (redsysData && redsysFormRef.current) {
+      redsysFormRef.current.action = redsysData.redsysUrl;
+      (redsysFormRef.current.querySelector('[name="Ds_SignatureVersion"]') as HTMLInputElement).value = redsysData.Ds_SignatureVersion;
+      (redsysFormRef.current.querySelector('[name="Ds_MerchantParameters"]') as HTMLInputElement).value = redsysData.Ds_MerchantParameters;
+      (redsysFormRef.current.querySelector('[name="Ds_Signature"]') as HTMLInputElement).value = redsysData.Ds_Signature;
+      redsysFormRef.current.submit();
+    }
+  }, [redsysData]);
 
   if (items.length === 0 && !orderId) {
     return (
@@ -196,16 +213,8 @@ export default function CheckoutForm({ user, iban }: CheckoutFormProps) {
         const sigData = await sigRes.json();
         if (!sigRes.ok) throw new Error(sigData.error || "Error generando firma de pago");
 
-        setTimeout(() => {
-          const form = document.getElementById("redsys-form") as HTMLFormElement;
-          if (form) {
-            form.action = sigData.redsysUrl;
-            (form.querySelector('[name="Ds_SignatureVersion"]') as HTMLInputElement).value = sigData.Ds_SignatureVersion;
-            (form.querySelector('[name="Ds_MerchantParameters"]') as HTMLInputElement).value = sigData.Ds_MerchantParameters;
-            (form.querySelector('[name="Ds_Signature"]') as HTMLInputElement).value = sigData.Ds_Signature;
-            form.submit();
-          }
-        }, 500);
+        // Store Redsys data - useEffect will auto-submit once form renders
+        setRedsysData(sigData);
       }
     } catch (err: any) {
       setError(err.message || "Error desconocido");

@@ -1,0 +1,94 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const pedidoId = Astro.url.searchParams.get("pedido");
+---
+
+<BaseLayout title="Pago no completado - Tienda Alcora">
+  <section class="bg-bg-light min-h-[70vh]">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Error header */}
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-5">
+          <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-navy mb-2">
+          Pago no completado
+        </h1>
+        <p class="text-text-muted max-w-md mx-auto">
+          {pedidoId ? (
+            <>El pago del pedido <strong>#{pedidoId}</strong> no se ha podido procesar. No se ha realizado ningun cargo en su cuenta.</>
+          ) : (
+            <>El pago no se ha podido procesar. No se ha realizado ningun cargo en su cuenta.</>
+          )}
+        </p>
+      </div>
+
+      {/* Info card */}
+      <div class="bg-white border border-border rounded-xl p-6 shadow-sm mb-8">
+        <h2 class="font-semibold text-navy mb-4">Posibles motivos</h2>
+        <ul class="space-y-3 text-sm text-text-muted">
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>La operacion fue cancelada o el tiempo expiro.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Fondos insuficientes o limite de la tarjeta superado.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>La autenticacion 3D Secure no fue completada.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Error temporal en la comunicacion con la entidad bancaria.</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* Help text */}
+      <div class="bg-[var(--color-bg-accent)] border border-action/20 rounded-xl p-5 mb-8">
+        <p class="text-sm text-navy">
+          Su pedido sigue registrado. Puede intentar el pago de nuevo desde
+          <a href="/cuenta/pedidos" class="text-action font-medium hover:underline"> sus pedidos</a>,
+          o ponerse en contacto con nosotros si necesita ayuda.
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        {pedidoId && (
+          <a
+            href={`/cuenta/pedidos/${pedidoId}`}
+            class="inline-flex items-center justify-center gap-2 bg-action text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-action-hover transition-colors"
+          >
+            Ver pedido #{pedidoId}
+          </a>
+        )}
+        <a
+          href="/cuenta/pedidos"
+          class="inline-flex items-center justify-center gap-2 border border-border text-navy px-6 py-3 rounded-lg text-sm font-medium hover:bg-bg-light transition-colors"
+        >
+          Ver todos mis pedidos
+        </a>
+        <a
+          href="mailto:central@alcora.es"
+          class="inline-flex items-center justify-center gap-2 border border-border text-navy px-6 py-3 rounded-lg text-sm font-medium hover:bg-bg-light transition-colors"
+        >
+          Contactar soporte
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

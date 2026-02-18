@@ -92,7 +92,7 @@ export async function directusAdmin(
 
 // ─── Collection-specific fetchers ───
 
-import type { Categoria, Producto, TarifaEspecial, Pedido } from "./types";
+import type { Categoria, Producto, Marca, TarifaEspecial, Pedido } from "./types";
 
 export async function getCategorias(): Promise<Categoria[]> {
   const res = await directusPublic(
@@ -113,6 +113,7 @@ export async function getCategoriaBySlug(
 export async function getProductos(params?: {
   categoriaId?: number;
   categoriaIds?: number[];
+  marcaId?: number;
   page?: number;
   limit?: number;
   search?: string;
@@ -128,6 +129,9 @@ export async function getProductos(params?: {
     );
   } else if (params?.categoriaId) {
     filters.push(`filter[categoria][_eq]=${params.categoriaId}`);
+  }
+  if (params?.marcaId) {
+    filters.push(`filter[marca_id][_eq]=${params.marcaId}`);
   }
   if (params?.search) {
     filters.push(`search=${encodeURIComponent(params.search)}`);
@@ -181,4 +185,22 @@ export async function getPedidoById(
     token
   );
   return res.data;
+}
+
+// ─── Marcas ───
+
+export async function getMarcas(): Promise<Marca[]> {
+  const res = await directusPublic(
+    "/items/marcas?filter[status][_eq]=published&sort=nombre&fields=*"
+  );
+  return res.data;
+}
+
+export async function getMarcaBySlug(
+  slug: string
+): Promise<Marca | null> {
+  const res = await directusPublic(
+    `/items/marcas?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&fields=*&limit=1`
+  );
+  return res.data?.[0] || null;
 }

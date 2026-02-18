@@ -101,19 +101,79 @@ if (parentCat) {
   });
 }
 breadcrumbs.push({ label: formatCategoryName(categoria.nombre) });
+
+// Subcategories for internal linking
+const childCats = allCategorias.filter((cat) => {
+  const parentId = typeof cat.parent === "object" ? cat.parent?.id : cat.parent;
+  return parentId === categoria.id;
+});
+
+const totalProducts = meta?.total_count || 0;
+const categoryName = formatCategoryName(categoria.nombre);
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+
+// SEO description
+const seoDescription = categoria.descripcion
+  ? categoria.descripcion.replace(/<[^>]+>/g, "").slice(0, 155)
+  : `Comprar ${categoryName} para profesionales. ${totalProducts} productos disponibles con stock inmediato. Distribuidor oficial - Alcora Salud Ambiental.`;
+
+// JSON-LD CollectionPage schema
+const collectionSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: `${categoryName} - Alcora Salud Ambiental`,
+  description: seoDescription,
+  url: `${siteUrl}/categoria/${slug}`,
+  numberOfItems: totalProducts,
+  ...(parentCat ? {
+    isPartOf: {
+      "@type": "CollectionPage",
+      name: formatCategoryName(parentCat.nombre),
+      url: `${siteUrl}/categoria/${parentCat.slug}`,
+    },
+  } : {}),
+  provider: {
+    "@type": "Organization",
+    name: "Alcora Salud Ambiental",
+    url: siteUrl,
+  },
+};
+
+// BreadcrumbList schema
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Catalogo", item: `${siteUrl}/catalogo` },
+    ...(parentCat ? [{
+      "@type": "ListItem",
+      position: 3,
+      name: formatCategoryName(parentCat.nombre),
+      item: `${siteUrl}/categoria/${parentCat.slug}`,
+    }] : []),
+    {
+      "@type": "ListItem",
+      position: parentCat ? 4 : 3,
+      name: categoryName,
+      item: `${siteUrl}/categoria/${slug}`,
+    },
+  ],
+};
 ---
 
 <CatalogLayout
-  title={`${formatCategoryName(categoria.nombre)} - Tienda Alcora`}
+  title={`${categoryName} - Productos profesionales | Tienda Alcora`}
+  description={seoDescription}
   breadcrumbs={breadcrumbs}
   sidebarMode="children"
   currentCategorySlug={slug}
 >
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-xl font-bold text-navy">{formatCategoryName(categoria.nombre)}</h1>
+      <h1 class="text-xl font-bold text-navy">{categoryName}</h1>
       <span class="text-sm text-text-muted">
-        {meta?.total_count || 0} productos
+        {totalProducts} productos
       </span>
     </div>
 
@@ -121,12 +181,45 @@ breadcrumbs.push({ label: formatCategoryName(categoria.nombre) });
       <div class="prose prose-sm max-w-none text-text-muted mb-6" set:html={categoria.descripcion} />
     )}
 
+    {/* Subcategories links */}
+    {childCats.length > 0 && (
+      <div class="flex flex-wrap gap-2 mb-6">
+        {childCats.map((child) => (
+          <a
+            href={`/categoria/${child.slug}`}
+            class="inline-flex items-center gap-1 px-3 py-1.5 bg-bg-accent text-action text-sm rounded-full hover:bg-action hover:text-white transition-colors"
+          >
+            {formatCategoryName(child.nombre)}
+          </a>
+        ))}
+      </div>
+    )}
+
     <InfiniteProductGrid
       client:load
       apiUrl={apiUrl}
       initialItems={initialItems}
       initialPage={1}
-      initialHasMore={(meta?.total_count || 0) > limit}
+      initialHasMore={totalProducts > limit}
     />
+
+    {/* SEO footer text (only if no description from Directus) */}
+    {!categoria.descripcion && (
+      <div class="mt-12 prose prose-sm max-w-none text-text-muted">
+        <h2 class="text-lg font-semibold text-navy">
+          {categoryName} para profesionales
+        </h2>
+        <p>
+          En Alcora Salud Ambiental ofrecemos un amplio catalogo de productos de
+          <strong> {categoryName.toLowerCase()}</strong> para profesionales del sector.
+          Stock inmediato, asesoramiento tecnico y las mejores condiciones para empresas
+          del sector de la sanidad ambiental, control de plagas y limpieza profesional.
+        </p>
+      </div>
+    )}
   </div>
+
+  {/* Schema.org structured data */}
+  <script type="application/ld+json" set:html={JSON.stringify(collectionSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 </CatalogLayout>

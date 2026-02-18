@@ -66,9 +66,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    // Ensure total is a valid number > 0
+    const amount = parseFloat(pedido.total);
+    if (!amount || amount <= 0) {
+      console.error("Redsys: pedido.total invalido:", pedido.total, "pedidoId:", pedido.id);
+      return new Response(
+        JSON.stringify({ error: "El importe del pedido no es valido" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Redsys firma: pedido=${pedido.id}, total=${amount}, cents=${Math.round(amount * 100)}`);
+
     const formData = createPaymentForm({
       pedidoId: pedido.id,
-      amount: pedido.total,
+      amount,
       description: `Pedido #${pedido.id} - Alcora`,
     });
 
