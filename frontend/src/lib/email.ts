@@ -21,24 +21,40 @@ interface SendMailOptions {
 export async function sendMail({ to, subject, html }: SendMailOptions): Promise<void> {
   const recipients = Array.isArray(to) ? to : [to];
 
-  const res = await fetch(`${DIRECTUS_URL}/utils/send-mail`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${ADMIN_TOKEN}`,
-    },
-    body: JSON.stringify({
-      to: recipients,
-      subject,
-      html,
-    }),
-  });
+  if (!ADMIN_TOKEN) {
+    console.error("sendMail: DIRECTUS_ADMIN_TOKEN is not configured");
+    throw new Error("Email service not configured (missing admin token)");
+  }
+
+  const url = `${DIRECTUS_URL}/utils/send-mail`;
+  console.log(`sendMail: Sending to ${recipients.join(", ")} via ${url}`);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ADMIN_TOKEN}`,
+      },
+      body: JSON.stringify({
+        to: recipients,
+        subject,
+        html,
+      }),
+    });
+  } catch (fetchErr) {
+    console.error("sendMail: Network error connecting to Directus:", fetchErr);
+    throw new Error(`Cannot connect to email service: ${fetchErr instanceof Error ? fetchErr.message : "unknown"}`);
+  }
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("Directus send-mail error:", res.status, text);
-    throw new Error(`Error enviando email: ${res.status}`);
+    console.error(`sendMail: Directus returned ${res.status}:`, text);
+    throw new Error(`Error enviando email: ${res.status} - ${text.substring(0, 200)}`);
   }
+
+  console.log("sendMail: Email sent successfully");
 }
 
 /** Centralized company notification emails */

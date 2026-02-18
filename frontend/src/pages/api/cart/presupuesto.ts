@@ -84,9 +84,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("Presupuesto error:", err instanceof Error ? err.message : "Unknown");
+    const errorMsg = err instanceof Error ? err.message : "Unknown";
+    console.error("Presupuesto error:", errorMsg);
     return new Response(
-      JSON.stringify({ error: "Error al enviar la solicitud de presupuesto" }),
+      JSON.stringify({ error: `Error al enviar la solicitud: ${errorMsg}` }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
