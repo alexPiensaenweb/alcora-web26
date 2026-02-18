@@ -8,47 +8,48 @@ set -e
 
 SERVER="root@185.14.57.159"
 REMOTE_DIR="/var/www/vhosts/tienda.alcora.es/httpdocs"
-LOCAL_FRONTEND="frontend"
 
 echo "========================================="
 echo " Tienda Alcora - Deploy to Production"
 echo "========================================="
 
-# Step 1: Build locally
+# Step 1: Build locally with production env vars
 echo ""
-echo "[1/4] Building Astro frontend..."
-cd "$LOCAL_FRONTEND"
-npm run build
+echo "[1/5] Building Astro frontend..."
+cd frontend
+PUBLIC_DIRECTUS_URL=https://tienda.alcora.es PUBLIC_SITE_URL=https://tienda.alcora.es npm run build
 cd ..
 
-# Step 2: Create deploy package
+# Step 2: Clean remote (remove repo junk)
 echo ""
-echo "[2/4] Creating deploy package..."
-rm -rf deploy-frontend
-mkdir -p deploy-frontend
+echo "[2/5] Cleaning remote server..."
+ssh "$SERVER" "cd $REMOTE_DIR && rm -rf .git .gitignore .mcp.json .env.example frontend directus scripts migration deploy-frontend docker-compose*.yml ecosystem.config.cjs AGENCY_STANDARD_2026.md deploy.sh deploy.ps1 logo-alcora.svg tienda-alcora-frontend.zip stderr.log 2>/dev/null; echo 'Cleaned'"
 
-# Copy built output
-cp -r frontend/dist deploy-frontend/
-cp frontend/app.js deploy-frontend/
-cp frontend/package.json deploy-frontend/
-cp frontend/package-lock.json deploy-frontend/
-
-# Step 3: Sync to server
+# Step 3: Upload files
 echo ""
-echo "[3/4] Syncing to server..."
-rsync -avz --delete \
-  deploy-frontend/dist/ "$SERVER:$REMOTE_DIR/dist/"
+echo "[3/5] Uploading to server..."
 
-rsync -avz \
-  deploy-frontend/app.js \
-  deploy-frontend/package.json \
-  deploy-frontend/package-lock.json \
-  "$SERVER:$REMOTE_DIR/"
+# Upload runtime config from deploy-frontend
+scp deploy-frontend/app.js "$SERVER:$REMOTE_DIR/app.js"
+scp deploy-frontend/.env "$SERVER:$REMOTE_DIR/.env"
+scp deploy-frontend/package.json "$SERVER:$REMOTE_DIR/package.json"
 
-# Step 4: Restart Astro on server
+# Upload dist (atomic swap)
+echo "  Uploading dist/..."
+rsync -avz --delete frontend/dist/ "$SERVER:$REMOTE_DIR/dist/"
+
+# Upload robots.txt
+scp frontend/public/robots.txt "$SERVER:$REMOTE_DIR/dist/client/robots.txt"
+
+# Step 4: Install runtime dependencies
 echo ""
-echo "[4/4] Restarting Astro on server..."
-ssh "$SERVER" "export PATH=/opt/plesk/node/20/bin:\$PATH && cd $REMOTE_DIR && npm install --production && pm2 restart astro-alcora"
+echo "[4/5] Installing runtime dependencies..."
+ssh "$SERVER" "export PATH=/opt/plesk/node/20/bin:\$PATH && cd $REMOTE_DIR && rm -rf node_modules package-lock.json && npm install --production && chown -R \$(stat -c '%U' .) node_modules/"
+
+# Step 5: Restart PM2
+echo ""
+echo "[5/5] Restarting Astro on server..."
+ssh "$SERVER" "pm2 restart astro-alcora && sleep 2 && pm2 logs astro-alcora --lines 10 --nostream"
 
 echo ""
 echo "========================================="

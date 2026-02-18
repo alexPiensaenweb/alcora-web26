@@ -14,47 +14,56 @@ Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host " Tienda Alcora - Deploy to Production" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
-# Step 1: Build locally
+# Step 1: Build locally with production env vars
 Write-Host ""
-Write-Host "[1/4] Building Astro frontend..." -ForegroundColor Yellow
+Write-Host "[1/5] Building Astro frontend..." -ForegroundColor Yellow
 Set-Location "$PROJECT_ROOT\frontend"
 
-# Set production env for build
 $env:PUBLIC_DIRECTUS_URL = "https://tienda.alcora.es"
+$env:PUBLIC_SITE_URL = "https://tienda.alcora.es"
 npm run build
 if ($LASTEXITCODE -ne 0) { throw "Build failed!" }
 
 Set-Location $PROJECT_ROOT
 
-# Step 2: Create deploy package
+# Step 2: Clean remote (remove repo junk, keep only what we need)
 Write-Host ""
-Write-Host "[2/4] Creating deploy package..." -ForegroundColor Yellow
-if (Test-Path "deploy-frontend") { Remove-Item -Recurse -Force "deploy-frontend" }
-New-Item -ItemType Directory -Path "deploy-frontend" | Out-Null
-Copy-Item -Recurse "frontend\dist" "deploy-frontend\dist"
-Copy-Item "frontend\app.js" "deploy-frontend\"
-Copy-Item "frontend\package.json" "deploy-frontend\"
-Copy-Item "frontend\package-lock.json" "deploy-frontend\"
+Write-Host "[2/5] Cleaning remote server..." -ForegroundColor Yellow
+ssh $SERVER @"
+cd $REMOTE_DIR
+# Remove repo files that should NOT be on the server
+rm -rf .git .gitignore .mcp.json .env.example frontend directus scripts migration deploy-frontend docker-compose*.yml ecosystem.config.cjs AGENCY_STANDARD_2026.md deploy.sh deploy.ps1 logo-alcora.svg tienda-alcora-frontend.zip stderr.log 2>/dev/null
+echo 'Cleaned repo artifacts from httpdocs'
+"@
 
-# Step 3: Create ZIP and upload
+# Step 3: Upload deploy-frontend config + built dist
 Write-Host ""
-Write-Host "[3/4] Uploading to server..." -ForegroundColor Yellow
+Write-Host "[3/5] Uploading to server..." -ForegroundColor Yellow
 
-# Sync dist folder
-Write-Host "  Syncing dist/..." -ForegroundColor Gray
-scp -r "deploy-frontend\dist" "${SERVER}:${REMOTE_DIR}/dist_new"
+# Upload app.js and .env from deploy-frontend (runtime config)
+Write-Host "  Uploading app.js + .env + package.json..." -ForegroundColor Gray
+scp "deploy-frontend\app.js" "${SERVER}:${REMOTE_DIR}/app.js"
+scp "deploy-frontend\.env" "${SERVER}:${REMOTE_DIR}/.env"
+scp "deploy-frontend\package.json" "${SERVER}:${REMOTE_DIR}/package.json"
+
+# Upload dist (atomic swap)
+Write-Host "  Uploading dist/..." -ForegroundColor Gray
+scp -r "frontend\dist" "${SERVER}:${REMOTE_DIR}/dist_new"
 ssh $SERVER "rm -rf ${REMOTE_DIR}/dist && mv ${REMOTE_DIR}/dist_new ${REMOTE_DIR}/dist"
 
-# Sync config files
-Write-Host "  Syncing config files..." -ForegroundColor Gray
-scp "deploy-frontend\app.js" "${SERVER}:${REMOTE_DIR}/app.js"
-scp "deploy-frontend\package.json" "${SERVER}:${REMOTE_DIR}/package.json"
-scp "deploy-frontend\package-lock.json" "${SERVER}:${REMOTE_DIR}/package-lock.json"
+# Upload robots.txt to dist/client (static file)
+Write-Host "  Uploading robots.txt..." -ForegroundColor Gray
+scp "frontend\public\robots.txt" "${SERVER}:${REMOTE_DIR}/dist/client/robots.txt"
 
-# Step 4: Install deps and restart
+# Step 4: Install runtime dependencies
 Write-Host ""
-Write-Host "[4/4] Restarting Astro on server..." -ForegroundColor Yellow
-ssh $SERVER "export PATH=/opt/plesk/node/20/bin:`$PATH && cd ${REMOTE_DIR} && npm install --production && pm2 restart astro-alcora"
+Write-Host "[4/5] Installing runtime dependencies..." -ForegroundColor Yellow
+ssh $SERVER "export PATH=/opt/plesk/node/20/bin:`$PATH && cd ${REMOTE_DIR} && rm -rf node_modules package-lock.json && npm install --production && chown -R `$(stat -c '%U' .) node_modules/"
+
+# Step 5: Restart PM2
+Write-Host ""
+Write-Host "[5/5] Restarting Astro on server..." -ForegroundColor Yellow
+ssh $SERVER "pm2 restart astro-alcora && sleep 2 && pm2 logs astro-alcora --lines 10 --nostream"
 
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Green

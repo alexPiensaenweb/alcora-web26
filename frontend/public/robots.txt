@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tienda.alcora.es/sitemap-dynamic.xml
+
+# Block admin/api paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /registro
+Disallow: /cuenta/
+Disallow: /checkout/
+Disallow: /carrito

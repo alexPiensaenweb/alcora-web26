@@ -92,7 +92,7 @@ const seoDescription = product.extracto
   || `${product.nombre} - Comprar online para profesionales. ${marcaNombre ? `Marca ${marcaNombre}.` : ""} Stock inmediato - Alcora Salud Ambiental`;
 ---
 
-<BaseLayout title={`${product.nombre}${marcaNombre ? ` - ${marcaNombre}` : ""} | Tienda Alcora`} description={seoDescription}>
+<BaseLayout title={`${product.nombre}${marcaNombre ? ` - ${marcaNombre}` : ""} | Tienda Alcora`} description={seoDescription} ogImage={product.imagen_principal ? getAssetUrl(product.imagen_principal, { width: 800, height: 800 }) : undefined}>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <Breadcrumb items={breadcrumbs} />
 

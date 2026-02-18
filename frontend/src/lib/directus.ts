@@ -10,13 +10,13 @@
 function resolveDirectusUrl(): string {
   return process.env.DIRECTUS_URL ||
     import.meta.env.DIRECTUS_URL ||
-    "http://localhost:8055";
+    "http://127.0.0.1:8055";
 }
 
 function resolvePublicDirectusUrl(): string {
   return process.env.PUBLIC_DIRECTUS_URL ||
     import.meta.env.PUBLIC_DIRECTUS_URL ||
-    "http://localhost:8055";
+    "https://tienda.alcora.es";
 }
 
 export function getDirectusUrl(): string {

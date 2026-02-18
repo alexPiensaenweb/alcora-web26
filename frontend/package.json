@@ -11,6 +11,7 @@
   "dependencies": {
     "@astrojs/node": "^9.0.0",
     "@astrojs/react": "^4.0.0",
+    "@astrojs/sitemap": "^3.7.0",
     "@astrojs/tailwind": "^6.0.0",
     "@directus/sdk": "^18.0.0",
     "@nanostores/persistent": "^0.10.0",

@@ -1,7 +1,11 @@
 # Environment files
-.env
-.env.production
-.env.local
+/.env
+/.env.production
+/.env.local
+frontend/.env
+frontend/.env.production
+frontend/.env.local
+deploy-frontend/.env
 
 # Dependencies
 node_modules/
@@ -27,8 +31,7 @@ nul
 .vscode/
 .idea/
 
-# Deploy artifacts (generated, not source)
-deploy-frontend/
+# Deploy artifacts
 tienda-alcora-frontend.zip
 *.zip
 
