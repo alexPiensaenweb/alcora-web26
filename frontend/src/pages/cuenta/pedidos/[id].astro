@@ -14,11 +14,15 @@ try {
   pedido = await getPedidoById(parseInt(id!), token);
 } catch {
   // If user token fails, try admin token for orders created with admin
-  const { directusAdmin } = await import("../../../lib/directus");
-  const res = await directusAdmin(
-    `/items/pedidos/${id}?fields=*,items.*,items.producto.nombre,items.producto.imagen_principal`
-  );
-  pedido = res.data;
+  try {
+    const { directusAdmin } = await import("../../../lib/directus");
+    const res = await directusAdmin(
+      `/items/pedidos/${id}?fields=*,items.*,items.producto.nombre,items.producto.imagen_principal`
+    );
+    pedido = res.data;
+  } catch (error) {
+    console.error("[cuenta/pedidos/id] Error fetching pedido:", error);
+  }
 }
 
 if (!pedido) {

@@ -100,6 +100,17 @@ const collectionSchema = {
     url: siteUrl,
   },
 };
+
+// BreadcrumbList schema
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "Marcas", item: `${siteUrl}/marcas` },
+    { "@type": "ListItem", position: 3, name: marca.nombre, item: `${siteUrl}/marca/${marca.slug}` },
+  ],
+};
 ---
 
 <CatalogLayout
@@ -124,7 +135,7 @@ const collectionSchema = {
         </div>
       )}
       <div class="flex-1">
-        <h1 class="text-xl font-bold text-navy">{marca.nombre}</h1>
+        <h1 class="text-xl font-bold text-navy">Productos {marca.nombre}</h1>
         <p class="text-sm text-text-muted mt-1">
           {totalProducts} productos profesionales disponibles
         </p>
@@ -165,4 +176,5 @@ const collectionSchema = {
   {/* Schema.org structured data */}
   <script type="application/ld+json" set:html={JSON.stringify(brandSchema)} />
   <script type="application/ld+json" set:html={JSON.stringify(collectionSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 </CatalogLayout>

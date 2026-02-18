@@ -5,7 +5,12 @@ import { formatCurrency } from "../../lib/pricing";
 import { estadoLabel, estadoColor, formatDate } from "../../lib/utils";
 
 const token = Astro.locals.token!;
-const pedidos = await getPedidosForUser(token);
+let pedidos: any[] = [];
+try {
+  pedidos = await getPedidosForUser(token);
+} catch (error) {
+  console.error("[cuenta/pedidos] Error fetching pedidos:", error);
+}
 ---
 
 <AccountLayout title="Mis Pedidos - Tienda Alcora" activeTab="pedidos">

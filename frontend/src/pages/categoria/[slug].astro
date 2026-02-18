@@ -200,20 +200,6 @@ const breadcrumbSchema = {
       <div class="prose prose-sm max-w-none text-text-muted mb-6" set:html={sanitizeHtml(categoria.descripcion)} />
     )}
 
-    {/* Subcategories links */}
-    {childCats.length > 0 && (
-      <div class="flex flex-wrap gap-2 mb-6">
-        {childCats.map((child) => (
-          <a
-            href={`/categoria/${child.slug}`}
-            class="inline-flex items-center gap-1 px-3 py-1.5 bg-bg-accent text-action text-sm rounded-full hover:bg-action hover:text-white transition-colors"
-          >
-            {formatCategoryName(child.nombre)}
-          </a>
-        ))}
-      </div>
-    )}
-
     <InfiniteProductGrid
       client:load
       apiUrl={apiUrl}

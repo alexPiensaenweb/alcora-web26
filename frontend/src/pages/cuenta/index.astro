@@ -7,7 +7,12 @@ import { estadoLabel, estadoColor, formatDate } from "../../lib/utils";
 const user = Astro.locals.user!;
 const token = Astro.locals.token!;
 
-const pedidos = await getPedidosForUser(token);
+let pedidos: any[] = [];
+try {
+  pedidos = await getPedidosForUser(token);
+} catch (error) {
+  console.error("[cuenta] Error fetching pedidos:", error);
+}
 const recentPedidos = pedidos.slice(0, 5);
 const totalPedidos = pedidos.length;
 const pedidosPendientes = pedidos.filter(
