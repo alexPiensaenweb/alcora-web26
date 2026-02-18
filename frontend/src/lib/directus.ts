@@ -157,13 +157,18 @@ export async function getProductoBySlug(
 
 export async function getTarifasForGrupo(
   grupoCliente: string,
-  token: string
+  _token?: string
 ): Promise<TarifaEspecial[]> {
-  const res = await directusAuth(
-    `/items/tarifas_especiales?filter[grupo_cliente][_eq]=${encodeURIComponent(grupoCliente)}&fields=*`,
-    token
-  );
-  return res.data;
+  // Use admin token - users don't have permission to read tarifas_especiales
+  try {
+    const res = await directusAdmin(
+      `/items/tarifas_especiales?filter[grupo_cliente][_eq]=${encodeURIComponent(grupoCliente)}&fields=*`
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching tarifas:", err);
+    return [];
+  }
 }
 
 export async function getPedidosForUser(
