@@ -55,7 +55,7 @@ const turnstileSiteKey =
   </head>
   <body class="min-h-screen flex flex-col bg-white text-navy font-sans" data-directus-url={publicDirectusUrl}>
     <Header user={user} />
-    <main class="flex-1">
+    <main class="flex-1 pb-16 md:pb-0">
       <slot />
     </main>
     <Footer />
@@ -132,5 +132,10 @@ const turnstileSiteKey =
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Safe area for iOS bottom bar */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 </style>
