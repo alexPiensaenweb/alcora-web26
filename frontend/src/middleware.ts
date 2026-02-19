@@ -133,7 +133,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
     context.locals.user &&
     (pathname === LOGIN_ROUTE || pathname === "/registro")
   ) {
-    return redirect("/catalogo");
+    return redirect(context.locals.user.isAdmin ? "/gestion" : "/catalogo");
+  }
+
+  // Block non-active, non-admin users from protected routes
+  if (
+    isProtected &&
+    context.locals.user &&
+    !context.locals.user.isAdmin &&
+    context.locals.user.status !== "active"
+  ) {
+    return redirect("/login?pendiente=1");
   }
 
   // ─── Process request ───

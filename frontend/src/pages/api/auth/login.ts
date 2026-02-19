@@ -42,9 +42,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    if (user.status !== "active") {
+    // Admins can always log in regardless of status
+    if (!user.isAdmin && user.status !== "active") {
+      const errorMsg =
+        user.status === "suspended"
+          ? "Su cuenta ha sido suspendida. Contacte con nosotros."
+          : "Su solicitud de registro está pendiente de validación. Le avisaremos por email cuando sea aprobada.";
       return new Response(
-        JSON.stringify({ error: "Su cuenta aun no ha sido activada. Contacte con nosotros." }),
+        JSON.stringify({ error: errorMsg, status: user.status }),
         { status: 403, headers: { "Content-Type": "application/json" } }
       );
     }
