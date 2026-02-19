@@ -4,7 +4,7 @@ import { directusAdmin } from "../../../lib/directus";
 import PedidoAdminPanel from "../../../components/admin/PedidoAdminPanel";
 
 const { id } = Astro.params;
-if (!id) return Astro.redirect("/admin/pedidos");
+if (!id) return Astro.redirect("/gestion/pedidos");
 
 let pedido: any = null;
 
@@ -17,14 +17,14 @@ try {
   console.error("[admin/pedidos/id] Error:", err);
 }
 
-if (!pedido) return Astro.redirect("/admin/pedidos");
+if (!pedido) return Astro.redirect("/gestion/pedidos");
 ---
 
 <AdminLayout title={`Pedido #${id} - Admin Alcora`} activeTab="pedidos">
   <div class="space-y-5">
     <!-- Breadcrumb -->
     <div class="flex items-center gap-2 text-sm text-text-muted">
-      <a href="/admin/pedidos" class="hover:text-action transition-colors">Pedidos</a>
+      <a href="/gestion/pedidos" class="hover:text-action transition-colors">Pedidos</a>
       <span>/</span>
       <span class="text-navy font-medium">#{id}</span>
     </div>

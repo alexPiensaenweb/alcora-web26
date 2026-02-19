@@ -22,7 +22,7 @@ import {
 } from "./lib/auth";
 
 const PROTECTED_ROUTES = ["/cuenta", "/checkout"];
-const ADMIN_ROUTES = ["/admin"];
+const ADMIN_ROUTES = ["/gestion"];
 const LOGIN_ROUTE = "/login";
 
 const IS_PRODUCTION =
@@ -124,6 +124,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // No autorizado - redirigir a cuenta
       return redirect("/cuenta");
     }
+    // Admin no redirigir a /catalogo desde login
+
   }
 
   // Prevent logged-in users from accessing login/register

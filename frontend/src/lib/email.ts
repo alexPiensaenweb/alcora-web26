@@ -305,7 +305,7 @@ export function buildRegistroHtml(data: {
 
       <div style="background:#eff4ff;border:1px solid #2970ff;border-radius:6px;padding:16px;text-align:center;">
         <p style="margin:0;font-size:14px;color:#222d54;">
-          Para activar esta cuenta, acceda al <a href="https://tienda.alcora.es/admin/usuarios" style="color:#2970ff;font-weight:600;">panel de administracion</a> y active el usuario.
+          Para activar esta cuenta, acceda al <a href="https://tienda.alcora.es/gestion/usuarios" style="color:#2970ff;font-weight:600;">panel de administracion</a> y active el usuario.
         </p>
       </div>
     </div>

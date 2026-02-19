@@ -100,7 +100,7 @@ export default function ProductosAdminPanel({
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (statusFilter) params.set("status", statusFilter);
-    window.location.href = `/admin/productos?${params.toString()}`;
+    window.location.href = `/gestion/productos?${params.toString()}`;
   }
 
   // ─── Product editing ───
@@ -122,7 +122,7 @@ export default function ProductosAdminPanel({
     if (!selectedProduct) return;
     setSavingId(selectedProduct.id);
     try {
-      const res = await fetch(`/api/admin/productos/${selectedProduct.id}`, {
+      const res = await fetch(`/api/gestion/productos/${selectedProduct.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editData),
@@ -148,7 +148,7 @@ export default function ProductosAdminPanel({
     const nuevo = p.status === "published" ? "draft" : "published";
     setSavingId(p.id);
     try {
-      const res = await fetch(`/api/admin/productos/${p.id}`, {
+      const res = await fetch(`/api/gestion/productos/${p.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nuevo }),
@@ -247,7 +247,7 @@ export default function ProductosAdminPanel({
       }
 
       try {
-        const res = await fetch("/api/admin/productos/importar", {
+        const res = await fetch("/api/gestion/productos/importar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -289,7 +289,7 @@ export default function ProductosAdminPanel({
             Importar Excel
           </button>
           <a
-            href="/admin/productos/nuevo"
+            href="/gestion/productos/nuevo"
             className="flex items-center gap-2 px-4 py-2 bg-action text-white rounded-lg text-sm font-medium hover:bg-action-hover transition-colors"
           >
             <span className="material-icons text-base">add</span>
@@ -549,7 +549,7 @@ export default function ProductosAdminPanel({
               {["", "published", "draft", "archived"].map((s) => (
                 <a
                   key={s}
-                  href={s ? `/admin/productos?status=${s}` : "/admin/productos"}
+                  href={s ? `/gestion/productos?status=${s}` : "/gestion/productos"}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
                     statusFilter === s ? "bg-action text-white border-action" : "bg-white text-navy border-border hover:border-action"
                   }`}
@@ -622,11 +622,11 @@ export default function ProductosAdminPanel({
                       <p className="text-xs text-text-muted">Página {page} de {totalPages}</p>
                       <div className="flex gap-2">
                         {page > 1 && (
-                          <a href={`/admin/productos?page=${page - 1}${statusFilter ? `&status=${statusFilter}` : ""}`}
+                          <a href={`/gestion/productos?page=${page - 1}${statusFilter ? `&status=${statusFilter}` : ""}`}
                              className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">← Anterior</a>
                         )}
                         {page < totalPages && (
-                          <a href={`/admin/productos?page=${page + 1}${statusFilter ? `&status=${statusFilter}` : ""}`}
+                          <a href={`/gestion/productos?page=${page + 1}${statusFilter ? `&status=${statusFilter}` : ""}`}
                              className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">Siguiente →</a>
                         )}
                       </div>

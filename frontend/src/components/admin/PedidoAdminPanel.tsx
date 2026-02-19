@@ -72,7 +72,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
     setError("");
     setSavedMsg("");
     try {
-      const res = await fetch(`/api/admin/pedidos/${pedido.id}/estado`, {
+      const res = await fetch(`/api/gestion/pedidos/${pedido.id}/estado`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: nuevoEstado }),
@@ -96,7 +96,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
     setError("");
     setSavedMsg("");
     try {
-      const res = await fetch(`/api/admin/pedidos/${pedido.id}/notas`, {
+      const res = await fetch(`/api/gestion/pedidos/${pedido.id}/notas`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notas_admin: notasAdmin }),
@@ -304,7 +304,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
                 )}
                 <div className="pt-2 border-t border-border">
                   <a
-                    href={`/admin/usuarios?email=${encodeURIComponent(pedido.user_created.email)}`}
+                    href={`/gestion/usuarios?email=${encodeURIComponent(pedido.user_created.email)}`}
                     className="text-xs text-action hover:underline"
                   >
                     Ver perfil de usuario →

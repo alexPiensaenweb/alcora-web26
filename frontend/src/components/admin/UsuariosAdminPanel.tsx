@@ -82,7 +82,7 @@ export default function UsuariosAdminPanel({
     const params = new URLSearchParams();
     if (status) params.set("estado", status);
     if (emailFilter) params.set("email", emailFilter);
-    window.location.href = `/admin/usuarios?${params.toString()}`;
+    window.location.href = `/gestion/usuarios?${params.toString()}`;
   }
 
   function goToSearch(e: React.FormEvent) {
@@ -90,13 +90,13 @@ export default function UsuariosAdminPanel({
     const params = new URLSearchParams();
     if (estadoFilter) params.set("estado", estadoFilter);
     if (emailFilter) params.set("email", emailFilter);
-    window.location.href = `/admin/usuarios?${params.toString()}`;
+    window.location.href = `/gestion/usuarios?${params.toString()}`;
   }
 
   async function cambiarEstado(userId: string, nuevoStatus: string) {
     setLoadingId(userId);
     try {
-      const res = await fetch(`/api/admin/usuarios/${userId}/estado`, {
+      const res = await fetch(`/api/gestion/usuarios/${userId}/estado`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nuevoStatus }),
@@ -123,7 +123,7 @@ export default function UsuariosAdminPanel({
   async function cambiarGrupo(userId: string, nuevoGrupo: string) {
     setLoadingId(userId);
     try {
-      const res = await fetch(`/api/admin/usuarios/${userId}/grupo`, {
+      const res = await fetch(`/api/gestion/usuarios/${userId}/grupo`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ grupo_cliente: nuevoGrupo }),
@@ -271,13 +271,13 @@ export default function UsuariosAdminPanel({
                   <p className="text-xs text-text-muted">Página {page} de {totalPages} · {total} usuarios</p>
                   <div className="flex gap-2">
                     {page > 1 && (
-                      <a href={`/admin/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`}
+                      <a href={`/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`}
                          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                         ← Anterior
                       </a>
                     )}
                     {page < totalPages && (
-                      <a href={`/admin/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`}
+                      <a href={`/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`}
                          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                         Siguiente →
                       </a>
@@ -375,7 +375,7 @@ export default function UsuariosAdminPanel({
               {/* Ver pedidos */}
               <div className="pt-2 border-t border-border">
                 <a
-                  href={`/admin/pedidos?email=${encodeURIComponent(selectedUser.email)}`}
+                  href={`/gestion/pedidos?email=${encodeURIComponent(selectedUser.email)}`}
                   className="flex items-center gap-2 text-sm text-action hover:underline"
                 >
                   <span className="material-icons text-base">shopping_bag</span>
