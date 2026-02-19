@@ -6,6 +6,9 @@ export default defineConfig({
   site: process.env.PUBLIC_SITE_URL || "https://tienda.alcora.es",
   output: "server",
   adapter: node({ mode: "standalone" }),
+  security: {
+    checkOrigin: false, // We handle CSRF ourselves in middleware (Apache ProxyPass changes Host header)
+  },
   integrations: [react(), tailwind()],
   vite: {
     // PUBLIC_DIRECTUS_URL se necesita en cliente (React islands)
