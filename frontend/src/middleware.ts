@@ -182,10 +182,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       `img-src ${imgSrc}`,
-      "connect-src 'self'",
+      "connect-src 'self' blob:",
+      "worker-src 'self' blob:",
       "frame-src https://challenges.cloudflare.com",
       "font-src 'self' https://fonts.gstatic.com",
       "base-uri 'self'",

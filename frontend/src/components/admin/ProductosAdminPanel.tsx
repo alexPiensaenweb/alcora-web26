@@ -165,35 +165,46 @@ export default function ProductosAdminPanel({
   }
 
   // ─── Excel import ───
+  const [parseError, setParseError] = useState<string | null>(null);
+
   async function parseExcelFile(file: File) {
-    const XLSX = await import("xlsx");
-    const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab, { type: "array" });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
-    if (data.length < 2) return;
+    setParseError(null);
+    try {
+      const XLSX = await import("xlsx");
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
+      if (data.length < 2) {
+        setParseError("El archivo está vacío o solo tiene cabecera.");
+        return;
+      }
 
-    const headers = data[0].map(String);
-    const rows: ExcelRow[] = data.slice(1).filter((r) => r.some(Boolean)).map((row) => {
-      const obj: ExcelRow = {};
-      headers.forEach((h, i) => { obj[h] = row[i] != null ? String(row[i]) : ""; });
-      return obj;
-    });
+      const headers = data[0].map(String);
+      const rows: ExcelRow[] = data.slice(1).filter((r) => r.some(Boolean)).map((row) => {
+        const obj: ExcelRow = {};
+        headers.forEach((h, i) => { obj[h] = row[i] != null ? String(row[i]) : ""; });
+        return obj;
+      });
 
-    setExcelCols(headers);
-    setExcelRows(rows);
+      setExcelCols(headers);
+      setExcelRows(rows);
 
-    // Auto-map: intenta emparejar por nombre similar
-    const autoMap: FieldMapping = {};
-    EXCEL_COLUMNS.forEach(({ key }) => {
-      const match = headers.find((h) =>
-        h.toLowerCase().replace(/[^a-z0-9]/g, "").includes(key.replace(/_/g, "")) ||
-        key.replace(/_/g, "").includes(h.toLowerCase().replace(/[^a-z0-9]/g, ""))
-      );
-      autoMap[key] = { excelCol: match || null };
-    });
-    setFieldMapping(autoMap);
-    setImportStep("map");
+      // Auto-map: intenta emparejar por nombre similar
+      const autoMap: FieldMapping = {};
+      EXCEL_COLUMNS.forEach(({ key }) => {
+        const match = headers.find((h) =>
+          h.toLowerCase().replace(/[^a-z0-9]/g, "").includes(key.replace(/_/g, "")) ||
+          key.replace(/_/g, "").includes(h.toLowerCase().replace(/[^a-z0-9]/g, ""))
+        );
+        autoMap[key] = { excelCol: match || null };
+      });
+      setFieldMapping(autoMap);
+      setImportStep("map");
+    } catch (err: any) {
+      console.error("Error parsing Excel:", err);
+      setParseError(`Error al leer el archivo: ${err.message || "formato no válido"}`);
+    }
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -366,6 +377,13 @@ export default function ProductosAdminPanel({
                     onChange={handleFileInput}
                   />
                 </div>
+
+                {parseError && (
+                  <div className="mt-4 flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+                    <span className="material-icons text-base">error</span>
+                    {parseError}
+                  </div>
+                )}
 
                 <div className="mt-6 p-4 bg-bg-light rounded-lg">
                   <p className="text-sm font-semibold text-navy mb-2">Columnas esperadas en tu Excel:</p>
