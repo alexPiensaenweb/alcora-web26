@@ -72,7 +72,7 @@ const initialItems = products.map((product: any) => {
   };
 });
 
-const apiUrl = `/api/products?limit=${limit}&marca_id=${marca.id}`;
+const apiUrl = `/products-api?limit=${limit}&marca_id=${marca.id}`;
 const totalProducts = meta?.total_count || 0;
 const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 

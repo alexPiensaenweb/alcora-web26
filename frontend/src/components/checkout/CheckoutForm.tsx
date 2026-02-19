@@ -120,7 +120,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
     setError("");
 
     try {
-      const res = await fetch("/api/cart/submit", {
+      const res = await fetch("/cart/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

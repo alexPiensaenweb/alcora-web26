@@ -259,7 +259,7 @@ export default function CartPage({ isLoggedIn = false }: CartPageProps) {
               setPresupuestoError("");
               setPresupuestoLoading(true);
               try {
-                const res = await fetch("/api/cart/presupuesto", {
+                const res = await fetch("/cart/presupuesto", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({

@@ -59,7 +59,7 @@ const initialItems = products.map((product: any) => {
   };
 });
 
-const apiUrl = `/api/products?limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ""}`;
+const apiUrl = `/products-api?limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ""}`;
 ---
 
 <CatalogLayout

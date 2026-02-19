@@ -311,7 +311,7 @@ const { user } = Astro.props;
 
       timer = setTimeout(async () => {
         try {
-          const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(term)}`);
+          const res = await fetch(`/search/suggest?q=${encodeURIComponent(term)}`);
           const payload = await res.json();
           const items = payload.items || [];
 

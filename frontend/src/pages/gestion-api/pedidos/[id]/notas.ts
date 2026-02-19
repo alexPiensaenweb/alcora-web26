@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../../../lib/directus";
+import { directusAdmin } from "../../../../lib/directus";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   if (!locals.user?.isAdmin) {
@@ -18,15 +18,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
   }
 
-  const VALID_GRUPOS = ["distribuidor", "empresa", "hospital", "particular", ""];
-  if (!VALID_GRUPOS.includes(body.grupo_cliente ?? "")) {
-    return new Response(JSON.stringify({ error: "Grupo inválido" }), { status: 400 });
-  }
-
   try {
-    await directusAdmin(`/users/${id}`, {
+    await directusAdmin(`/items/pedidos/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ grupo_cliente: body.grupo_cliente || null }),
+      body: JSON.stringify({ notas_admin: body.notas_admin ?? null }),
     });
 
     return new Response(JSON.stringify({ ok: true }), {
@@ -34,7 +29,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("[api/admin/usuarios/grupo]", err);
+    console.error("[api/admin/pedidos/notas]", err);
     return new Response(
       JSON.stringify({ error: err.message || "Error interno" }),
       { status: 500 }

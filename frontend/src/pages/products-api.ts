@@ -5,9 +5,9 @@ import {
   getCategorias,
   getProductos,
   getTarifasForGrupo,
-} from "../../lib/directus";
-import { calculatePrice, resolveDiscount } from "../../lib/pricing";
-import type { Categoria } from "../../lib/types";
+} from "../lib/directus";
+import { calculatePrice, resolveDiscount } from "../lib/pricing";
+import type { Categoria } from "../lib/types";
 
 function collectDescendantIds(rootId: number, categorias: Categoria[]): number[] {
   const ids: number[] = [rootId];

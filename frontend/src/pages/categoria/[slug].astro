@@ -109,7 +109,7 @@ const initialItems = products.map((product: any) => {
   };
 });
 
-const apiUrl = `/api/products?limit=${limit}&categoria=${encodeURIComponent(slug!)}`;
+const apiUrl = `/products-api?limit=${limit}&categoria=${encodeURIComponent(slug!)}`;
 
 const parentCat = categoria.parent as Categoria | null;
 const breadcrumbs = [];

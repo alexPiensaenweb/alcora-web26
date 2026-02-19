@@ -122,7 +122,7 @@ export default function ProductosAdminPanel({
     if (!selectedProduct) return;
     setSavingId(selectedProduct.id);
     try {
-      const res = await fetch(`/api/gestion/productos/${selectedProduct.id}`, {
+      const res = await fetch(`/gestion-api/productos/${selectedProduct.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editData),
@@ -148,7 +148,7 @@ export default function ProductosAdminPanel({
     const nuevo = p.status === "published" ? "draft" : "published";
     setSavingId(p.id);
     try {
-      const res = await fetch(`/api/gestion/productos/${p.id}`, {
+      const res = await fetch(`/gestion-api/productos/${p.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nuevo }),
@@ -247,7 +247,7 @@ export default function ProductosAdminPanel({
       }
 
       try {
-        const res = await fetch("/api/gestion/productos/importar", {
+        const res = await fetch("/gestion-api/productos/importar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

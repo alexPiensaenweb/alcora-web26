@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../../lib/directus";
+import { directusAdmin } from "../../../lib/directus";
 
 function slugify(text: string): string {
   return text

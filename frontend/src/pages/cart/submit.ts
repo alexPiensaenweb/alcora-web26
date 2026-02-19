@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
-import { directusAuth, directusAdmin, getTarifasForGrupo } from "../../../lib/directus";
-import { resolveDiscount, calculatePrice } from "../../../lib/pricing";
-import { calculateShipping } from "../../../lib/shipping";
-import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
-import { sendMail, buildPedidoHtml, COMPANY_EMAILS } from "../../../lib/email";
-import type { CartItem } from "../../../lib/types";
+import { directusAuth, directusAdmin, getTarifasForGrupo } from "../../lib/directus";
+import { resolveDiscount, calculatePrice } from "../../lib/pricing";
+import { calculateShipping } from "../../lib/shipping";
+import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
+import { sendMail, buildPedidoHtml, COMPANY_EMAILS } from "../../lib/email";
+import type { CartItem } from "../../lib/types";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {

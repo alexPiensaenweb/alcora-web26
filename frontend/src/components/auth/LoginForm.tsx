@@ -29,7 +29,7 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, turnstileToken }),
@@ -43,6 +43,12 @@ export default function LoginForm() {
       }
 
       setUser(data.user);
+
+      // Admin users go to /gestion, others to intended page or catalog
+      if (data.user.isAdmin) {
+        window.location.href = "/gestion";
+        return;
+      }
 
       // Redirect to intended page or catalog (prevent open redirect)
       const params = new URLSearchParams(window.location.search);

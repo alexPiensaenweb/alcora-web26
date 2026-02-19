@@ -72,7 +72,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
     setError("");
     setSavedMsg("");
     try {
-      const res = await fetch(`/api/gestion/pedidos/${pedido.id}/estado`, {
+      const res = await fetch(`/gestion-api/pedidos/${pedido.id}/estado`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: nuevoEstado }),
@@ -96,7 +96,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
     setError("");
     setSavedMsg("");
     try {
-      const res = await fetch(`/api/gestion/pedidos/${pedido.id}/notas`, {
+      const res = await fetch(`/gestion-api/pedidos/${pedido.id}/notas`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notas_admin: notasAdmin }),

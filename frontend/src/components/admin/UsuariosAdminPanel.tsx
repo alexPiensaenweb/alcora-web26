@@ -96,7 +96,7 @@ export default function UsuariosAdminPanel({
   async function cambiarEstado(userId: string, nuevoStatus: string) {
     setLoadingId(userId);
     try {
-      const res = await fetch(`/api/gestion/usuarios/${userId}/estado`, {
+      const res = await fetch(`/gestion-api/usuarios/${userId}/estado`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nuevoStatus }),
@@ -123,7 +123,7 @@ export default function UsuariosAdminPanel({
   async function cambiarGrupo(userId: string, nuevoGrupo: string) {
     setLoadingId(userId);
     try {
-      const res = await fetch(`/api/gestion/usuarios/${userId}/grupo`, {
+      const res = await fetch(`/gestion-api/usuarios/${userId}/grupo`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ grupo_cliente: nuevoGrupo }),

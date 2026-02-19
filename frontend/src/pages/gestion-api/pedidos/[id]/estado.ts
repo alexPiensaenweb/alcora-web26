@@ -1,7 +1,8 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../../../lib/directus";
+import { directusAdmin } from "../../../../lib/directus";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
+  // Admin check
   if (!locals.user?.isAdmin) {
     return new Response(JSON.stringify({ error: "No autorizado" }), { status: 403 });
   }
@@ -18,10 +19,23 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
   }
 
+  const VALID_ESTADOS = [
+    "solicitado",
+    "presupuesto_solicitado",
+    "aprobado_pendiente_pago",
+    "pagado",
+    "enviado",
+    "cancelado",
+  ];
+
+  if (!VALID_ESTADOS.includes(body.estado)) {
+    return new Response(JSON.stringify({ error: "Estado inválido" }), { status: 400 });
+  }
+
   try {
     await directusAdmin(`/items/pedidos/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ notas_admin: body.notas_admin ?? null }),
+      body: JSON.stringify({ estado: body.estado }),
     });
 
     return new Response(JSON.stringify({ ok: true }), {
@@ -29,7 +43,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("[api/admin/pedidos/notas]", err);
+    console.error("[api/admin/pedidos/estado]", err);
     return new Response(
       JSON.stringify({ error: err.message || "Error interno" }),
       { status: 500 }

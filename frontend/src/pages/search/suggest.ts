@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusPublic, getPublicAssetUrl } from "../../../lib/directus";
+import { directusPublic, getPublicAssetUrl } from "../../lib/directus";
 
 export const GET: APIRoute = async ({ url }) => {
   try {

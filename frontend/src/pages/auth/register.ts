@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../lib/directus";
-import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
-import { verifyTurnstile } from "../../../lib/turnstile";
-import { sendMail, buildRegistroHtml, COMPANY_EMAILS } from "../../../lib/email";
+import { directusAdmin } from "../../lib/directus";
+import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
+import { verifyTurnstile } from "../../lib/turnstile";
+import { sendMail, buildRegistroHtml, COMPANY_EMAILS } from "../../lib/email";
 
 export const POST: APIRoute = async ({ request }) => {
   try {

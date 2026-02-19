@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAuth } from "../../../lib/directus";
+import { directusAuth } from "../../lib/directus";
 
 export const PATCH: APIRoute = async ({ request, locals }) => {
   try {

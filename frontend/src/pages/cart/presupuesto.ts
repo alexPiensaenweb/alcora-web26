@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
-import { sendMail, buildPresupuestoHtml, COMPANY_EMAILS } from "../../../lib/email";
-import { rateLimit, rateLimitResponse } from "../../../lib/rateLimit";
+import { sendMail, buildPresupuestoHtml, COMPANY_EMAILS } from "../../lib/email";
+import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
