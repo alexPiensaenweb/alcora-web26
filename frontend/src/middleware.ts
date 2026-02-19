@@ -101,7 +101,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // ─── Route protection ───
-  const isProtected = PROTECTED_ROUTES.some((route) =>
+  // Skip protection for API endpoints (cuenta-api, cart, gestion-api, etc.)
+  const isApiRoute = pathname.startsWith("/cuenta-api") ||
+    pathname.startsWith("/cart/") ||
+    pathname.startsWith("/gestion-api") ||
+    pathname.startsWith("/products-api") ||
+    pathname.startsWith("/search/");
+
+  const isProtected = !isApiRoute && PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
 
