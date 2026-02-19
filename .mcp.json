@@ -1,9 +1,10 @@
 {
   "mcpServers": {
-    "directus": {
-      "url": "http://localhost:8055/mcp",
+    "directus-alcora": {
+      "type": "http",
+      "url": "https://tienda.alcora.es/mcp",
       "headers": {
-        "Authorization": "Bearer zH7zNQCUU4EEV5Nh8I-yepbGw5vqTRWw"
+        "Authorization": "Bearer migration-static-token-alcora-2026"
       }
     }
   }

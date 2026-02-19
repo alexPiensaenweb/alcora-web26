@@ -22,6 +22,7 @@ import {
 } from "./lib/auth";
 
 const PROTECTED_ROUTES = ["/cuenta", "/checkout"];
+const ADMIN_ROUTES = ["/admin"];
 const LOGIN_ROUTE = "/login";
 
 const IS_PRODUCTION =
@@ -108,6 +109,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect(
       `${LOGIN_ROUTE}?redirect=${encodeURIComponent(pathname)}`
     );
+  }
+
+  // ─── Admin route protection ───
+  const isAdminRoute = ADMIN_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (isAdminRoute) {
+    if (!context.locals.user) {
+      return redirect(`${LOGIN_ROUTE}?redirect=${encodeURIComponent(pathname)}`);
+    }
+    if (!context.locals.user.isAdmin) {
+      // No autorizado - redirigir a cuenta
+      return redirect("/cuenta");
+    }
   }
 
   // Prevent logged-in users from accessing login/register

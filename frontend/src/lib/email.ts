@@ -1,12 +1,26 @@
 /**
- * Email utility - uses Directus /utils/send-mail endpoint
- * SMTP is already configured in Directus.
+ * Email utility - uses Resend API
+ * Set RESEND_API_KEY in .env
+ * Set EMAIL_FROM in .env (default: Alcora <noreply@tienda.alcora.es>)
  */
+import { Resend } from "resend";
 
-const DIRECTUS_URL =
-  import.meta.env.DIRECTUS_URL || process.env.DIRECTUS_URL || "http://127.0.0.1:8055";
-const ADMIN_TOKEN =
-  import.meta.env.DIRECTUS_ADMIN_TOKEN || process.env.DIRECTUS_ADMIN_TOKEN || "";
+const RESEND_API_KEY =
+  import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY || "";
+const EMAIL_FROM =
+  import.meta.env.EMAIL_FROM || process.env.EMAIL_FROM || "Alcora Salud Ambiental <noreply@tienda.alcora.es>";
+
+let resendClient: Resend | null = null;
+
+function getResend(): Resend {
+  if (!resendClient) {
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+    resendClient = new Resend(RESEND_API_KEY);
+  }
+  return resendClient;
+}
 
 interface SendMailOptions {
   to: string | string[];
@@ -15,46 +29,37 @@ interface SendMailOptions {
 }
 
 /**
- * Send an email through Directus SMTP.
- * Uses the admin static token for authentication.
+ * Send an email through Resend.
  */
 export async function sendMail({ to, subject, html }: SendMailOptions): Promise<void> {
   const recipients = Array.isArray(to) ? to : [to];
 
-  if (!ADMIN_TOKEN) {
-    console.error("sendMail: DIRECTUS_ADMIN_TOKEN is not configured");
-    throw new Error("Email service not configured (missing admin token)");
-  }
+  console.log(`sendMail: Sending to ${recipients.join(", ")} via Resend`);
 
-  const url = `${DIRECTUS_URL}/utils/send-mail`;
-  console.log(`sendMail: Sending to ${recipients.join(", ")} via ${url}`);
-
-  let res: Response;
   try {
-    res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${ADMIN_TOKEN}`,
-      },
-      body: JSON.stringify({
-        to: recipients,
-        subject,
-        html,
-      }),
+    const resend = getResend();
+    const { error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: recipients,
+      subject,
+      html,
     });
-  } catch (fetchErr) {
-    console.error("sendMail: Network error connecting to Directus:", fetchErr);
-    throw new Error(`Cannot connect to email service: ${fetchErr instanceof Error ? fetchErr.message : "unknown"}`);
-  }
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error(`sendMail: Directus returned ${res.status}:`, text);
-    throw new Error(`Error enviando email: ${res.status} - ${text.substring(0, 200)}`);
-  }
+    if (error) {
+      console.error("sendMail: Resend error:", error);
+      throw new Error(`Error enviando email: ${error.message}`);
+    }
 
-  console.log("sendMail: Email sent successfully");
+    console.log("sendMail: Email sent successfully via Resend");
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith("Error enviando")) {
+      throw err;
+    }
+    console.error("sendMail: Error:", err);
+    throw new Error(
+      `Cannot send email: ${err instanceof Error ? err.message : "unknown"}`
+    );
+  }
 }
 
 /** Centralized company notification emails */
@@ -185,7 +190,7 @@ export function buildPedidoHtml(data: {
     )
     .join("");
 
-  const metodoPagoLabel = data.metodoPago === "transferencia" ? "Transferencia bancaria" : "Pendiente de confirmar";
+  const metodoPagoLabel = data.metodoPago === "transferencia" ? "Transferencia bancaria" : data.metodoPago === "tarjeta" ? "Tarjeta (Redsys)" : "Pendiente de confirmar";
 
   return `
 <!DOCTYPE html>
@@ -300,7 +305,7 @@ export function buildRegistroHtml(data: {
 
       <div style="background:#eff4ff;border:1px solid #2970ff;border-radius:6px;padding:16px;text-align:center;">
         <p style="margin:0;font-size:14px;color:#222d54;">
-          Para activar esta cuenta, acceda al <a href="https://tienda.alcora.es/admin" style="color:#2970ff;font-weight:600;">panel de Directus</a> y cambie el estado del usuario a <strong>Activo</strong>.
+          Para activar esta cuenta, acceda al <a href="https://tienda.alcora.es/admin/usuarios" style="color:#2970ff;font-weight:600;">panel de administracion</a> y active el usuario.
         </p>
       </div>
     </div>

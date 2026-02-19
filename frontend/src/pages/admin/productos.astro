@@ -1,0 +1,63 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { directusAdmin } from "../../lib/directus";
+import ProductosAdminPanel from "../../components/admin/ProductosAdminPanel";
+
+const url = new URL(Astro.request.url);
+const search = url.searchParams.get("search") || "";
+const statusFilter = url.searchParams.get("status") || "";
+const page = parseInt(url.searchParams.get("page") || "1");
+const importar = url.searchParams.get("importar") === "1";
+const limit = 25;
+const offset = (page - 1) * limit;
+
+let productos: any[] = [];
+let categorias: any[] = [];
+let marcas: any[] = [];
+let total = 0;
+
+try {
+  const filters: string[] = [];
+  if (statusFilter) filters.push(`filter[status][_eq]=${statusFilter}`);
+  if (search) filters.push(`search=${encodeURIComponent(search)}`);
+
+  const qs = [
+    `sort=nombre`,
+    `limit=${limit}`,
+    `offset=${offset}`,
+    `fields=id,status,sku,nombre,slug,precio_base,stock,imagen_principal,categoria.id,categoria.nombre,marca_id.nombre,formato,unidad_venta`,
+    `meta=filter_count`,
+    ...filters,
+  ].join("&");
+
+  const [prodRes, catRes, marcaRes] = await Promise.all([
+    directusAdmin(`/items/productos?${qs}`),
+    directusAdmin("/items/categorias?sort=nombre&fields=id,nombre,parent&limit=200"),
+    directusAdmin("/items/marcas?sort=nombre&fields=id,nombre&limit=100"),
+  ]);
+
+  productos = prodRes.data || [];
+  total = prodRes.meta?.filter_count || 0;
+  categorias = catRes.data || [];
+  marcas = marcaRes.data || [];
+} catch (err) {
+  console.error("[admin/productos] Error:", err);
+}
+
+const totalPages = Math.ceil(total / limit);
+---
+
+<AdminLayout title="Productos - Admin Alcora" activeTab="productos">
+  <ProductosAdminPanel
+    client:load
+    productosInitial={productos}
+    categoriasInitial={categorias}
+    marcasInitial={marcas}
+    searchInitial={search}
+    statusFilterInitial={statusFilter}
+    total={total}
+    page={page}
+    totalPages={totalPages}
+    openImport={importar}
+  />
+</AdminLayout>

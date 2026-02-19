@@ -1,0 +1,60 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { directusAdmin } from "../../lib/directus";
+import UsuariosAdminPanel from "../../components/admin/UsuariosAdminPanel";
+
+const url = new URL(Astro.request.url);
+const estadoFilter = url.searchParams.get("estado") || "";
+const emailFilter = url.searchParams.get("email") || "";
+const page = parseInt(url.searchParams.get("page") || "1");
+const limit = 30;
+const offset = (page - 1) * limit;
+
+let usuarios: any[] = [];
+let total = 0;
+
+try {
+  const filters: string[] = [];
+  if (estadoFilter) filters.push(`filter[status][_eq]=${estadoFilter}`);
+  if (emailFilter) filters.push(`search=${encodeURIComponent(emailFilter)}`);
+
+  const qs = [
+    `sort=-date_created`,
+    `limit=${limit}`,
+    `offset=${offset}`,
+    `fields=id,email,first_name,last_name,status,date_created,grupo_cliente,razon_social,cif_nif,telefono,tipo_negocio,ciudad,provincia`,
+    `meta=filter_count`,
+    ...filters,
+  ].join("&");
+
+  const res = await directusAdmin(`/users?${qs}`);
+  usuarios = res.data || [];
+  total = res.meta?.filter_count || 0;
+} catch (err) {
+  console.error("[admin/usuarios] Error:", err);
+}
+
+const totalPages = Math.ceil(total / limit);
+---
+
+<AdminLayout title="Usuarios - Admin Alcora" activeTab="usuarios">
+  <div class="space-y-5">
+
+    <!-- Header -->
+    <div>
+      <h1 class="text-2xl font-bold text-navy">Usuarios</h1>
+      <p class="text-text-muted text-sm mt-0.5">{total} resultado{total !== 1 ? "s" : ""}</p>
+    </div>
+
+    <!-- Panel React interactivo -->
+    <UsuariosAdminPanel
+      client:load
+      usuariosInitial={usuarios}
+      estadoFilterInitial={estadoFilter}
+      emailFilterInitial={emailFilter}
+      total={total}
+      page={page}
+      totalPages={totalPages}
+    />
+  </div>
+</AdminLayout>

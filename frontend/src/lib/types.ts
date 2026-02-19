@@ -6,13 +6,15 @@ export interface DirectusUser {
   first_name: string | null;
   last_name: string | null;
   status: "active" | "suspended" | "invited" | "draft";
-  role: string;
+  role: string | { id: string; name: string; admin_access: boolean } | null;
   grupo_cliente: "distribuidor" | "empresa" | "hospital" | "particular" | null;
   razon_social: string | null;
   cif_nif: string | null;
   telefono: string | null;
   direccion_facturacion: string | null;
   direccion_envio: string | null;
+  /** true si el rol tiene admin_access en Directus */
+  isAdmin?: boolean;
 }
 
 export interface Categoria {

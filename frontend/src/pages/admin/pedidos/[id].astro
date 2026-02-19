@@ -1,0 +1,35 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { directusAdmin } from "../../../lib/directus";
+import PedidoAdminPanel from "../../../components/admin/PedidoAdminPanel";
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect("/admin/pedidos");
+
+let pedido: any = null;
+
+try {
+  const res = await directusAdmin(
+    `/items/pedidos/${id}?fields=*,items.*,items.producto.nombre,items.producto.sku,items.producto.imagen_principal,user_created.id,user_created.first_name,user_created.last_name,user_created.email,user_created.razon_social,user_created.cif_nif,user_created.telefono,user_created.grupo_cliente,user_created.direccion_envio,user_created.direccion_facturacion`
+  );
+  pedido = res.data;
+} catch (err) {
+  console.error("[admin/pedidos/id] Error:", err);
+}
+
+if (!pedido) return Astro.redirect("/admin/pedidos");
+---
+
+<AdminLayout title={`Pedido #${id} - Admin Alcora`} activeTab="pedidos">
+  <div class="space-y-5">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-text-muted">
+      <a href="/admin/pedidos" class="hover:text-action transition-colors">Pedidos</a>
+      <span>/</span>
+      <span class="text-navy font-medium">#{id}</span>
+    </div>
+
+    <!-- Panel interactivo (React island) -->
+    <PedidoAdminPanel client:load pedido={pedido} />
+  </div>
+</AdminLayout>
