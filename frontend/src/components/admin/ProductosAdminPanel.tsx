@@ -180,23 +180,31 @@ export default function ProductosAdminPanel({
         return;
       }
 
-      const headers = data[0].map(String);
+      // Convertir cabeceras a strings seguros (celdas vacías → "")
+      const rawHeaders = data[0] || [];
+      const headers: string[] = [];
+      for (let i = 0; i < rawHeaders.length; i++) {
+        headers.push(rawHeaders[i] != null ? String(rawHeaders[i]).trim() : `Columna_${i + 1}`);
+      }
+
       const rows: ExcelRow[] = data.slice(1).filter((r) => r.some(Boolean)).map((row) => {
         const obj: ExcelRow = {};
         headers.forEach((h, i) => { obj[h] = row[i] != null ? String(row[i]) : ""; });
         return obj;
       });
 
-      setExcelCols(headers);
+      setExcelCols(headers.filter((h) => !h.startsWith("Columna_")));
       setExcelRows(rows);
 
       // Auto-map: intenta emparejar por nombre similar
       const autoMap: FieldMapping = {};
       EXCEL_COLUMNS.forEach(({ key }) => {
-        const match = headers.find((h) =>
-          h.toLowerCase().replace(/[^a-z0-9]/g, "").includes(key.replace(/_/g, "")) ||
-          key.replace(/_/g, "").includes(h.toLowerCase().replace(/[^a-z0-9]/g, ""))
-        );
+        const match = headers.find((h) => {
+          if (!h || h.startsWith("Columna_")) return false;
+          const hNorm = h.toLowerCase().replace(/[^a-z0-9]/g, "");
+          const kNorm = key.replace(/_/g, "");
+          return hNorm.includes(kNorm) || kNorm.includes(hNorm);
+        });
         autoMap[key] = { excelCol: match || null };
       });
       setFieldMapping(autoMap);

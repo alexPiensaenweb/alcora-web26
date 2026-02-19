@@ -1,0 +1,23 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { directusAdmin } from "../../../lib/directus";
+import NuevoProductoForm from "../../../components/admin/NuevoProductoForm";
+
+let categorias: any[] = [];
+let marcas: any[] = [];
+
+try {
+  const [catRes, marcaRes] = await Promise.all([
+    directusAdmin("/items/categorias?sort=nombre&fields=id,nombre,parent&limit=200"),
+    directusAdmin("/items/marcas?sort=nombre&fields=id,nombre&limit=100"),
+  ]);
+  categorias = catRes.data || [];
+  marcas = marcaRes.data || [];
+} catch (err) {
+  console.error("[admin/productos/nuevo] Error:", err);
+}
+---
+
+<AdminLayout title="Nuevo Producto - Admin Alcora" activeTab="productos">
+  <NuevoProductoForm client:load categorias={categorias} marcas={marcas} />
+</AdminLayout>
