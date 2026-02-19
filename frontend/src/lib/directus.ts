@@ -62,7 +62,15 @@ async function directusFetch(
     );
   }
 
-  return res.json();
+  // DELETE returns 204 No Content with empty body
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return { data: null };
+  }
+
+  const text = await res.text();
+  if (!text) return { data: null };
+
+  return JSON.parse(text);
 }
 
 export async function directusPublic(endpoint: string): Promise<any> {
