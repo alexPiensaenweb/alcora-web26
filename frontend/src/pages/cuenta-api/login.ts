@@ -79,6 +79,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const user = await getCurrentUser(tokens.access_token);
 
+    console.log("Login user data:", JSON.stringify({ email, status: user?.status, isAdmin: user?.isAdmin, role: user?.role }));
+
     if (!user) {
       return new Response(
         JSON.stringify({ error: "No se pudo obtener el perfil de usuario" }),
