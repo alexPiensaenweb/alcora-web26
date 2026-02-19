@@ -156,6 +156,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // ─── Process request ───
   const response = await next();
 
+  // ─── Cache Control for admin pages ───
+  // Prevent ViewTransitions/bfcache from showing stale data
+  if (pathname.startsWith("/gestion")) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+  }
+
   // ─── Security Headers ───
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");

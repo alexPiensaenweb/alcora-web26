@@ -51,6 +51,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     marca: body.marca || null,
     categoria: body.categoria || null,
     marca_id: body.marca_id || null,
+    imagen_principal: body.imagen_principal || null,
+    ficha_tecnica: body.ficha_tecnica || null,
+    ficha_seguridad: body.ficha_seguridad || null,
   };
 
   try {
