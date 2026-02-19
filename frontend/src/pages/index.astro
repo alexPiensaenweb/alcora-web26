@@ -16,7 +16,7 @@ try {
 
 const rootRaw = categorias.filter((c) => {
   const parentId = typeof c.parent === "object" ? c.parent?.id : c.parent;
-  return parentId === null;
+  return !parentId;
 });
 
 const rootCategorias = rootRaw.filter((cat, index, all) => {
@@ -62,7 +62,7 @@ function subcategoryCount(categoryId: number): number {
       class="absolute inset-0 w-full h-full object-cover"
       loading="eager"
     />
-    <div class="absolute inset-0 bg-gradient-to-r from-[#222d54] via-[#222d54]/95 to-[#222d54]/85"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-[#222d54]/90 via-[#222d54]/75 to-[#222d54]/60"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
       <div class="max-w-2xl">
         <h1 class="text-3xl lg:text-5xl font-bold leading-tight mb-4">
