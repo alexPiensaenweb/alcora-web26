@@ -228,7 +228,7 @@ export async function getEmpresa(): Promise<{
   web_corporativa: string | null;
 } | null> {
   try {
-    const res = await directusPublic(
+    const res = await directusAdmin(
       "/items/empresa/1?fields=denominacion_social,telefono,telefono_whatsapp,email,domicilio,web_corporativa"
     );
     return res.data || null;
