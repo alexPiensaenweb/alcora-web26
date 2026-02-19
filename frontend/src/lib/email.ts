@@ -98,7 +98,7 @@ export function buildPresupuestoHtml(data: {
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#6b7589;">${escapeHtml(item.sku)}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${item.formato ? escapeHtml(item.formato) : "—"}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:center;">${item.cantidad}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;">${item.precioUnitario.toFixed(2)} €</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;">${Number(item.precioUnitario || 0).toFixed(2)} €</td>
       </tr>`
     )
     .join("");
@@ -184,8 +184,8 @@ export function buildPedidoHtml(data: {
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${escapeHtml(item.nombre)}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#6b7589;">${escapeHtml(item.sku)}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:center;">${item.cantidad}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;">${item.precioUnitario.toFixed(2)} \u20AC</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;font-weight:600;">${(item.precioUnitario * item.cantidad).toFixed(2)} \u20AC</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;">${Number(item.precioUnitario || 0).toFixed(2)} \u20AC</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;font-weight:600;">${(Number(item.precioUnitario || 0) * Number(item.cantidad || 0)).toFixed(2)} \u20AC</td>
       </tr>`
     )
     .join("");
@@ -236,9 +236,9 @@ export function buildPedidoHtml(data: {
       </table>
 
       <table style="width:100%;font-size:14px;margin-bottom:24px;">
-        <tr><td style="padding:4px 0;text-align:right;color:#6b7589;">Subtotal:</td><td style="padding:4px 0 4px 16px;text-align:right;color:#222d54;width:100px;">${data.subtotal.toFixed(2)} \u20AC</td></tr>
-        <tr><td style="padding:4px 0;text-align:right;color:#6b7589;">Envio:</td><td style="padding:4px 0 4px 16px;text-align:right;color:#222d54;">${data.costoEnvio === 0 ? "Gratis" : data.costoEnvio.toFixed(2) + " \u20AC"}</td></tr>
-        <tr><td style="padding:8px 0 0;text-align:right;font-weight:700;color:#222d54;font-size:16px;">TOTAL:</td><td style="padding:8px 0 0 16px;text-align:right;font-weight:700;color:#2970ff;font-size:16px;">${data.total.toFixed(2)} \u20AC</td></tr>
+        <tr><td style="padding:4px 0;text-align:right;color:#6b7589;">Subtotal:</td><td style="padding:4px 0 4px 16px;text-align:right;color:#222d54;width:100px;">${Number(data.subtotal || 0).toFixed(2)} \u20AC</td></tr>
+        <tr><td style="padding:4px 0;text-align:right;color:#6b7589;">Envio:</td><td style="padding:4px 0 4px 16px;text-align:right;color:#222d54;">${Number(data.costoEnvio || 0) === 0 ? "Gratis" : Number(data.costoEnvio || 0).toFixed(2) + " \u20AC"}</td></tr>
+        <tr><td style="padding:8px 0 0;text-align:right;font-weight:700;color:#222d54;font-size:16px;">TOTAL:</td><td style="padding:8px 0 0 16px;text-align:right;font-weight:700;color:#2970ff;font-size:16px;">${Number(data.total || 0).toFixed(2)} \u20AC</td></tr>
       </table>
 
       <p style="font-size:13px;color:#6b7589;line-height:1.5;">

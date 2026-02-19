@@ -168,8 +168,8 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
                       <td className="px-4 py-3 font-medium text-navy">{item.nombre_producto}</td>
                       <td className="px-4 py-3 text-text-muted">{item.sku}</td>
                       <td className="px-4 py-3 text-center">{item.cantidad}</td>
-                      <td className="px-4 py-3 text-right">{item.precio_unitario?.toFixed(2)} €</td>
-                      <td className="px-4 py-3 text-right font-semibold">{item.subtotal?.toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-right">{Number(item.precio_unitario || 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-right font-semibold">{Number(item.subtotal || 0).toFixed(2)} €</td>
                     </tr>
                   ))}
                 </tbody>
@@ -178,15 +178,15 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
             <div className="px-4 py-3 border-t border-border bg-bg-light space-y-1 text-sm">
               <div className="flex justify-between text-text-muted">
                 <span>Subtotal</span>
-                <span>{pedido.subtotal?.toFixed(2)} €</span>
+                <span>{Number(pedido.subtotal || 0).toFixed(2)} €</span>
               </div>
               <div className="flex justify-between text-text-muted">
                 <span>Envío</span>
-                <span>{pedido.costo_envio === 0 ? "Gratis" : `${pedido.costo_envio?.toFixed(2)} €`}</span>
+                <span>{Number(pedido.costo_envio || 0) === 0 ? "Gratis" : `${Number(pedido.costo_envio || 0).toFixed(2)} €`}</span>
               </div>
               <div className="flex justify-between font-bold text-navy text-base pt-1 border-t border-border">
                 <span>Total (sin IVA)</span>
-                <span>{pedido.total?.toFixed(2)} €</span>
+                <span>{Number(pedido.total || 0).toFixed(2)} €</span>
               </div>
             </div>
           </div>

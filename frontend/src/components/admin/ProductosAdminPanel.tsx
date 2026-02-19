@@ -591,7 +591,7 @@ export default function ProductosAdminPanel({
                             <td className="px-4 py-3 hidden md:table-cell text-text-muted text-xs">
                               {typeof p.categoria === "object" ? p.categoria?.nombre : "—"}
                             </td>
-                            <td className="px-4 py-3 text-right font-semibold text-navy">{p.precio_base?.toFixed(2)} €</td>
+                            <td className="px-4 py-3 text-right font-semibold text-navy">{Number(p.precio_base || 0).toFixed(2)} €</td>
                             <td className="px-4 py-3 text-center hidden sm:table-cell">
                               <span className={`text-sm font-medium ${p.stock <= 0 ? "text-red-600" : p.stock <= 5 ? "text-yellow-600" : "text-green-700"}`}>
                                 {p.stock}
@@ -737,7 +737,7 @@ export default function ProductosAdminPanel({
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-bg-light rounded-lg p-3">
                         <p className="text-xs text-text-muted">Precio</p>
-                        <p className="font-bold text-navy">{selectedProduct.precio_base?.toFixed(2)} €</p>
+                        <p className="font-bold text-navy">{Number(selectedProduct.precio_base || 0).toFixed(2)} €</p>
                       </div>
                       <div className="bg-bg-light rounded-lg p-3">
                         <p className="text-xs text-text-muted">Stock</p>

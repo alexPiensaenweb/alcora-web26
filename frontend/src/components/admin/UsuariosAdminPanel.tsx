@@ -237,7 +237,7 @@ export default function UsuariosAdminPanel({
                           {GRUPOS[u.grupo_cliente || ""] || u.grupo_cliente || "—"}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell text-text-muted text-xs whitespace-nowrap">
-                          {formatDate(u.date_created)}
+                          {u.date_created ? formatDate(u.date_created) : "—"}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {u.status === "suspended" && (
@@ -326,7 +326,9 @@ export default function UsuariosAdminPanel({
                 {(selectedUser.ciudad || selectedUser.provincia) && (
                   <div><span className="text-text-muted text-xs">Ubicación:</span> <span>{[selectedUser.ciudad, selectedUser.provincia].filter(Boolean).join(", ")}</span></div>
                 )}
-                <div><span className="text-text-muted text-xs">Alta:</span> <span>{formatDate(selectedUser.date_created)}</span></div>
+                {selectedUser.date_created && (
+                  <div><span className="text-text-muted text-xs">Alta:</span> <span>{formatDate(selectedUser.date_created)}</span></div>
+                )}
               </div>
 
               {/* Estado */}
