@@ -40,11 +40,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       // Use admin token to look up the user
       try {
         const lookupRes = await directusAdmin(
-          `/users?filter[email][_eq]=${encodeURIComponent(email)}&fields=id,status,role.admin_access&limit=1`
+          `/users?filter[email][_eq]=${encodeURIComponent(email)}&fields=id,status,role.policies.policy.admin_access&limit=1`
         );
         const foundUser = lookupRes.data?.[0];
 
-        if (foundUser && foundUser.role?.admin_access === true && foundUser.status !== "active") {
+        // Check admin via Directus 11 policies
+        const isFoundAdmin = foundUser?.role?.policies?.some(
+          (rp: any) => rp?.policy?.admin_access === true
+        );
+        if (foundUser && isFoundAdmin && foundUser.status !== "active") {
           // Admin user is not active - auto-activate and retry login
           await directusAdmin(`/users/${foundUser.id}`, {
             method: "PATCH",
