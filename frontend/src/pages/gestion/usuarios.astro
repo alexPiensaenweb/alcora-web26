@@ -19,10 +19,10 @@ try {
   if (emailFilter) filters.push(`search=${encodeURIComponent(emailFilter)}`);
 
   const qs = [
-    `sort=-date_created`,
+    `sort=-id`,
     `limit=${limit}`,
     `offset=${offset}`,
-    `fields=id,email,first_name,last_name,status,date_created,grupo_cliente,razon_social,cif_nif,telefono,tipo_negocio,ciudad,provincia`,
+    `fields=id,email,first_name,last_name,status,grupo_cliente,razon_social,cif_nif,telefono,tipo_negocio,ciudad,provincia`,
     `meta=filter_count`,
     ...filters,
   ].join("&");
