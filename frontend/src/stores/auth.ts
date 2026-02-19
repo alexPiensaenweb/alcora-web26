@@ -13,7 +13,8 @@ export const $currentUser = atom<DirectusUser | null>(null);
 
 export function setUser(user: DirectusUser | null): void {
   $currentUser.set(user);
-  $isLoggedIn.set(user !== null && user.status === "active");
+  // Admins are always logged in regardless of status
+  $isLoggedIn.set(user !== null && (user.status === "active" || user.isAdmin === true));
 }
 
 export function clearUser(): void {
@@ -23,7 +24,8 @@ export function clearUser(): void {
 
 export async function logout(): Promise<void> {
   try {
-    await fetch("/api/auth/logout", { method: "POST" });
+    // /auth/logout instead of /api/auth/logout — Apache proxies /api/* to Directus
+    await fetch("/auth/logout", { method: "POST" });
   } catch {
     // Ignore errors
   }
