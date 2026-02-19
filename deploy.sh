@@ -29,14 +29,16 @@ ssh "$SERVER" "cd $REMOTE_DIR && rm -rf .git .gitignore .mcp.json .env.example f
 echo ""
 echo "[3/5] Uploading to server..."
 
-# Upload runtime config from deploy-frontend
+# Upload runtime config
 scp deploy-frontend/app.js "$SERVER:$REMOTE_DIR/app.js"
 scp deploy-frontend/.env "$SERVER:$REMOTE_DIR/.env"
-scp deploy-frontend/package.json "$SERVER:$REMOTE_DIR/package.json"
+# Use frontend/package.json so all Astro runtime deps are included
+scp frontend/package.json "$SERVER:$REMOTE_DIR/package.json"
 
-# Upload dist (atomic swap)
+# Upload dist via scp (rsync not available on Windows Git Bash)
 echo "  Uploading dist/..."
-rsync -avz --delete frontend/dist/ "$SERVER:$REMOTE_DIR/dist/"
+ssh "$SERVER" "rm -rf $REMOTE_DIR/dist"
+scp -r frontend/dist "$SERVER:$REMOTE_DIR/dist"
 
 # Upload robots.txt
 scp frontend/public/robots.txt "$SERVER:$REMOTE_DIR/dist/client/robots.txt"
@@ -49,7 +51,7 @@ ssh "$SERVER" "export PATH=/opt/plesk/node/20/bin:\$PATH && cd $REMOTE_DIR && rm
 # Step 5: Restart PM2
 echo ""
 echo "[5/5] Restarting Astro on server..."
-ssh "$SERVER" "pm2 restart astro-alcora && sleep 2 && pm2 logs astro-alcora --lines 10 --nostream"
+ssh "$SERVER" "export PATH=/opt/plesk/node/20/bin:\$PATH && pm2 restart astro-alcora && sleep 2 && pm2 logs astro-alcora --lines 10 --nostream"
 
 echo ""
 echo "========================================="

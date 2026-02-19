@@ -97,19 +97,31 @@ export async function getCurrentUser(
   token: string
 ): Promise<DirectusUser | null> {
   try {
-    const res = await fetch(`${getDirectusUrl()}/users/me?fields=id,email,first_name,last_name,status,role.id,role.name,role.admin_access,grupo_cliente,razon_social,cif_nif,telefono,direccion_facturacion,direccion_envio`, {
+    const res = await fetch(`${getDirectusUrl()}/users/me?fields=id,email,first_name,last_name,status,role.id,role.name,role.admin_access,role.policies.policy.admin_access,grupo_cliente,razon_social,cif_nif,telefono,direccion_facturacion,direccion_envio`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!res.ok) return null;
 
     const { data } = await res.json();
-    // Normalizar isAdmin desde role.admin_access
-    if (data && data.role && typeof data.role === "object") {
-      data.isAdmin = data.role.admin_access === true;
-    } else {
-      data.isAdmin = false;
+    // Detect admin: check role.admin_access (Directus 10) OR role.policies[].policy.admin_access (Directus 11)
+    let isAdmin = false;
+    if (data?.role) {
+      const role = typeof data.role === "object" ? data.role : null;
+      if (role) {
+        // Directus 10 style
+        if (role.admin_access === true) {
+          isAdmin = true;
+        }
+        // Directus 11 style - check policies attached to role
+        if (!isAdmin && Array.isArray(role.policies)) {
+          isAdmin = role.policies.some(
+            (rp: any) => rp?.policy?.admin_access === true
+          );
+        }
+      }
     }
+    data.isAdmin = isAdmin;
     return data;
   } catch {
     return null;
