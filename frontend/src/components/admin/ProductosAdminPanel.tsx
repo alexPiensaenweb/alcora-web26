@@ -219,6 +219,8 @@ export default function ProductosAdminPanel({
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) parseExcelFile(file);
+    // Reset para poder seleccionar el mismo archivo otra vez
+    if (e.target) e.target.value = "";
   }
 
   function getMappedValue(row: ExcelRow, fieldKey: string): string {
@@ -356,6 +358,13 @@ export default function ProductosAdminPanel({
             {/* Step: Drop file */}
             {importStep === "drop" && (
               <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={handleFileInput}
+                />
                 <div
                   className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${
                     dragOver ? "border-action bg-bg-accent" : "border-border hover:border-action hover:bg-bg-light"
@@ -369,13 +378,6 @@ export default function ProductosAdminPanel({
                   <p className="text-navy font-semibold mb-1">Arrastra tu archivo Excel aquí</p>
                   <p className="text-text-muted text-sm">o haz clic para seleccionar</p>
                   <p className="text-text-muted text-xs mt-3">Formatos: .xlsx, .xls, .csv</p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    className="hidden"
-                    onChange={handleFileInput}
-                  />
                 </div>
 
                 {parseError && (

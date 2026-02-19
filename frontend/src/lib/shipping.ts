@@ -15,6 +15,6 @@ export function getShippingMessage(subtotal: number): string {
   if (subtotal >= FREE_SHIPPING_THRESHOLD) {
     return "Envio gratuito";
   }
-  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+  const remaining = FREE_SHIPPING_THRESHOLD - Number(subtotal || 0);
   return `Envio: ${SHIPPING_COST}€ (faltan ${remaining.toFixed(2)}€ para envio gratis)`;
 }
