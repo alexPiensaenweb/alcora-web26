@@ -151,7 +151,7 @@ const estadoColor: Record<string, string> = {
                     <span class={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoColor[p.estado] || "bg-gray-100 text-gray-700"}`}>
                       {estadoLabel[p.estado] || p.estado}
                     </span>
-                    <span class="text-sm font-semibold text-navy">{p.total?.toFixed(2)} €</span>
+                    <span class="text-sm font-semibold text-navy">{Number(p.total || 0).toFixed(2)} €</span>
                   </div>
                 </a>
               );

@@ -125,7 +125,7 @@ function clienteNombre(p: any) {
                     <td class="px-4 py-3 text-text-muted text-xs capitalize">
                       {p.metodo_pago === "transferencia" ? "Transferencia" : p.metodo_pago === "tarjeta" ? "Tarjeta" : "—"}
                     </td>
-                    <td class="px-4 py-3 text-right font-semibold text-navy">{p.total?.toFixed(2)} €</td>
+                    <td class="px-4 py-3 text-right font-semibold text-navy">{Number(p.total || 0).toFixed(2)} €</td>
                     <td class="px-4 py-3 text-right">
                       <a href={`/gestion/pedidos/${p.id}`} class="text-action hover:underline text-xs font-medium">
                         Ver →
