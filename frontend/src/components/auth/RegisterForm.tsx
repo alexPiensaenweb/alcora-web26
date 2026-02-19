@@ -445,10 +445,32 @@ export default function RegisterForm() {
               onChange={(e) => updateField("password", e.target.value)}
               onBlur={(e) => handleBlur("password", e.target.value)}
               className={fieldClass("password", form.password)}
-              placeholder="Min. 8 car., mayus., minus. y num."
+              placeholder="Crea tu contrasena"
             />
-            <FieldError name="password" />
-            <FieldOk name="password" value={form.password} />
+            {/* Requisitos visuales - se muestran en cuanto hay algo escrito */}
+            {form.password.length > 0 && (
+              <div className="mt-2 p-3 bg-[var(--color-bg-light)] rounded-lg grid grid-cols-2 gap-1.5">
+                {[
+                  { ok: form.password.length >= 8, label: "Mínimo 8 caracteres" },
+                  { ok: /[A-Z]/.test(form.password), label: "Una mayúscula" },
+                  { ok: /[a-z]/.test(form.password), label: "Una minúscula" },
+                  { ok: /[0-9]/.test(form.password), label: "Un número" },
+                ].map(({ ok, label }) => (
+                  <span key={label} className={`flex items-center gap-1.5 text-xs ${ok ? "text-green-600" : "text-[var(--color-text-muted)]"}`}>
+                    {ok ? (
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                      </svg>
+                    )}
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <label className={labelClass}>Confirmar contrasena *</label>
@@ -457,9 +479,17 @@ export default function RegisterForm() {
               onChange={(e) => updateField("password_confirm", e.target.value)}
               onBlur={(e) => handleBlur("password_confirm", e.target.value)}
               className={fieldClass("password_confirm", form.password_confirm)}
+              placeholder="Repite la contrasena"
             />
             <FieldError name="password_confirm" />
-            <FieldOk name="password_confirm" value={form.password_confirm} />
+            {form.password_confirm.length > 0 && !fieldErrors["password_confirm"] && form.password === form.password_confirm && (
+              <p className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Las contrasenas coinciden
+              </p>
+            )}
           </div>
         </div>
       </section>

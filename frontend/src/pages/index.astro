@@ -180,38 +180,40 @@ function subcategoryCount(categoryId: number): number {
     </div>
   </section>
 
-  {/* Featured products */}
-  <section class="bg-bg-light border-t border-border">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h2 class="text-2xl font-bold text-navy">Productos destacados</h2>
-          <p class="text-sm text-text-muted mt-1">Las novedades de nuestro catalogo</p>
+  {/* Featured products - solo si hay productos */}
+  {featuredProducts.length > 0 && (
+    <section class="bg-bg-light border-t border-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h2 class="text-2xl font-bold text-navy">Productos destacados</h2>
+            <p class="text-sm text-text-muted mt-1">Las novedades de nuestro catalogo</p>
+          </div>
+          <a
+            href="/catalogo"
+            class="text-sm text-action hover:underline font-medium"
+          >
+            Ver todos →
+          </a>
         </div>
-        <a
-          href="/catalogo"
-          class="text-sm text-action hover:underline font-medium"
-        >
-          Ver todos →
-        </a>
-      </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {featuredProducts.map((product) => {
-          const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
-          const descuento = user ? resolveDiscount(tarifas, product.id, categoriaId ?? null) : 0;
-          const finalPrice = user ? calculatePrice(product.precio_base, descuento) : null;
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {featuredProducts.map((product) => {
+            const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
+            const descuento = user ? resolveDiscount(tarifas, product.id, categoriaId ?? null) : 0;
+            const finalPrice = user ? calculatePrice(product.precio_base, descuento) : null;
 
-          return (
-            <ProductCard
-              product={product}
-              price={finalPrice}
-            />
-          );
-        })}
+            return (
+              <ProductCard
+                product={product}
+                price={finalPrice}
+              />
+            );
+          })}
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  )}
 
   {/* CTA */}
   {!user && (
