@@ -24,8 +24,8 @@ export function clearUser(): void {
 
 export async function logout(): Promise<void> {
   try {
-    // /auth/logout instead of /api/auth/logout — Apache proxies /api/* to Directus
-    await fetch("/auth/logout", { method: "POST" });
+    // /cuenta-api/logout — Apache proxies /auth/* to Directus
+    await fetch("/cuenta-api/logout", { method: "POST" });
   } catch {
     // Ignore errors
   }

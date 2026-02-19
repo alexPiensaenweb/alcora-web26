@@ -30,7 +30,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     setError("");
 
     try {
-      const res = await fetch("/auth/profile", {
+      const res = await fetch("/cuenta-api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
