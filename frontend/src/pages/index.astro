@@ -137,8 +137,8 @@ function subcategoryCount(categoryId: number): number {
     </div>
   </section>
 
-  {/* Categories */}
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  {/* Categories - solo si hay categorias */}
+  {rootCategorias.length > 0 && <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="text-center mb-8">
       <h2 class="text-2xl font-bold text-navy">Categorias de producto</h2>
       <p class="text-sm text-text-muted mt-2">
@@ -178,7 +178,7 @@ function subcategoryCount(categoryId: number): number {
         );
       })}
     </div>
-  </section>
+  </section>}
 
   {/* Featured products - solo si hay productos */}
   {featuredProducts.length > 0 && (
