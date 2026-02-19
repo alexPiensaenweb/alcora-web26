@@ -218,3 +218,21 @@ export async function getMarcaBySlug(
   );
   return res.data?.[0] || null;
 }
+
+export async function getEmpresa(): Promise<{
+  denominacion_social: string;
+  telefono: string;
+  telefono_whatsapp: string | null;
+  email: string;
+  domicilio: string | null;
+  web_corporativa: string | null;
+} | null> {
+  try {
+    const res = await directusPublic(
+      "/items/empresa/1?fields=denominacion_social,telefono,telefono_whatsapp,email,domicilio,web_corporativa"
+    );
+    return res.data || null;
+  } catch {
+    return null;
+  }
+}
