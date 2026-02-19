@@ -272,12 +272,14 @@ export default function UsuariosAdminPanel({
                   <div className="flex gap-2">
                     {page > 1 && (
                       <a href={`/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`}
+                         onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`; }}
                          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                         ← Anterior
                       </a>
                     )}
                     {page < totalPages && (
                       <a href={`/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`}
+                         onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`; }}
                          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                         Siguiente →
                       </a>
@@ -378,6 +380,7 @@ export default function UsuariosAdminPanel({
               <div className="pt-2 border-t border-border">
                 <a
                   href={`/gestion/pedidos?email=${encodeURIComponent(selectedUser.email)}`}
+                  onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/pedidos?email=${encodeURIComponent(selectedUser.email)}`; }}
                   className="flex items-center gap-2 text-sm text-action hover:underline"
                 >
                   <span className="material-icons text-base">shopping_bag</span>

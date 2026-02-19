@@ -79,6 +79,7 @@ function clienteNombre(p: any) {
       {ESTADOS.map((e) => (
         <a
           href={e.value ? `/gestion/pedidos?estado=${e.value}` : "/gestion/pedidos"}
+          data-astro-reload
           class:list={[
             "px-3 py-1.5 rounded-full text-sm font-medium transition-colors border",
             estadoFilter === e.value
@@ -127,7 +128,7 @@ function clienteNombre(p: any) {
                     </td>
                     <td class="px-4 py-3 text-right font-semibold text-navy">{Number(p.total || 0).toFixed(2)} €</td>
                     <td class="px-4 py-3 text-right">
-                      <a href={`/gestion/pedidos/${p.id}`} class="text-action hover:underline text-xs font-medium">
+                      <a href={`/gestion/pedidos/${p.id}`} data-astro-reload class="text-action hover:underline text-xs font-medium">
                         Ver →
                       </a>
                     </td>
@@ -144,13 +145,13 @@ function clienteNombre(p: any) {
               <div class="flex gap-2">
                 {page > 1 && (
                   <a href={`/gestion/pedidos?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`}
-                     class="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
+                     data-astro-reload class="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                     ← Anterior
                   </a>
                 )}
                 {page < totalPages && (
                   <a href={`/gestion/pedidos?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`}
-                     class="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
+                     data-astro-reload class="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                     Siguiente →
                   </a>
                 )}

@@ -42,6 +42,7 @@ const navItems = [
             {navItems.map((item) => (
               <a
                 href={item.href}
+                data-astro-reload
                 class:list={[
                   "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors border-b border-border last:border-b-0",
                   activeTab === item.key

@@ -159,8 +159,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // ─── Cache Control for admin pages ───
   // Prevent ViewTransitions/bfcache from showing stale data
   if (pathname.startsWith("/gestion")) {
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
   }
 
   // ─── Security Headers ───

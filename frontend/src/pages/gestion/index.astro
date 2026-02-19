@@ -70,7 +70,7 @@ const estadoColor: Record<string, string> = {
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <a href="/gestion/pedidos" class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group">
+      <a href="/gestion/pedidos" data-astro-reload class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group">
         <div class="flex items-start justify-between">
           <div>
             <p class="text-3xl font-bold text-navy group-hover:text-action transition-colors">{stats.totalPedidos}</p>
@@ -86,7 +86,7 @@ const estadoColor: Record<string, string> = {
         )}
       </a>
 
-      <a href="/gestion/usuarios" class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group">
+      <a href="/gestion/usuarios" data-astro-reload class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group">
         <div class="flex items-start justify-between">
           <div>
             <p class="text-3xl font-bold text-navy group-hover:text-action transition-colors">{stats.totalUsuarios}</p>
@@ -102,7 +102,7 @@ const estadoColor: Record<string, string> = {
         )}
       </a>
 
-      <a href="/gestion/productos" class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group">
+      <a href="/gestion/productos" data-astro-reload class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group">
         <div class="flex items-start justify-between">
           <div>
             <p class="text-3xl font-bold text-navy group-hover:text-action transition-colors">{stats.totalProductos}</p>
@@ -133,7 +133,7 @@ const estadoColor: Record<string, string> = {
       <div class="lg:col-span-2 bg-white border border-border rounded-xl overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 class="font-semibold text-navy">Pedidos recientes</h2>
-          <a href="/gestion/pedidos" class="text-xs text-action hover:underline">Ver todos →</a>
+          <a href="/gestion/pedidos" data-astro-reload class="text-xs text-action hover:underline">Ver todos →</a>
         </div>
         {recentPedidos.length > 0 ? (
           <div class="divide-y divide-border">
@@ -142,7 +142,7 @@ const estadoColor: Record<string, string> = {
                 ? (p.user_created?.razon_social || `${p.user_created?.first_name || ""} ${p.user_created?.last_name || ""}`.trim() || p.user_created?.email)
                 : "—";
               return (
-                <a href={`/gestion/pedidos/${p.id}`} class="flex items-center justify-between px-5 py-3 hover:bg-bg-light transition-colors">
+                <a href={`/gestion/pedidos/${p.id}`} data-astro-reload class="flex items-center justify-between px-5 py-3 hover:bg-bg-light transition-colors">
                   <div class="min-w-0">
                     <p class="text-sm font-medium text-navy">#{p.id} · {cliente}</p>
                     <p class="text-xs text-text-muted">{formatDate(p.date_created)}</p>
@@ -167,21 +167,21 @@ const estadoColor: Record<string, string> = {
         <div class="bg-white border border-border rounded-xl p-5">
           <h2 class="font-semibold text-navy mb-4">Acceso rápido</h2>
           <div class="space-y-2">
-            <a href="/gestion/pedidos?estado=solicitado" class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
+            <a href="/gestion/pedidos?estado=solicitado" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
               <span class="material-icons text-base text-yellow-600">pending</span>
               Pedidos nuevos
               {stats.pedidosPendientes > 0 && <span class="ml-auto bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full font-medium">{stats.pedidosPendientes}</span>}
             </a>
-            <a href="/gestion/usuarios?estado=suspended" class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
+            <a href="/gestion/usuarios?estado=suspended" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
               <span class="material-icons text-base text-orange-500">person_add</span>
               Solicitudes registro
               {stats.usuariosPendientes > 0 && <span class="ml-auto bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full font-medium">{stats.usuariosPendientes}</span>}
             </a>
-            <a href="/gestion/productos/nuevo" class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
+            <a href="/gestion/productos/nuevo" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
               <span class="material-icons text-base text-green-600">add_circle</span>
               Añadir producto
             </a>
-            <a href="/gestion/productos?importar=1" class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
+            <a href="/gestion/productos?importar=1" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy">
               <span class="material-icons text-base text-action">upload_file</span>
               Importar Excel
             </a>
@@ -191,7 +191,7 @@ const estadoColor: Record<string, string> = {
         <div class="bg-bg-accent border border-action/20 rounded-xl p-5">
           <h3 class="text-sm font-semibold text-action mb-2">Directus CMS</h3>
           <p class="text-xs text-text-muted mb-3">Acceso avanzado a la base de datos y configuración</p>
-          <a href="https://tienda.alcora.es/directus" target="_blank" rel="noopener" class="text-xs text-action hover:underline flex items-center gap-1">
+          <a href="https://tienda.alcora.es/admin" target="_blank" rel="noopener" class="text-xs text-action hover:underline flex items-center gap-1">
             <span class="material-icons text-sm">open_in_new</span>
             Abrir Directus
           </a>

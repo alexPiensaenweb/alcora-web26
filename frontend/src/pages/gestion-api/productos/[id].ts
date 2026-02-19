@@ -47,3 +47,37 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     );
   }
 };
+
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  if (!locals.user?.isAdmin) {
+    return new Response(JSON.stringify({ error: "No autorizado" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const id = params.id;
+  if (!id) {
+    return new Response(JSON.stringify({ error: "ID requerido" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    await directusAdmin(`/items/productos/${id}`, {
+      method: "DELETE",
+    });
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    console.error("[api/admin/productos/delete]", err);
+    return new Response(
+      JSON.stringify({ error: err.message || "Error al eliminar producto" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+};

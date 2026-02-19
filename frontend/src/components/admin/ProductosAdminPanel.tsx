@@ -88,6 +88,8 @@ export default function ProductosAdminPanel({
   const [importStep, setImportStep] = useState<"drop" | "map" | "preview" | "done">("drop");
   const [importResults, setImportResults] = useState<{ ok: number; err: number; errors: string[] }>({ ok: 0, err: 0, errors: [] });
   const [importing, setImporting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function showMsg(type: "ok" | "err", text: string) {
@@ -161,6 +163,28 @@ export default function ProductosAdminPanel({
       showMsg("err", "Error al cambiar estado");
     } finally {
       setSavingId(null);
+    }
+  }
+
+  // ─── Delete product ───
+  async function deleteProduct(p: Producto) {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/gestion-api/productos/${p.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Error al eliminar");
+      }
+      setProductos((prev) => prev.filter((x) => x.id !== p.id));
+      setSelectedProduct(null);
+      setDeleteConfirm(null);
+      showMsg("ok", `Producto "${p.nombre}" eliminado`);
+    } catch (err: any) {
+      showMsg("err", err.message || "Error al eliminar producto");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -311,6 +335,7 @@ export default function ProductosAdminPanel({
           </button>
           <a
             href="/gestion/productos/nuevo"
+            onClick={(e) => { e.preventDefault(); window.location.href = "/gestion/productos/nuevo"; }}
             className="flex items-center gap-2 px-4 py-2 bg-action text-white rounded-lg text-sm font-medium hover:bg-action-hover transition-colors"
           >
             <span className="material-icons text-base">add</span>
@@ -578,6 +603,7 @@ export default function ProductosAdminPanel({
                 <a
                   key={s}
                   href={s ? `/gestion/productos?status=${s}` : "/gestion/productos"}
+                  onClick={(e) => { e.preventDefault(); window.location.href = s ? `/gestion/productos?status=${s}` : "/gestion/productos"; }}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
                     statusFilter === s ? "bg-action text-white border-action" : "bg-white text-navy border-border hover:border-action"
                   }`}
@@ -651,10 +677,12 @@ export default function ProductosAdminPanel({
                       <div className="flex gap-2">
                         {page > 1 && (
                           <a href={`/gestion/productos?page=${page - 1}${statusFilter ? `&status=${statusFilter}` : ""}`}
+                             onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/productos?page=${page - 1}${statusFilter ? `&status=${statusFilter}` : ""}`; }}
                              className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">← Anterior</a>
                         )}
                         {page < totalPages && (
                           <a href={`/gestion/productos?page=${page + 1}${statusFilter ? `&status=${statusFilter}` : ""}`}
+                             onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/productos?page=${page + 1}${statusFilter ? `&status=${statusFilter}` : ""}`; }}
                              className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">Siguiente →</a>
                         )}
                       </div>
@@ -791,6 +819,40 @@ export default function ProductosAdminPanel({
                       >
                         {selectedProduct.status === "published" ? "Despublicar" : "Publicar"}
                       </button>
+                    </div>
+
+                    {/* Delete section */}
+                    <div className="pt-3 border-t border-border">
+                      {deleteConfirm === selectedProduct.id ? (
+                        <div className="space-y-2">
+                          <p className="text-xs text-red-700 font-medium">
+                            Se eliminara permanentemente este producto. Esta accion no se puede deshacer.
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => deleteProduct(selectedProduct)}
+                              disabled={deleting}
+                              className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              {deleting ? "Eliminando..." : "Confirmar eliminacion"}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              className="px-3 py-2 border border-border text-navy rounded-lg text-xs hover:bg-bg-light transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setDeleteConfirm(selectedProduct.id)}
+                          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium transition-colors"
+                        >
+                          <span className="material-icons text-sm">delete_outline</span>
+                          Eliminar producto
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

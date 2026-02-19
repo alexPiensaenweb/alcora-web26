@@ -149,8 +149,13 @@ export default function NuevoProductoForm({ categorias, marcas }: Props) {
           <h1 className="text-2xl font-bold text-navy">Nuevo producto</h1>
           <p className="text-text-muted text-sm mt-1">Crea un nuevo producto en el catálogo</p>
         </div>
-        <a href="/gestion/productos" className="text-text-muted hover:text-navy text-sm">
-          ← Volver a productos
+        <a
+          href="/gestion/productos"
+          onClick={(e) => { e.preventDefault(); window.location.href = "/gestion/productos"; }}
+          className="inline-flex items-center gap-1 text-text-muted hover:text-action text-sm transition-colors"
+        >
+          <span className="material-icons text-base">arrow_back</span>
+          Volver a productos
         </a>
       </div>
 
@@ -334,6 +339,7 @@ export default function NuevoProductoForm({ categorias, marcas }: Props) {
               </button>
               <a
                 href="/gestion/productos"
+                onClick={(e) => { e.preventDefault(); window.location.href = "/gestion/productos"; }}
                 className="px-6 py-2.5 border border-border text-navy rounded-lg text-sm font-medium hover:border-action hover:text-action transition-colors"
               >
                 Cancelar

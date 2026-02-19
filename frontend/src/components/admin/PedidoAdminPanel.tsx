@@ -117,7 +117,16 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      {/* Back + Header */}
+      <a
+        href="/gestion/pedidos"
+        onClick={(e) => { e.preventDefault(); window.location.href = "/gestion/pedidos"; }}
+        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-action transition-colors"
+      >
+        <span className="material-icons text-base">arrow_back</span>
+        Volver a pedidos
+      </a>
+
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-navy">Pedido #{pedido.id}</h1>
@@ -305,6 +314,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
                 <div className="pt-2 border-t border-border">
                   <a
                     href={`/gestion/usuarios?email=${encodeURIComponent(pedido.user_created.email)}`}
+                    onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/usuarios?email=${encodeURIComponent(pedido.user_created.email)}`; }}
                     className="text-xs text-action hover:underline"
                   >
                     Ver perfil de usuario →
