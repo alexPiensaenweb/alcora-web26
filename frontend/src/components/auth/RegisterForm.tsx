@@ -13,21 +13,21 @@ const TIPO_NEGOCIO_OPTIONS = [
   { value: "", label: "Seleccione tipo de negocio..." },
   { value: "control_plagas", label: "Control de plagas" },
   { value: "limpieza", label: "Limpieza profesional" },
-  { value: "horeca", label: "Hosteleria / HORECA" },
+  { value: "horeca", label: "Hostelería / HORECA" },
   { value: "sanidad", label: "Sanidad / Hospital" },
   { value: "alimentaria", label: "Industria alimentaria" },
-  { value: "ambiental", label: "Gestion ambiental" },
-  { value: "distribucion", label: "Distribucion" },
+  { value: "ambiental", label: "Gestión ambiental" },
+  { value: "distribucion", label: "Distribución" },
   { value: "otro", label: "Otro" },
 ];
 
 const PROVINCIAS = [
-  "Alava", "Albacete", "Alicante", "Almeria", "Asturias", "Avila",
-  "Badajoz", "Barcelona", "Burgos", "Caceres", "Cadiz", "Cantabria",
-  "Castellon", "Ciudad Real", "Cordoba", "Cuenca", "Gerona", "Granada",
-  "Guadalajara", "Guipuzcoa", "Huelva", "Huesca", "Islas Baleares",
-  "Jaen", "La Coruna", "La Rioja", "Las Palmas", "Leon", "Lerida",
-  "Lugo", "Madrid", "Malaga", "Murcia", "Navarra", "Orense", "Palencia",
+  "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila",
+  "Badajoz", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria",
+  "Castellón", "Ciudad Real", "Córdoba", "Cuenca", "Gerona", "Granada",
+  "Guadalajara", "Guipúzcoa", "Huelva", "Huesca", "Islas Baleares",
+  "Jaén", "La Coruña", "La Rioja", "Las Palmas", "León", "Lérida",
+  "Lugo", "Madrid", "Málaga", "Murcia", "Navarra", "Orense", "Palencia",
   "Pontevedra", "Salamanca", "Santa Cruz de Tenerife", "Segovia",
   "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia",
   "Valladolid", "Vizcaya", "Zamora", "Zaragoza", "Ceuta", "Melilla",
@@ -43,34 +43,34 @@ function validateField(name: string, value: string, form?: any): string {
       return value.trim() ? "" : "Los apellidos son obligatorios";
     case "email": {
       if (!value.trim()) return "El email es obligatorio";
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Formato de email no valido";
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Formato de email no válido";
     }
     case "password": {
-      if (!value) return "La contrasena es obligatoria";
-      if (value.length < 8) return "Minimo 8 caracteres";
-      if (!/[A-Z]/.test(value)) return "Debe incluir al menos una mayuscula";
-      if (!/[a-z]/.test(value)) return "Debe incluir al menos una minuscula";
-      if (!/[0-9]/.test(value)) return "Debe incluir al menos un numero";
+      if (!value) return "La contraseña es obligatoria";
+      if (value.length < 8) return "Mínimo 8 caracteres";
+      if (!/[A-Z]/.test(value)) return "Debe incluir al menos una mayúscula";
+      if (!/[a-z]/.test(value)) return "Debe incluir al menos una minúscula";
+      if (!/[0-9]/.test(value)) return "Debe incluir al menos un número";
       return "";
     }
     case "password_confirm":
-      return value === form?.password ? "" : "Las contrasenas no coinciden";
+      return value === form?.password ? "" : "Las contraseñas no coinciden";
     case "razon_social":
-      return value.trim() ? "" : "La razon social es obligatoria";
+      return value.trim() ? "" : "La razón social es obligatoria";
     case "cif_nif": {
       if (!value.trim()) return "El CIF/NIF es obligatorio";
       return /^[A-Za-z]\d{7,8}[A-Za-z0-9]?$|^\d{8}[A-Za-z]$/.test(value.trim())
-        ? "" : "Formato no valido (ej: B12345678 o 12345678A)";
+        ? "" : "Formato no válido (ej: B12345678 o 12345678A)";
     }
     case "telefono":
-      return value.trim() ? "" : "El telefono es obligatorio";
+      return value.trim() ? "" : "El teléfono es obligatorio";
     case "tipo_negocio":
       return value ? "" : "Seleccione el tipo de negocio";
     case "direccion_facturacion":
-      return value.trim() ? "" : "La direccion es obligatoria";
+      return value.trim() ? "" : "La dirección es obligatoria";
     case "codigo_postal": {
-      if (!value.trim()) return "El codigo postal es obligatorio";
-      return /^\d{5}$/.test(value.trim()) ? "" : "Debe tener 5 digitos";
+      if (!value.trim()) return "El código postal es obligatorio";
+      return /^\d{5}$/.test(value.trim()) ? "" : "Debe tener 5 dígitos";
     }
     case "ciudad":
       return value.trim() ? "" : "La ciudad es obligatoria";
@@ -162,7 +162,7 @@ export default function RegisterForm() {
     }
 
     if (!form.acepta_proteccion_datos) {
-      setSubmitError("Debe aceptar la politica de proteccion de datos");
+      setSubmitError("Debe aceptar la política de protección de datos");
       return;
     }
 
@@ -180,7 +180,7 @@ export default function RegisterForm() {
       }
       setSuccess(true);
     } catch {
-      setSubmitError("Error de conexion. Intentelo de nuevo.");
+      setSubmitError("Error de conexión. Inténtelo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -196,9 +196,9 @@ export default function RegisterForm() {
         </div>
         <h3 className="text-xl font-bold text-green-800 mb-3">Solicitud enviada correctamente</h3>
         <p className="text-sm text-green-700 max-w-md mx-auto leading-relaxed">
-          Hemos recibido su solicitud de registro. Nuestro equipo revisara su informacion
-          y activara su cuenta en las proximas horas habiles. Recibira un email cuando su
-          cuenta este activa.
+          Hemos recibido su solicitud de registro. Nuestro equipo revisará su información
+          y activará su cuenta en las próximas horas hábiles. Recibirá un email cuando su
+          cuenta esté activa.
         </p>
         <a href="/" className="inline-block mt-6 bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
           Volver al inicio
@@ -309,7 +309,7 @@ export default function RegisterForm() {
         </div>
         <div className="space-y-4 pl-11">
           <div>
-            <label className={labelClass}>Razon Social / Empresa *</label>
+            <label className={labelClass}>Razón Social / Empresa *</label>
             <input
               type="text" value={form.razon_social}
               onChange={(e) => updateField("razon_social", e.target.value)}
@@ -333,7 +333,7 @@ export default function RegisterForm() {
             <FieldOk name="cif_nif" value={form.cif_nif} />
           </div>
           <div>
-            <label className={labelClass}>Telefono *</label>
+            <label className={labelClass}>Teléfono *</label>
             <input
               type="tel" value={form.telefono}
               onChange={(e) => updateField("telefono", e.target.value)}
@@ -370,15 +370,15 @@ export default function RegisterForm() {
         </div>
       </section>
 
-      {/* 3. Direccion */}
+      {/* 3. Dirección */}
       <section>
         <div className="flex items-center gap-3 mb-4">
           <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
-          <h3 className="text-base font-semibold text-[var(--color-navy)]">Direccion</h3>
+          <h3 className="text-base font-semibold text-[var(--color-navy)]">Dirección</h3>
         </div>
         <div className="space-y-4 pl-11">
           <div>
-            <label className={labelClass}>Calle, numero, piso *</label>
+            <label className={labelClass}>Calle, número, piso *</label>
             <input
               type="text" value={form.direccion_facturacion}
               onChange={(e) => updateField("direccion_facturacion", e.target.value)}
@@ -390,7 +390,7 @@ export default function RegisterForm() {
             <FieldOk name="direccion_facturacion" value={form.direccion_facturacion} />
           </div>
           <div>
-            <label className={labelClass}>Codigo postal *</label>
+            <label className={labelClass}>Código postal *</label>
             <input
               type="text" value={form.codigo_postal}
               onChange={(e) => updateField("codigo_postal", e.target.value)}
@@ -431,21 +431,21 @@ export default function RegisterForm() {
         </div>
       </section>
 
-      {/* 4. Contrasena */}
+      {/* 4. Contraseña */}
       <section>
         <div className="flex items-center gap-3 mb-4">
           <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">4</span>
-          <h3 className="text-base font-semibold text-[var(--color-navy)]">Contrasena de acceso</h3>
+          <h3 className="text-base font-semibold text-[var(--color-navy)]">Contraseña de acceso</h3>
         </div>
         <div className="space-y-4 pl-11">
           <div>
-            <label className={labelClass}>Contrasena *</label>
+            <label className={labelClass}>Contraseña *</label>
             <input
               type="password" value={form.password}
               onChange={(e) => updateField("password", e.target.value)}
               onBlur={(e) => handleBlur("password", e.target.value)}
               className={fieldClass("password", form.password)}
-              placeholder="Crea tu contrasena"
+              placeholder="Crea tu contraseña"
             />
             {/* Requisitos visuales - se muestran en cuanto hay algo escrito */}
             {form.password.length > 0 && (
@@ -473,13 +473,13 @@ export default function RegisterForm() {
             )}
           </div>
           <div>
-            <label className={labelClass}>Confirmar contrasena *</label>
+            <label className={labelClass}>Confirmar contraseña *</label>
             <input
               type="password" value={form.password_confirm}
               onChange={(e) => updateField("password_confirm", e.target.value)}
               onBlur={(e) => handleBlur("password_confirm", e.target.value)}
               className={fieldClass("password_confirm", form.password_confirm)}
-              placeholder="Repite la contrasena"
+              placeholder="Repite la contraseña"
             />
             <FieldError name="password_confirm" />
             {form.password_confirm.length > 0 && !fieldErrors["password_confirm"] && form.password === form.password_confirm && (
@@ -487,7 +487,7 @@ export default function RegisterForm() {
                 <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Las contrasenas coinciden
+                Las contraseñas coinciden
               </p>
             )}
           </div>
@@ -504,9 +504,9 @@ export default function RegisterForm() {
             className="mt-0.5 rounded border-[var(--color-border)]"
           />
           <span>
-            He leido y acepto la{" "}
+            He leído y acepto la{" "}
             <a href="/politica-privacidad" target="_blank" className="text-[var(--color-action)] hover:underline font-medium">
-              Politica de Proteccion de Datos
+              Política de Protección de Datos
             </a>{" "}*
           </span>
         </label>
@@ -518,13 +518,13 @@ export default function RegisterForm() {
             onChange={(e) => updateField("acepta_comunicaciones", e.target.checked)}
             className="mt-0.5 rounded border-[var(--color-border)]"
           />
-          <span>Deseo recibir noticias e informacion comercial de Alcora Salud Ambiental</span>
+          <span>Deseo recibir noticias e información comercial de Alcora Salud Ambiental</span>
         </label>
 
         <p className="text-xs text-[var(--color-text-muted)] leading-relaxed px-3">
-          Los datos facilitados seran tratados por Alcora Salud Ambiental S.L. para gestionar
+          Los datos facilitados serán tratados por Alcora Salud Ambiental S.L. para gestionar
           su solicitud de registro como cliente profesional. Puede ejercer sus derechos de acceso,
-          rectificacion o supresion dirigiendose a{" "}
+          rectificación o supresión dirigiéndose a{" "}
           <a href="mailto:central@alcora.es" className="text-[var(--color-action)]">central@alcora.es</a>.
         </p>
       </div>
@@ -556,7 +556,7 @@ export default function RegisterForm() {
       </button>
 
       <p className="text-center text-sm text-[var(--color-text-muted)]">
-        Ya tiene cuenta?{" "}
+        ¿Ya tiene cuenta?{" "}
         <a href="/login" className="text-[var(--color-action)] hover:underline font-medium">Acceder</a>
       </p>
     </form>

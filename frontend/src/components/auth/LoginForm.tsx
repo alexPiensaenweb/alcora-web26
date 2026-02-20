@@ -38,7 +38,7 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Error al iniciar sesion");
+        setError(data.error || "Error al iniciar sesión");
         return;
       }
 
@@ -59,7 +59,7 @@ export default function LoginForm() {
           : "/catalogo";
       window.location.href = safeRedirect;
     } catch {
-      setError("Error de conexion. Intentelo de nuevo.");
+      setError("Error de conexión. Inténtelo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function LoginForm() {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-[var(--color-navy)] mb-1">
-          Contrasena
+          Contraseña
         </label>
         <input
           id="password"
@@ -122,7 +122,7 @@ export default function LoginForm() {
       </button>
 
       <p className="text-center text-sm text-[var(--color-text-muted)]">
-        No tiene cuenta?{" "}
+        ¿No tiene cuenta?{" "}
         <a href="/registro" className="text-[var(--color-action)] hover:underline font-medium">
           Solicitar acceso
         </a>

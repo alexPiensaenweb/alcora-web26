@@ -91,7 +91,7 @@ const collectionSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
   name: `Productos ${marca.nombre} - Alcora Salud Ambiental`,
-  description: `Catalogo de productos profesionales ${marca.nombre} para control de plagas, desinfeccion e higiene ambiental. Distribuidor oficial.`,
+  description: `Catálogo de productos profesionales ${marca.nombre} para control de plagas, desinfección e higiene ambiental. Distribuidor oficial.`,
   url: `${siteUrl}/marca/${marca.slug}`,
   numberOfItems: totalProducts,
   provider: {
@@ -115,7 +115,7 @@ const breadcrumbSchema = {
 
 <CatalogLayout
   title={`${marca.nombre} - Productos profesionales | Tienda Alcora`}
-  description={`Catalogo completo de productos ${marca.nombre} para profesionales del control de plagas, desinfeccion e higiene ambiental. ${totalProducts} productos disponibles. Distribuidor oficial.`}
+  description={`Catálogo completo de productos ${marca.nombre} para profesionales del control de plagas, desinfección e higiene ambiental. ${totalProducts} productos disponibles. Distribuidor oficial.`}
   breadcrumbs={[
     { label: "Marcas", href: "/marcas" },
     { label: marca.nombre },
