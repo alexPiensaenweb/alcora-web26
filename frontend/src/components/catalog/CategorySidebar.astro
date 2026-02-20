@@ -72,23 +72,23 @@ let itemsToShow: Categoria[];
 let backLink: { label: string; href: string } | null = null;
 
 if (isCatalogRoot) {
-  sidebarTitle = "Categorias";
+  sidebarTitle = "Categorías";
   itemsToShow = topLevel;
 } else if (hasChildren) {
   // Current category has subcategories → show them
-  sidebarTitle = `Subcategorias de ${formatCategoryName(currentCategory!.nombre)}`;
+  sidebarTitle = `Subcategorías de${formatCategoryName(currentCategory!.nombre)}`;
   itemsToShow = childCategories;
   backLink = parentCategory
     ? { label: `← ${formatCategoryName(parentCategory.nombre)}`, href: `/categoria/${parentCategory.slug}` }
-    : { label: "← Todas las categorias", href: "/catalogo" };
+    : { label: "← Todas las categorías", href: "/catalogo" };
 } else if (hasSiblings && parentCategory) {
   // No subcategories but has siblings → show sibling categories
   sidebarTitle = formatCategoryName(parentCategory.nombre);
   itemsToShow = siblingCategories;
-  backLink = { label: "← Todas las categorias", href: "/catalogo" };
+  backLink = { label: "← Todas las categorías", href: "/catalogo" };
 } else {
   // Top-level category with no children → show all top-level
-  sidebarTitle = "Categorias";
+  sidebarTitle = "Categorías";
   itemsToShow = topLevel;
 }
 ---
@@ -121,7 +121,7 @@ if (isCatalogRoot) {
     </ul>
   ) : (
     <div class="px-4 py-3 text-sm text-text-muted">
-      No hay categorias disponibles.
+      No hay categorías disponibles.
     </div>
   )}
   {backLink && (
@@ -134,7 +134,7 @@ if (isCatalogRoot) {
   {!isCatalogRoot && !backLink && (
     <div class="px-4 py-3 border-t border-border bg-white">
       <a href="/catalogo" class="text-sm text-action hover:underline">
-        Ver categorias principales
+        Ver categorías principales
       </a>
     </div>
   )}
