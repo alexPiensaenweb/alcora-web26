@@ -13,10 +13,11 @@ echo "========================================="
 echo " Tienda Alcora - Deploy to Production"
 echo "========================================="
 
-# Step 1: Build locally with production env vars
+# Step 1: Clean build locally with production env vars
 echo ""
-echo "[1/5] Building Astro frontend..."
+echo "[1/5] Building Astro frontend (clean)..."
 cd frontend
+rm -rf dist .astro
 npm run build
 cd ..
 
