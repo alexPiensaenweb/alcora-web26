@@ -20,15 +20,19 @@ if (!product) {
 
 const user = Astro.locals.user;
 const token = Astro.locals.token;
-let finalPrice: number | null = null;
 let descuento = 0;
 
+// Always show price (precio_base). Apply B2B discount if user has tarifas.
+let finalPrice: number = product.precio_base;
 if (user?.grupo_cliente && token) {
   const tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
   const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
   descuento = resolveDiscount(tarifas, product.id, categoriaId);
   finalPrice = calculatePrice(product.precio_base, descuento);
 }
+
+// Can add to cart only if logged in
+const canAddToCart = !!user;
 
 const imageUrl = getAssetUrl(product.imagen_principal, { width: 600, height: 600 });
 const categoria = product.categoria as Categoria | null;
@@ -239,39 +243,28 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
           </p>
         )}
 
-        {/* Price */}
+        {/* Price - always visible */}
         <div class="border-t border-b border-border py-4 my-4">
-          {finalPrice !== null ? (
-            <div>
-              {descuento > 0 && (
-                <p class="text-sm text-text-muted line-through">
-                  PVP: {formatCurrency(product.precio_base)}
-                </p>
-              )}
-              <p class="text-3xl font-bold text-action">
-                {formatCurrency(finalPrice)}
+          <div>
+            {descuento > 0 && (
+              <p class="text-sm text-text-muted line-through">
+                PVP: {formatCurrency(product.precio_base)}
               </p>
-              {descuento > 0 && (
-                <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
-                  -{descuento}% dto. {user?.grupo_cliente}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div class="bg-bg-accent p-4 rounded-lg">
-              <p class="text-sm text-navy font-medium">
-                <a href="/login" class="text-action hover:underline">Acceda a su cuenta</a>
-                {" "}para ver precios y realizar pedidos.
-              </p>
-              <p class="text-xs text-text-muted mt-1">
-                No tiene cuenta? <a href="/registro" class="text-action hover:underline">Solicite acceso</a>
-              </p>
-            </div>
-          )}
+            )}
+            <p class="text-3xl font-bold text-action">
+              {formatCurrency(finalPrice)}
+            </p>
+            {descuento > 0 && (
+              <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                -{descuento}% dto. {user?.grupo_cliente}
+              </span>
+            )}
+            <p class="text-xs text-text-muted mt-1">Precio sin IVA</p>
+          </div>
         </div>
 
-        {/* Add to cart - only if logged in with price */}
-        {finalPrice !== null && (
+        {/* Add to cart - only if logged in */}
+        {canAddToCart ? (
           <div class="mb-6" id="add-to-cart-section"
             data-product-id={product.id}
             data-product-name={product.nombre}
@@ -294,6 +287,16 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
                 Anadir al carrito
               </button>
             </div>
+          </div>
+        ) : (
+          <div class="mb-6 bg-bg-accent p-4 rounded-lg">
+            <p class="text-sm text-navy font-medium">
+              <a href="/login" class="text-action hover:underline">Inicie sesion</a>
+              {" "}para anadir productos al carrito.
+            </p>
+            <p class="text-xs text-text-muted mt-1">
+              No tiene cuenta? <a href="/registro" class="text-action hover:underline">Registrese aqui</a>
+            </p>
           </div>
         )}
 

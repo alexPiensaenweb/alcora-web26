@@ -5,7 +5,7 @@ import type { Producto } from "../../lib/types";
 
 interface Props {
   product: Producto;
-  price?: number | null; // Calculated price (null = not logged in)
+  price?: number | null; // Calculated price (always available now)
 }
 
 const { product, price } = Astro.props;
@@ -49,13 +49,11 @@ const imageUrl = getAssetUrl(product.imagen_principal, {
         <p class="text-xs text-text-muted mb-2">{product.formato}</p>
       )}
 
-      {/* Price */}
+      {/* Price - always visible */}
       {price !== undefined && price !== null ? (
         <p class="text-lg font-bold text-action">{formatCurrency(price)}</p>
       ) : (
-        <p class="text-xs text-text-muted italic">
-          <a href="/login" class="text-action hover:underline">Acceda</a> para ver precios
-        </p>
+        <p class="text-sm text-text-muted">Consultar precio</p>
       )}
     </div>
   </a>

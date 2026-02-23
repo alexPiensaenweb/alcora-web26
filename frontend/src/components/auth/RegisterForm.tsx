@@ -13,29 +13,32 @@ const TIPO_NEGOCIO_OPTIONS = [
   { value: "", label: "Seleccione tipo de negocio..." },
   { value: "control_plagas", label: "Control de plagas" },
   { value: "limpieza", label: "Limpieza profesional" },
-  { value: "horeca", label: "Hostelería / HORECA" },
+  { value: "horeca", label: "Hosteleria / HORECA" },
   { value: "sanidad", label: "Sanidad / Hospital" },
   { value: "alimentaria", label: "Industria alimentaria" },
-  { value: "ambiental", label: "Gestión ambiental" },
-  { value: "distribucion", label: "Distribución" },
+  { value: "ambiental", label: "Gestion ambiental" },
+  { value: "distribucion", label: "Distribucion" },
   { value: "otro", label: "Otro" },
 ];
 
 const PROVINCIAS = [
-  "Álava", "Albacete", "Alicante", "Almería", "Asturias", "Ávila",
-  "Badajoz", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria",
-  "Castellón", "Ciudad Real", "Córdoba", "Cuenca", "Gerona", "Granada",
-  "Guadalajara", "Guipúzcoa", "Huelva", "Huesca", "Islas Baleares",
-  "Jaén", "La Coruña", "La Rioja", "Las Palmas", "León", "Lérida",
-  "Lugo", "Madrid", "Málaga", "Murcia", "Navarra", "Orense", "Palencia",
+  "Alava", "Albacete", "Alicante", "Almeria", "Asturias", "Avila",
+  "Badajoz", "Barcelona", "Burgos", "Caceres", "Cadiz", "Cantabria",
+  "Castellon", "Ciudad Real", "Cordoba", "Cuenca", "Gerona", "Granada",
+  "Guadalajara", "Guipuzcoa", "Huelva", "Huesca", "Islas Baleares",
+  "Jaen", "La Coruna", "La Rioja", "Las Palmas", "Leon", "Lerida",
+  "Lugo", "Madrid", "Malaga", "Murcia", "Navarra", "Orense", "Palencia",
   "Pontevedra", "Salamanca", "Santa Cruz de Tenerife", "Segovia",
   "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia",
   "Valladolid", "Vizcaya", "Zamora", "Zaragoza", "Ceuta", "Melilla",
 ];
 
+type TipoUsuario = "particular" | "empresa";
 type FieldErrors = Partial<Record<string, string>>;
 
-function validateField(name: string, value: string, form?: any): string {
+function validateField(name: string, value: string, form?: any, tipoUsuario?: TipoUsuario): string {
+  const isB2C = tipoUsuario === "particular";
+
   switch (name) {
     case "first_name":
       return value.trim() ? "" : "El nombre es obligatorio";
@@ -43,34 +46,37 @@ function validateField(name: string, value: string, form?: any): string {
       return value.trim() ? "" : "Los apellidos son obligatorios";
     case "email": {
       if (!value.trim()) return "El email es obligatorio";
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Formato de email no válido";
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Formato de email no valido";
     }
     case "password": {
-      if (!value) return "La contraseña es obligatoria";
-      if (value.length < 8) return "Mínimo 8 caracteres";
-      if (!/[A-Z]/.test(value)) return "Debe incluir al menos una mayúscula";
-      if (!/[a-z]/.test(value)) return "Debe incluir al menos una minúscula";
-      if (!/[0-9]/.test(value)) return "Debe incluir al menos un número";
+      if (!value) return "La contrasena es obligatoria";
+      if (value.length < 8) return "Minimo 8 caracteres";
+      if (!/[A-Z]/.test(value)) return "Debe incluir al menos una mayuscula";
+      if (!/[a-z]/.test(value)) return "Debe incluir al menos una minuscula";
+      if (!/[0-9]/.test(value)) return "Debe incluir al menos un numero";
       return "";
     }
     case "password_confirm":
-      return value === form?.password ? "" : "Las contraseñas no coinciden";
+      return value === form?.password ? "" : "Las contrasenas no coinciden";
+    // B2B-only fields
     case "razon_social":
-      return value.trim() ? "" : "La razón social es obligatoria";
+      return isB2C ? "" : (value.trim() ? "" : "La razon social es obligatoria");
     case "cif_nif": {
+      if (isB2C) return "";
       if (!value.trim()) return "El CIF/NIF es obligatorio";
       return /^[A-Za-z]\d{7,8}[A-Za-z0-9]?$|^\d{8}[A-Za-z]$/.test(value.trim())
-        ? "" : "Formato no válido (ej: B12345678 o 12345678A)";
+        ? "" : "Formato no valido (ej: B12345678 o 12345678A)";
     }
     case "telefono":
-      return value.trim() ? "" : "El teléfono es obligatorio";
+      return isB2C ? "" : (value.trim() ? "" : "El telefono es obligatorio");
     case "tipo_negocio":
-      return value ? "" : "Seleccione el tipo de negocio";
+      return isB2C ? "" : (value ? "" : "Seleccione el tipo de negocio");
+    // Shared fields
     case "direccion_facturacion":
-      return value.trim() ? "" : "La dirección es obligatoria";
+      return value.trim() ? "" : "La direccion es obligatoria";
     case "codigo_postal": {
-      if (!value.trim()) return "El código postal es obligatorio";
-      return /^\d{5}$/.test(value.trim()) ? "" : "Debe tener 5 dígitos";
+      if (!value.trim()) return "El codigo postal es obligatorio";
+      return /^\d{5}$/.test(value.trim()) ? "" : "Debe tener 5 digitos";
     }
     case "ciudad":
       return value.trim() ? "" : "La ciudad es obligatoria";
@@ -84,6 +90,8 @@ function validateField(name: string, value: string, form?: any): string {
 export default function RegisterForm() {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => { setIsClient(true); }, []);
+
+  const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario>("particular");
 
   const [form, setForm] = useState({
     first_name: "",
@@ -108,8 +116,24 @@ export default function RegisterForm() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [autoActivated, setAutoActivated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+
+  // Clear B2B errors when switching to B2C
+  useEffect(() => {
+    if (tipoUsuario === "particular") {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next.razon_social;
+        delete next.cif_nif;
+        delete next.telefono;
+        delete next.tipo_negocio;
+        return next;
+      });
+    }
+  }, [tipoUsuario]);
 
   function updateField(field: string, value: string | boolean) {
     const newForm = { ...form, [field]: value };
@@ -117,14 +141,13 @@ export default function RegisterForm() {
     if (touched[field] && typeof value === "string") {
       setFieldErrors((prev) => ({
         ...prev,
-        [field]: validateField(field, value, newForm),
+        [field]: validateField(field, value, newForm, tipoUsuario),
       }));
     }
-    // Re-validate confirm password when password changes
     if (field === "password" && touched["password_confirm"]) {
       setFieldErrors((prev) => ({
         ...prev,
-        password_confirm: validateField("password_confirm", newForm.password_confirm, newForm),
+        password_confirm: validateField("password_confirm", newForm.password_confirm, newForm, tipoUsuario),
       }));
     }
   }
@@ -133,7 +156,7 @@ export default function RegisterForm() {
     setTouched((prev) => ({ ...prev, [field]: true }));
     setFieldErrors((prev) => ({
       ...prev,
-      [field]: validateField(field, value, form),
+      [field]: validateField(field, value, form, tipoUsuario),
     }));
   }
 
@@ -141,16 +164,23 @@ export default function RegisterForm() {
     e.preventDefault();
     setSubmitError("");
 
-    // Validate all required fields
-    const requiredFields = [
+    const isB2C = tipoUsuario === "particular";
+
+    // Required fields based on user type
+    const sharedRequired = [
       "first_name", "last_name", "email", "password", "password_confirm",
-      "razon_social", "cif_nif", "telefono", "tipo_negocio",
       "direccion_facturacion", "codigo_postal", "ciudad", "provincia",
     ];
+    const b2bRequired = [
+      ...sharedRequired,
+      "razon_social", "cif_nif", "telefono", "tipo_negocio",
+    ];
+    const requiredFields = isB2C ? sharedRequired : b2bRequired;
+
     const newErrors: FieldErrors = {};
     let hasErrors = false;
     for (const field of requiredFields) {
-      const err = validateField(field, (form as any)[field], form);
+      const err = validateField(field, (form as any)[field], form, tipoUsuario);
       if (err) { newErrors[field] = err; hasErrors = true; }
     }
     setFieldErrors(newErrors);
@@ -162,7 +192,7 @@ export default function RegisterForm() {
     }
 
     if (!form.acepta_proteccion_datos) {
-      setSubmitError("Debe aceptar la política de protección de datos");
+      setSubmitError("Debe aceptar la politica de proteccion de datos");
       return;
     }
 
@@ -171,7 +201,7 @@ export default function RegisterForm() {
       const res = await fetch("/cuenta-api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, turnstileToken }),
+        body: JSON.stringify({ ...form, tipo_usuario: tipoUsuario, turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -179,14 +209,36 @@ export default function RegisterForm() {
         return;
       }
       setSuccess(true);
+      setSuccessMessage(data.message || "");
+      setAutoActivated(data.autoActivated === true);
     } catch {
-      setSubmitError("Error de conexión. Inténtelo de nuevo.");
+      setSubmitError("Error de conexion. Intentelo de nuevo.");
     } finally {
       setLoading(false);
     }
   }
 
   if (success) {
+    if (autoActivated) {
+      // B2C: auto-activated, can login immediately
+      return (
+        <div className="text-center p-8 sm:p-12 bg-green-50 border border-green-200 rounded-xl">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-green-800 mb-3">Cuenta creada correctamente</h3>
+          <p className="text-sm text-green-700 max-w-md mx-auto leading-relaxed">
+            {successMessage || "Su cuenta ya esta activa. Puede acceder para empezar a comprar."}
+          </p>
+          <a href="/login" className="inline-block mt-6 bg-[var(--color-action)] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors">
+            Acceder a mi cuenta
+          </a>
+        </div>
+      );
+    }
+    // B2B: pending approval
     return (
       <div className="text-center p-8 sm:p-12 bg-green-50 border border-green-200 rounded-xl">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
@@ -196,9 +248,7 @@ export default function RegisterForm() {
         </div>
         <h3 className="text-xl font-bold text-green-800 mb-3">Solicitud enviada correctamente</h3>
         <p className="text-sm text-green-700 max-w-md mx-auto leading-relaxed">
-          Hemos recibido su solicitud de registro. Nuestro equipo revisará su información
-          y activará su cuenta en las próximas horas hábiles. Recibirá un email cuando su
-          cuenta esté activa.
+          {successMessage || "Hemos recibido su solicitud de registro. Nuestro equipo revisara su informacion y activara su cuenta en las proximas horas habiles. Recibira un email cuando su cuenta este activa."}
         </p>
         <a href="/" className="inline-block mt-6 bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
           Volver al inicio
@@ -244,6 +294,12 @@ export default function RegisterForm() {
     );
   }
 
+  const isB2C = tipoUsuario === "particular";
+  // Section numbering adjusts based on user type
+  const sectionEmpresa = isB2C ? null : 2;
+  const sectionDireccion = isB2C ? 2 : 3;
+  const sectionPassword = isB2C ? 3 : 4;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-xl mx-auto">
       {submitError && (
@@ -253,6 +309,50 @@ export default function RegisterForm() {
           </svg>
           {submitError}
         </div>
+      )}
+
+      {/* User type selector */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => setTipoUsuario("particular")}
+          className={`p-4 rounded-xl border-2 text-left transition-all ${
+            isB2C
+              ? "border-[var(--color-action)] bg-[var(--color-action)]/5 ring-2 ring-[var(--color-action)]/20"
+              : "border-[var(--color-border)] hover:border-[var(--color-action)]/40"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <svg className={`w-5 h-5 ${isB2C ? "text-[var(--color-action)]" : "text-[var(--color-text-muted)]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className={`font-semibold text-sm ${isB2C ? "text-[var(--color-action)]" : "text-[var(--color-navy)]"}`}>Particular</span>
+          </div>
+          <p className="text-xs text-[var(--color-text-muted)]">Compras personales</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => setTipoUsuario("empresa")}
+          className={`p-4 rounded-xl border-2 text-left transition-all ${
+            !isB2C
+              ? "border-[var(--color-action)] bg-[var(--color-action)]/5 ring-2 ring-[var(--color-action)]/20"
+              : "border-[var(--color-border)] hover:border-[var(--color-action)]/40"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <svg className={`w-5 h-5 ${!isB2C ? "text-[var(--color-action)]" : "text-[var(--color-text-muted)]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span className={`font-semibold text-sm ${!isB2C ? "text-[var(--color-action)]" : "text-[var(--color-navy)]"}`}>Empresa</span>
+          </div>
+          <p className="text-xs text-[var(--color-text-muted)]">Precios profesionales</p>
+        </button>
+      </div>
+
+      {!isB2C && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+          Las cuentas de empresa requieren aprobacion manual. Activaremos su cuenta en 24-48h habiles.
+        </p>
       )}
 
       {/* 1. Datos personales */}
@@ -287,13 +387,13 @@ export default function RegisterForm() {
             <FieldOk name="last_name" value={form.last_name} />
           </div>
           <div>
-            <label className={labelClass}>Email corporativo *</label>
+            <label className={labelClass}>{isB2C ? "Email *" : "Email corporativo *"}</label>
             <input
               type="email" value={form.email}
               onChange={(e) => updateField("email", e.target.value)}
               onBlur={(e) => handleBlur("email", e.target.value)}
               className={fieldClass("email", form.email)}
-              placeholder="empresa@ejemplo.com"
+              placeholder={isB2C ? "tu@email.com" : "empresa@ejemplo.com"}
             />
             <FieldError name="email" />
             <FieldOk name="email" value={form.email} />
@@ -301,84 +401,86 @@ export default function RegisterForm() {
         </div>
       </section>
 
-      {/* 2. Datos de empresa */}
-      <section>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
-          <h3 className="text-base font-semibold text-[var(--color-navy)]">Datos de empresa</h3>
-        </div>
-        <div className="space-y-4 pl-11">
-          <div>
-            <label className={labelClass}>Razón Social / Empresa *</label>
-            <input
-              type="text" value={form.razon_social}
-              onChange={(e) => updateField("razon_social", e.target.value)}
-              onBlur={(e) => handleBlur("razon_social", e.target.value)}
-              className={fieldClass("razon_social", form.razon_social)}
-              placeholder="Empresa S.L."
-            />
-            <FieldError name="razon_social" />
-            <FieldOk name="razon_social" value={form.razon_social} />
+      {/* 2. Datos de empresa (B2B only) */}
+      {!isB2C && (
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{sectionEmpresa}</span>
+            <h3 className="text-base font-semibold text-[var(--color-navy)]">Datos de empresa</h3>
           </div>
-          <div>
-            <label className={labelClass}>CIF / NIF *</label>
-            <input
-              type="text" value={form.cif_nif}
-              onChange={(e) => updateField("cif_nif", e.target.value)}
-              onBlur={(e) => handleBlur("cif_nif", e.target.value)}
-              className={fieldClass("cif_nif", form.cif_nif)}
-              placeholder="B12345678"
-            />
-            <FieldError name="cif_nif" />
-            <FieldOk name="cif_nif" value={form.cif_nif} />
+          <div className="space-y-4 pl-11">
+            <div>
+              <label className={labelClass}>Razon Social / Empresa *</label>
+              <input
+                type="text" value={form.razon_social}
+                onChange={(e) => updateField("razon_social", e.target.value)}
+                onBlur={(e) => handleBlur("razon_social", e.target.value)}
+                className={fieldClass("razon_social", form.razon_social)}
+                placeholder="Empresa S.L."
+              />
+              <FieldError name="razon_social" />
+              <FieldOk name="razon_social" value={form.razon_social} />
+            </div>
+            <div>
+              <label className={labelClass}>CIF / NIF *</label>
+              <input
+                type="text" value={form.cif_nif}
+                onChange={(e) => updateField("cif_nif", e.target.value)}
+                onBlur={(e) => handleBlur("cif_nif", e.target.value)}
+                className={fieldClass("cif_nif", form.cif_nif)}
+                placeholder="B12345678"
+              />
+              <FieldError name="cif_nif" />
+              <FieldOk name="cif_nif" value={form.cif_nif} />
+            </div>
+            <div>
+              <label className={labelClass}>Telefono *</label>
+              <input
+                type="tel" value={form.telefono}
+                onChange={(e) => updateField("telefono", e.target.value)}
+                onBlur={(e) => handleBlur("telefono", e.target.value)}
+                className={fieldClass("telefono", form.telefono)}
+                placeholder="976 123 456"
+              />
+              <FieldError name="telefono" />
+              <FieldOk name="telefono" value={form.telefono} />
+            </div>
+            <div>
+              <label className={labelClass}>Tipo de negocio *</label>
+              <select
+                value={form.tipo_negocio}
+                onChange={(e) => updateField("tipo_negocio", e.target.value)}
+                onBlur={(e) => handleBlur("tipo_negocio", e.target.value)}
+                className={fieldClass("tipo_negocio", form.tipo_negocio)}
+              >
+                {TIPO_NEGOCIO_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <FieldError name="tipo_negocio" />
+            </div>
+            <div>
+              <label className={labelClass}>Cargo <span className="text-[var(--color-text-muted)] font-normal">(opcional)</span></label>
+              <input
+                type="text" value={form.cargo}
+                onChange={(e) => updateField("cargo", e.target.value)}
+                className={inputOk}
+                placeholder="Responsable de compras"
+              />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Teléfono *</label>
-            <input
-              type="tel" value={form.telefono}
-              onChange={(e) => updateField("telefono", e.target.value)}
-              onBlur={(e) => handleBlur("telefono", e.target.value)}
-              className={fieldClass("telefono", form.telefono)}
-              placeholder="976 123 456"
-            />
-            <FieldError name="telefono" />
-            <FieldOk name="telefono" value={form.telefono} />
-          </div>
-          <div>
-            <label className={labelClass}>Tipo de negocio *</label>
-            <select
-              value={form.tipo_negocio}
-              onChange={(e) => updateField("tipo_negocio", e.target.value)}
-              onBlur={(e) => handleBlur("tipo_negocio", e.target.value)}
-              className={fieldClass("tipo_negocio", form.tipo_negocio)}
-            >
-              {TIPO_NEGOCIO_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            <FieldError name="tipo_negocio" />
-          </div>
-          <div>
-            <label className={labelClass}>Cargo <span className="text-[var(--color-text-muted)] font-normal">(opcional)</span></label>
-            <input
-              type="text" value={form.cargo}
-              onChange={(e) => updateField("cargo", e.target.value)}
-              className={inputOk}
-              placeholder="Responsable de compras"
-            />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* 3. Dirección */}
+      {/* Direccion */}
       <section>
         <div className="flex items-center gap-3 mb-4">
-          <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
-          <h3 className="text-base font-semibold text-[var(--color-navy)]">Dirección</h3>
+          <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{sectionDireccion}</span>
+          <h3 className="text-base font-semibold text-[var(--color-navy)]">Direccion</h3>
         </div>
         <div className="space-y-4 pl-11">
           <div>
-            <label className={labelClass}>Calle, número, piso *</label>
+            <label className={labelClass}>Calle, numero, piso *</label>
             <input
               type="text" value={form.direccion_facturacion}
               onChange={(e) => updateField("direccion_facturacion", e.target.value)}
@@ -390,7 +492,7 @@ export default function RegisterForm() {
             <FieldOk name="direccion_facturacion" value={form.direccion_facturacion} />
           </div>
           <div>
-            <label className={labelClass}>Código postal *</label>
+            <label className={labelClass}>Codigo postal *</label>
             <input
               type="text" value={form.codigo_postal}
               onChange={(e) => updateField("codigo_postal", e.target.value)}
@@ -431,30 +533,29 @@ export default function RegisterForm() {
         </div>
       </section>
 
-      {/* 4. Contraseña */}
+      {/* Contrasena */}
       <section>
         <div className="flex items-center gap-3 mb-4">
-          <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">4</span>
-          <h3 className="text-base font-semibold text-[var(--color-navy)]">Contraseña de acceso</h3>
+          <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{sectionPassword}</span>
+          <h3 className="text-base font-semibold text-[var(--color-navy)]">Contrasena de acceso</h3>
         </div>
         <div className="space-y-4 pl-11">
           <div>
-            <label className={labelClass}>Contraseña *</label>
+            <label className={labelClass}>Contrasena *</label>
             <input
               type="password" value={form.password}
               onChange={(e) => updateField("password", e.target.value)}
               onBlur={(e) => handleBlur("password", e.target.value)}
               className={fieldClass("password", form.password)}
-              placeholder="Crea tu contraseña"
+              placeholder="Crea tu contrasena"
             />
-            {/* Requisitos visuales - se muestran en cuanto hay algo escrito */}
             {form.password.length > 0 && (
               <div className="mt-2 p-3 bg-[var(--color-bg-light)] rounded-lg grid grid-cols-2 gap-1.5">
                 {[
-                  { ok: form.password.length >= 8, label: "Mínimo 8 caracteres" },
-                  { ok: /[A-Z]/.test(form.password), label: "Una mayúscula" },
-                  { ok: /[a-z]/.test(form.password), label: "Una minúscula" },
-                  { ok: /[0-9]/.test(form.password), label: "Un número" },
+                  { ok: form.password.length >= 8, label: "Minimo 8 caracteres" },
+                  { ok: /[A-Z]/.test(form.password), label: "Una mayuscula" },
+                  { ok: /[a-z]/.test(form.password), label: "Una minuscula" },
+                  { ok: /[0-9]/.test(form.password), label: "Un numero" },
                 ].map(({ ok, label }) => (
                   <span key={label} className={`flex items-center gap-1.5 text-xs ${ok ? "text-green-600" : "text-[var(--color-text-muted)]"}`}>
                     {ok ? (
@@ -473,13 +574,13 @@ export default function RegisterForm() {
             )}
           </div>
           <div>
-            <label className={labelClass}>Confirmar contraseña *</label>
+            <label className={labelClass}>Confirmar contrasena *</label>
             <input
               type="password" value={form.password_confirm}
               onChange={(e) => updateField("password_confirm", e.target.value)}
               onBlur={(e) => handleBlur("password_confirm", e.target.value)}
               className={fieldClass("password_confirm", form.password_confirm)}
-              placeholder="Repite la contraseña"
+              placeholder="Repite la contrasena"
             />
             <FieldError name="password_confirm" />
             {form.password_confirm.length > 0 && !fieldErrors["password_confirm"] && form.password === form.password_confirm && (
@@ -487,7 +588,7 @@ export default function RegisterForm() {
                 <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                Las contraseñas coinciden
+                Las contrasenas coinciden
               </p>
             )}
           </div>
@@ -504,9 +605,9 @@ export default function RegisterForm() {
             className="mt-0.5 rounded border-[var(--color-border)]"
           />
           <span>
-            He leído y acepto la{" "}
+            He leido y acepto la{" "}
             <a href="/politica-privacidad" target="_blank" className="text-[var(--color-action)] hover:underline font-medium">
-              Política de Protección de Datos
+              Politica de Proteccion de Datos
             </a>{" "}*
           </span>
         </label>
@@ -518,13 +619,13 @@ export default function RegisterForm() {
             onChange={(e) => updateField("acepta_comunicaciones", e.target.checked)}
             className="mt-0.5 rounded border-[var(--color-border)]"
           />
-          <span>Deseo recibir noticias e información comercial de Alcora Salud Ambiental</span>
+          <span>Deseo recibir noticias e informacion comercial de Alcora Salud Ambiental</span>
         </label>
 
         <p className="text-xs text-[var(--color-text-muted)] leading-relaxed px-3">
-          Los datos facilitados serán tratados por Alcora Salud Ambiental S.L. para gestionar
-          su solicitud de registro como cliente profesional. Puede ejercer sus derechos de acceso,
-          rectificación o supresión dirigiéndose a{" "}
+          Los datos facilitados seran tratados por Alcora Salud Ambiental S.L. para gestionar
+          su {isB2C ? "cuenta de usuario" : "solicitud de registro como cliente profesional"}. Puede ejercer sus derechos de acceso,
+          rectificacion o supresion dirigiendose a{" "}
           <a href="mailto:central@alcora.es" className="text-[var(--color-action)]">central@alcora.es</a>.
         </p>
       </div>
@@ -550,13 +651,13 @@ export default function RegisterForm() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Enviando solicitud...
+            {isB2C ? "Creando cuenta..." : "Enviando solicitud..."}
           </span>
-        ) : "Solicitar acceso profesional"}
+        ) : isB2C ? "Crear cuenta" : "Solicitar acceso profesional"}
       </button>
 
       <p className="text-center text-sm text-[var(--color-text-muted)]">
-        ¿Ya tiene cuenta?{" "}
+        Ya tiene cuenta?{" "}
         <a href="/login" className="text-[var(--color-action)] hover:underline font-medium">Acceder</a>
       </p>
     </form>

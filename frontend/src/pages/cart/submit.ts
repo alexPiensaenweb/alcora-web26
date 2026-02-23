@@ -5,7 +5,6 @@ import { calculateShipping } from "../../lib/shipping";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { sendMail, buildPedidoHtml, getCompanyEmail } from "../../lib/email";
 import { validateSchema, pedidoSubmitSchema } from "../../lib/schemas";
-import type { CartItem } from "../../lib/types";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -45,7 +44,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const pedidoItems: any[] = [];
 
     for (const item of items) {
-      // Fetch product from Directus by ID to get real precio_base
       let product: any;
       try {
         const productRes = await directusAdmin(
@@ -91,11 +89,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const costoEnvio = calculateShipping(subtotal);
     const total = Math.round((subtotal + costoEnvio) * 100) / 100;
 
-    // Create pedido using user's token (so user_created is set correctly)
-    // Fall back to admin token if user token fails (permission issues)
+    // Estado: tarjeta/bizum → "aprobado_pendiente_pago" (awaiting Redsys payment)
+    //         other methods → "solicitado" (awaiting manual confirmation)
+    const isRedsysPayment = metodo_pago === "tarjeta" || metodo_pago === "bizum";
+    const initialEstado = isRedsysPayment ? "aprobado_pendiente_pago" : "solicitado";
     let pedidoRes: any;
     const pedidoData = {
-      estado: "solicitado",
+      estado: initialEstado,
       subtotal,
       costo_envio: costoEnvio,
       total,
@@ -112,7 +112,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         body: JSON.stringify(pedidoData),
       });
     } catch {
-      // Fallback: use admin token but set user_created explicitly
       pedidoRes = await directusAdmin("/items/pedidos", {
         method: "POST",
         body: JSON.stringify({
@@ -124,7 +123,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const pedidoId = pedidoRes.data.id;
 
-    // Create pedido items separately
     for (const lineItem of pedidoItems) {
       await directusAdmin("/items/pedidos_items", {
         method: "POST",
@@ -135,68 +133,68 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Send email notification to company + confirmation to client
-    const user = locals.user;
-    const userName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Cliente";
-    const userEmail = user.email;
-    const userPhone = user.telefono || "";
-    const userCompany = user.razon_social || "";
-    const companyEmail = await getCompanyEmail();
+    // Send email notification for non-Redsys payments
+    // Card/Bizum payments: emails sent after successful Redsys webhook
+    if (!isRedsysPayment) {
+      const user = locals.user;
+      const userName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Cliente";
+      const userEmail = user.email;
+      const userPhone = user.telefono || "";
+      const userCompany = user.razon_social || "";
+      const companyEmail = await getCompanyEmail();
 
-    const emailBaseData = {
-      pedidoId,
-      userName,
-      userEmail,
-      userPhone,
-      userCompany,
-      direccionEnvio: pedidoData.direccion_envio || "",
-      direccionFacturacion: pedidoData.direccion_facturacion || "",
-      metodoPago: pedidoData.metodo_pago,
-      notasCliente: pedidoData.notas_cliente,
-      items: pedidoItems.map((i) => ({
-        nombre: i.nombre_producto,
-        sku: i.sku,
-        cantidad: i.cantidad,
-        precioUnitario: i.precio_unitario,
-      })),
-      subtotal,
-      costoEnvio,
-      total,
-    };
+      const emailBaseData = {
+        pedidoId,
+        userName,
+        userEmail,
+        userPhone,
+        userCompany,
+        direccionEnvio: pedidoData.direccion_envio || "",
+        direccionFacturacion: pedidoData.direccion_facturacion || "",
+        metodoPago: pedidoData.metodo_pago,
+        notasCliente: pedidoData.notas_cliente,
+        items: pedidoItems.map((i) => ({
+          nombre: i.nombre_producto,
+          sku: i.sku,
+          cantidad: i.cantidad,
+          precioUnitario: i.precio_unitario,
+        })),
+        subtotal,
+        costoEnvio,
+        total,
+      };
 
-    // Build separate emails with context-specific CTAs
-    const adminHtml = buildPedidoHtml({
-      ...emailBaseData,
-      cta: { label: "Gestionar pedido", url: "https://tienda.alcora.es/gestion/pedidos" },
-    });
-
-    const clientHtml = buildPedidoHtml({
-      ...emailBaseData,
-      cta: { label: "Ver mis pedidos", url: "https://tienda.alcora.es/cuenta/pedidos" },
-    });
-
-    // Send to company (don't fail the order if email fails)
-    try {
-      await sendMail({
-        to: companyEmail,
-        subject: `Nuevo pedido #${pedidoId} - ${userCompany || userName}`,
-        html: adminHtml,
-        replyTo: userEmail,
+      const adminHtml = buildPedidoHtml({
+        ...emailBaseData,
+        cta: { label: "Gestionar pedido", url: "https://tienda.alcora.es/gestion/pedidos" },
       });
-    } catch (emailErr) {
-      console.error("Error sending order notification to company:", emailErr);
-    }
 
-    // Send confirmation copy to client (Reply-To: company email)
-    try {
-      await sendMail({
-        to: userEmail,
-        subject: `Su pedido #${pedidoId} - Alcora Salud Ambiental`,
-        html: clientHtml,
-        replyTo: companyEmail,
+      const clientHtml = buildPedidoHtml({
+        ...emailBaseData,
+        cta: { label: "Ver mis pedidos", url: "https://tienda.alcora.es/cuenta/pedidos" },
       });
-    } catch (emailErr) {
-      console.error("Error sending order confirmation to client:", emailErr);
+
+      try {
+        await sendMail({
+          to: companyEmail,
+          subject: `Nuevo pedido #${pedidoId} - ${userCompany || userName}`,
+          html: adminHtml,
+          replyTo: userEmail,
+        });
+      } catch (emailErr) {
+        console.error("Error sending order notification to company:", emailErr);
+      }
+
+      try {
+        await sendMail({
+          to: userEmail,
+          subject: `Su pedido #${pedidoId} - Alcora Salud Ambiental`,
+          html: clientHtml,
+          replyTo: companyEmail,
+        });
+      } catch (emailErr) {
+        console.error("Error sending order confirmation to client:", emailErr);
+      }
     }
 
     return new Response(
@@ -205,7 +203,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         pedido: {
           id: pedidoId,
           total,
-          estado: "solicitado",
+          estado: initialEstado,
         },
       }),
       { status: 201, headers: { "Content-Type": "application/json" } }

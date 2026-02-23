@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { directusAdmin } from "../../lib/directus";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { verifyTurnstile } from "../../lib/turnstile";
-import { sendMail, buildRegistroHtml, getCompanyEmail } from "../../lib/email";
+import { sendMail, buildRegistroHtml, buildBienvenidaHtml, getCompanyEmail } from "../../lib/email";
 import { validateSchema, registerSchema } from "../../lib/schemas";
 
 export const POST: APIRoute = async ({ request }) => {
@@ -11,7 +11,12 @@ export const POST: APIRoute = async ({ request }) => {
     const rl = rateLimit(`register:${clientIp}`, 3, 300_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
+    }
 
     const validation = validateSchema(registerSchema, body);
     if (!validation.valid) {
@@ -27,6 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
       password,
       first_name,
       last_name,
+      tipo_usuario,
       razon_social,
       cif_nif,
       telefono,
@@ -41,6 +47,31 @@ export const POST: APIRoute = async ({ request }) => {
       acepta_comunicaciones,
     } = validation.data;
 
+    const isB2C = tipo_usuario === "particular";
+
+    // Additional B2B-only validation (conditional, not in Zod schema)
+    if (!isB2C) {
+      if (!razon_social || razon_social.trim().length === 0) {
+        return new Response(
+          JSON.stringify({ error: "La razon social es obligatoria" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (!cif_nif) {
+        return new Response(
+          JSON.stringify({ error: "El CIF/NIF es obligatorio" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (!tipo_negocio || tipo_negocio.trim().length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Seleccione el tipo de negocio" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Verify Turnstile CAPTCHA
     const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || import.meta.env.TURNSTILE_SECRET_KEY || "";
     const isDevKey = TURNSTILE_SECRET.startsWith("1x00000");
     const turnstileRequired = !!TURNSTILE_SECRET && !isDevKey;
@@ -96,62 +127,107 @@ export const POST: APIRoute = async ({ request }) => {
       .filter(Boolean)
       .join(", ");
 
-    // Create user with status: suspended (pending admin approval)
+    // Determine status and grupo based on user type
+    // B2C (particular): auto-activated, can shop immediately
+    // B2B (empresa): suspended, pending admin approval
+    const userStatus = isB2C ? "active" : "suspended";
+    const grupoCliente = isB2C ? "particular" : null;
+
+    // Create user in Directus
+    const userData: Record<string, unknown> = {
+      email: email.trim().toLowerCase(),
+      password,
+      first_name: cleanFirstName,
+      last_name: cleanLastName,
+      status: userStatus,
+      role: clienteRoleId,
+      telefono: cleanTelefono,
+      direccion_facturacion: fullAddress,
+      direccion_envio: fullAddress,
+      ciudad: cleanCiudad,
+      provincia: cleanProvincia,
+      codigo_postal: cleanCodigoPostal,
+      acepta_proteccion_datos: !!acepta_proteccion_datos,
+      acepta_comunicaciones: !!acepta_comunicaciones,
+    };
+
+    // B2B-specific fields
+    if (!isB2C) {
+      userData.razon_social = cleanRazonSocial;
+      userData.cif_nif = cleanCifNif.toUpperCase();
+      userData.cargo = cleanCargo;
+      userData.tipo_negocio = tipo_negocio || "";
+      userData.numero_roesb = stripHtml(numero_roesb);
+    }
+
+    // Set grupo_cliente if applicable
+    if (grupoCliente) {
+      userData.grupo_cliente = grupoCliente;
+    }
+
     await directusAdmin("/users", {
       method: "POST",
-      body: JSON.stringify({
-        email: email.trim().toLowerCase(),
-        password,
-        first_name: cleanFirstName,
-        last_name: cleanLastName,
-        status: "suspended",
-        role: clienteRoleId,
-        razon_social: cleanRazonSocial,
-        cif_nif: cleanCifNif.toUpperCase(),
-        telefono: cleanTelefono,
-        cargo: cleanCargo,
-        tipo_negocio: tipo_negocio || "",
-        numero_roesb: stripHtml(numero_roesb),
-        direccion_facturacion: fullAddress,
-        direccion_envio: fullAddress, // Same address by default
-        ciudad: cleanCiudad,
-        provincia: cleanProvincia,
-        codigo_postal: cleanCodigoPostal,
-        acepta_proteccion_datos: !!acepta_proteccion_datos,
-        acepta_comunicaciones: !!acepta_comunicaciones,
-      }),
+      body: JSON.stringify(userData),
     });
 
-    // Send registration notification to company
+    // Send emails
     try {
-      const registroHtml = buildRegistroHtml({
-        firstName: cleanFirstName,
-        lastName: cleanLastName,
-        email: email.trim().toLowerCase(),
-        razonSocial: cleanRazonSocial,
-        cifNif: cleanCifNif.toUpperCase(),
-        telefono: cleanTelefono,
-        tipoNegocio: tipo_negocio || "",
-        direccion: cleanDireccion,
-        ciudad: cleanCiudad,
-        provincia: cleanProvincia,
-        codigoPostal: cleanCodigoPostal,
-      });
+      if (isB2C) {
+        // B2C: Send welcome email to the user (account is already active)
+        const bienvenidaHtml = buildBienvenidaHtml({
+          userName: cleanFirstName,
+          userEmail: email.trim().toLowerCase(),
+        });
 
-      const companyEmail = await getCompanyEmail();
-      await sendMail({
-        to: companyEmail,
-        subject: `Nueva solicitud de registro - ${cleanRazonSocial || cleanFirstName + " " + cleanLastName}`,
-        html: registroHtml,
-        replyTo: email.trim().toLowerCase(),
-      });
+        await sendMail({
+          to: email.trim().toLowerCase(),
+          subject: "Bienvenido/a a Alcora Salud Ambiental",
+          html: bienvenidaHtml,
+        });
+      } else {
+        // B2B: Send registration notification to company (pending approval)
+        const registroHtml = buildRegistroHtml({
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          email: email.trim().toLowerCase(),
+          razonSocial: cleanRazonSocial,
+          cifNif: cleanCifNif.toUpperCase(),
+          telefono: cleanTelefono,
+          tipoNegocio: tipo_negocio || "",
+          direccion: cleanDireccion,
+          ciudad: cleanCiudad,
+          provincia: cleanProvincia,
+          codigoPostal: cleanCodigoPostal,
+        });
+
+        const companyEmail = await getCompanyEmail();
+        await sendMail({
+          to: companyEmail,
+          subject: `Nueva solicitud de registro - ${cleanRazonSocial || cleanFirstName + " " + cleanLastName}`,
+          html: registroHtml,
+          replyTo: email.trim().toLowerCase(),
+        });
+      }
     } catch (emailErr) {
-      console.error("Error sending registration notification:", emailErr);
+      console.error("Error sending registration email:", emailErr);
+    }
+
+    // Different response based on user type
+    if (isB2C) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          autoActivated: true,
+          message: "Cuenta creada correctamente. Ya puede acceder a la tienda.",
+        }),
+        { status: 201, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     return new Response(
       JSON.stringify({
         success: true,
+        autoActivated: false,
         message: "Solicitud de registro recibida. Le notificaremos cuando su cuenta sea activada.",
       }),
       { status: 201, headers: { "Content-Type": "application/json" } }

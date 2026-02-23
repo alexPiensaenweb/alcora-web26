@@ -117,12 +117,11 @@ export default function InfiniteProductGrid({
                 {product.formato && (
                   <p className="text-xs text-text-muted mb-2">{product.formato}</p>
                 )}
+                {/* Price - always visible */}
                 {product.price !== null ? (
                   <p className="text-lg font-bold text-action">{formatCurrency(product.price)}</p>
                 ) : (
-                  <p className="text-xs text-text-muted italic">
-                    <span className="text-action">Acceda</span> para ver precios
-                  </p>
+                  <p className="text-sm text-text-muted">Consultar precio</p>
                 )}
               </div>
             </a>
