@@ -10,6 +10,7 @@ interface Props {
 
 const { title = "Admin - Tienda Alcora", activeTab = "", autoRefresh = 0 } = Astro.props;
 const user = Astro.locals.user;
+const nonce = Astro.locals.nonce || "";
 
 const navItems = [
   { href: "/gestion", label: "Dashboard", icon: "grid_view", key: "dashboard" },
@@ -98,7 +99,7 @@ const navItems = [
 
   {/* Auto-refresh for list pages: reloads unless user has a focused input/modal open */}
   {autoRefresh > 0 && (
-    <script define:vars={{ autoRefreshInterval: autoRefresh * 1000 }}>
+    <script define:vars={{ autoRefreshInterval: autoRefresh * 1000 }} nonce={nonce}>
       (function() {
         let timer;
         function scheduleRefresh() {

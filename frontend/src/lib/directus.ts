@@ -36,9 +36,14 @@ export function getAssetUrl(
   fileId: string | null,
   params?: { width?: number; height?: number; quality?: number; fit?: string }
 ): string {
-  void params;
   if (!fileId) return "/placeholder.svg";
-  return `${resolvePublicDirectusUrl()}/assets/${fileId}`;
+  const base = `${resolvePublicDirectusUrl()}/assets/${fileId}`;
+  if (!params) return base;
+  const qs = Object.entries(params)
+    .filter(([_, v]) => v != null)
+    .map(([k, v]) => `${k}=${v}`)
+    .join("&");
+  return qs ? `${base}?${qs}` : base;
 }
 
 // ─── Generic fetch helpers ───
@@ -59,6 +64,8 @@ async function directusFetch(
     ...fetchOptions,
     headers: {
       "Content-Type": "application/json",
+      // Bypass Directus Redis cache on time-sensitive reads
+      ...(bypassCache ? { "Cache-Control": "no-cache, no-store" } : {}),
       ...fetchOptions.headers,
     },
   });

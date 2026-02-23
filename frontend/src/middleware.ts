@@ -7,11 +7,12 @@
  * 3. Auto-refreshes if expired
  * 4. Injects user into Astro.locals
  * 5. Protects specific routes
- * 6. Adds security headers
+ * 6. Adds security headers (CSP with nonce)
  * 7. CSRF protection on state-changing requests
  */
 
 import { defineMiddleware } from "astro:middleware";
+import { randomBytes } from "node:crypto";
 import {
   getSessionToken,
   getRefreshToken,
@@ -35,6 +36,10 @@ const PUBLIC_DIRECTUS_URL =
 export const onRequest = defineMiddleware(async (context, next) => {
   const { cookies, url, redirect } = context;
   const pathname = url.pathname;
+
+  // ─── Generate CSP nonce for this request ───
+  const nonce = randomBytes(16).toString("base64");
+  context.locals.nonce = nonce;
 
   // Default: no user
   context.locals.user = null;
@@ -131,8 +136,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // No autorizado - redirigir a cuenta
       return redirect("/cuenta");
     }
-    // Admin no redirigir a /catalogo desde login
-
   }
 
   // Prevent logged-in users from accessing login/register
@@ -188,7 +191,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     );
   }
 
-  // Content Security Policy
+  // Content Security Policy with nonce
   const imgSrc = PUBLIC_DIRECTUS_URL
     ? `'self' data: blob: ${PUBLIC_DIRECTUS_URL}`
     : "'self' data: blob:";
@@ -197,7 +200,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://challenges.cloudflare.com",
+      `script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' blob: https://challenges.cloudflare.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       `img-src ${imgSrc}`,
       "connect-src 'self' blob:",

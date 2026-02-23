@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import { loginWithCredentials, setAuthCookies, getCurrentUser } from "../../lib/auth";
-import { directusAdmin } from "../../lib/directus";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { verifyTurnstile } from "../../lib/turnstile";
 
@@ -39,52 +38,24 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Try login - may fail if user is suspended/inactive in Directus
+    // Try login - will fail if user is suspended/inactive
     let tokens;
     try {
       tokens = await loginWithCredentials(email, password);
     } catch (loginErr: any) {
-      // Login failed - check if user is admin and needs auto-activation
-      // Use admin token to look up the user
-      try {
-        const lookupRes = await directusAdmin(
-          `/users?filter[email][_eq]=${encodeURIComponent(email)}&fields=id,status,role.policies.policy.admin_access&limit=1`
+      // Generic message to avoid user enumeration
+      const errorMessage = loginErr?.message || "";
+      // Directus returns specific errors for suspended users
+      if (errorMessage.includes("suspended") || errorMessage.includes("FORBIDDEN")) {
+        return new Response(
+          JSON.stringify({
+            error: "Su solicitud de registro esta pendiente de validacion. Le avisaremos por email cuando sea aprobada.",
+            status: "suspended",
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
         );
-        const foundUser = lookupRes.data?.[0];
-
-        // Check admin via Directus 11 policies
-        const isFoundAdmin = foundUser?.role?.policies?.some(
-          (rp: any) => rp?.policy?.admin_access === true
-        );
-        if (foundUser && isFoundAdmin && foundUser.status !== "active") {
-          // Admin user is not active - auto-activate and retry login
-          await directusAdmin(`/users/${foundUser.id}`, {
-            method: "PATCH",
-            body: JSON.stringify({ status: "active" }),
-          });
-          // Retry login after activation
-          tokens = await loginWithCredentials(email, password);
-        } else if (foundUser && foundUser.status === "suspended") {
-          // Non-admin suspended user - pending validation
-          return new Response(
-            JSON.stringify({
-              error: "Su solicitud de registro esta pendiente de validacion. Le avisaremos por email cuando sea aprobada.",
-              status: "suspended",
-            }),
-            { status: 403, headers: { "Content-Type": "application/json" } }
-          );
-        } else {
-          // Bad credentials or other issue
-          throw loginErr;
-        }
-      } catch (adminErr: any) {
-        // If admin lookup threw a structured Response, propagate it
-        if (adminErr instanceof Response) throw adminErr;
-        // If the error message suggests it's our custom error, re-throw
-        if (adminErr?.message?.includes("pendiente")) throw adminErr;
-        // Otherwise it's bad credentials
-        throw loginErr;
       }
+      throw loginErr;
     }
 
     setAuthCookies(cookies, tokens);

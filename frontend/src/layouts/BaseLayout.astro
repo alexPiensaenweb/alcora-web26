@@ -23,6 +23,7 @@ const publicDirectusUrl =
   process.env.PUBLIC_DIRECTUS_URL || import.meta.env.PUBLIC_DIRECTUS_URL || "https://tienda.alcora.es";
 const turnstileSiteKey =
   process.env.PUBLIC_TURNSTILE_SITE_KEY || import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+const nonce = Astro.locals.nonce || "";
 ---
 
 <!doctype html>
@@ -94,7 +95,7 @@ const turnstileSiteKey =
     )}
 
     {/* Hydrate auth store from server data */}
-    <script define:vars={{ user: user ? { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, grupo_cliente: user.grupo_cliente, status: user.status } : null, publicDirectusUrl, turnstileSiteKey }}>
+    <script define:vars={{ user: user ? { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, grupo_cliente: user.grupo_cliente, status: user.status } : null, publicDirectusUrl, turnstileSiteKey }} nonce={nonce}>
       if (typeof window !== "undefined") {
         window.__ALCORA_USER__ = user;
         window.__PUBLIC_DIRECTUS_URL = publicDirectusUrl;
