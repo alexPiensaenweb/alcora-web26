@@ -9,9 +9,11 @@ interface Props {
   title?: string;
   description?: string;
   ogImage?: string;
+  ogType?: string;
+  extraMeta?: { property?: string; name?: string; content: string }[];
 }
 
-const { title = "Tienda Alcora", description = "Tienda Alcora Salud Ambiental - Productos de limpieza, control de plagas, desinfectantes y EPIs para profesionales", ogImage } = Astro.props;
+const { title = "Tienda Alcora", description = "Tienda Alcora Salud Ambiental - Productos de limpieza, control de plagas, desinfectantes y EPIs para profesionales", ogImage, ogType = "website", extraMeta = [] } = Astro.props;
 const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).href;
 const user = Astro.locals.user;
@@ -33,13 +35,18 @@ const turnstileSiteKey =
     <title>{title}</title>
 
     {/* Open Graph */}
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content="Alcora Salud Ambiental" />
     <meta property="og:locale" content="es_ES" />
     {ogImage && <meta property="og:image" content={ogImage} />}
+    {extraMeta.map((m) => (
+      m.property
+        ? <meta property={m.property} content={m.content} />
+        : <meta name={m.name!} content={m.content} />
+    ))}
 
     {/* Twitter Card */}
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />

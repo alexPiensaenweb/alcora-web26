@@ -4,9 +4,11 @@ import BaseLayout from "./BaseLayout.astro";
 interface Props {
   title?: string;
   activeTab?: string;
+  /** Auto-refresh interval in seconds (0 = disabled). Default: 60 for list pages */
+  autoRefresh?: number;
 }
 
-const { title = "Admin - Tienda Alcora", activeTab = "" } = Astro.props;
+const { title = "Admin - Tienda Alcora", activeTab = "", autoRefresh = 0 } = Astro.props;
 const user = Astro.locals.user;
 
 const navItems = [
@@ -28,6 +30,12 @@ const navItems = [
         <a href="/" class="hidden sm:inline text-xs opacity-60 hover:opacity-100 transition-opacity">← Volver a la tienda</a>
       </div>
       <div class="flex items-center gap-3 text-sm">
+        {autoRefresh > 0 && (
+          <span class="hidden sm:flex items-center gap-1 text-[10px] opacity-40">
+            <span class="material-icons text-xs">sync</span>
+            <span id="admin-refresh-time"></span>
+          </span>
+        )}
         <span class="hidden sm:block opacity-70 text-xs">{user?.first_name || user?.email}</span>
         <a href="/" class="sm:hidden opacity-70 hover:opacity-100 text-xs">← Tienda</a>
       </div>
@@ -87,4 +95,38 @@ const navItems = [
       }
     });
   </script>
+
+  {/* Auto-refresh for list pages: reloads unless user has a focused input/modal open */}
+  {autoRefresh > 0 && (
+    <script define:vars={{ autoRefreshInterval: autoRefresh * 1000 }}>
+      (function() {
+        let timer;
+        function scheduleRefresh() {
+          timer = setTimeout(() => {
+            // Don't refresh if user is typing in an input or has a modal open
+            const active = document.activeElement;
+            const isEditing = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT");
+            const hasModal = document.querySelector("[class*='fixed inset-0']");
+            if (isEditing || hasModal) {
+              // Retry in 10s
+              scheduleRefresh();
+              return;
+            }
+            window.location.reload();
+          }, autoRefreshInterval);
+        }
+        // Update the last-refresh indicator
+        const indicator = document.getElementById("admin-refresh-time");
+        if (indicator) {
+          indicator.textContent = new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+        }
+        scheduleRefresh();
+        // Cancel on page hide to avoid double-reload
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) clearTimeout(timer);
+          else scheduleRefresh();
+        });
+      })();
+    </script>
+  )}
 </BaseLayout>

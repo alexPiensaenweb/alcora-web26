@@ -97,7 +97,8 @@ export async function getCurrentUser(
   token: string
 ): Promise<DirectusUser | null> {
   try {
-    const res = await fetch(`${getDirectusUrl()}/users/me?fields=id,email,first_name,last_name,status,role.id,role.name,role.policies.policy.admin_access,grupo_cliente,razon_social,cif_nif,telefono,direccion_facturacion,direccion_envio`, {
+    // _t param bypasses Directus Redis cache so admin changes to user status/role are immediate
+    const res = await fetch(`${getDirectusUrl()}/users/me?fields=id,email,first_name,last_name,status,role.id,role.name,role.policies.policy.admin_access,grupo_cliente,razon_social,cif_nif,telefono,direccion_facturacion,direccion_envio&_t=${Date.now()}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

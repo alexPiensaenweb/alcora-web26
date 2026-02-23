@@ -43,15 +43,23 @@ export function getAssetUrl(
 
 // ─── Generic fetch helpers ───
 
+/** Add a unique param to bypass Directus Redis cache for time-sensitive reads */
+function cacheBust(endpoint: string): string {
+  const sep = endpoint.includes("?") ? "&" : "?";
+  return `${endpoint}${sep}_t=${Date.now()}`;
+}
+
 async function directusFetch(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit & { bypassCache?: boolean } = {}
 ): Promise<any> {
-  const res = await fetch(`${resolveDirectusUrl()}${endpoint}`, {
-    ...options,
+  const { bypassCache, ...fetchOptions } = options;
+  const finalEndpoint = bypassCache ? cacheBust(endpoint) : endpoint;
+  const res = await fetch(`${resolveDirectusUrl()}${finalEndpoint}`, {
+    ...fetchOptions,
     headers: {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...fetchOptions.headers,
     },
   });
 
@@ -84,6 +92,7 @@ export async function directusAuth(
 ): Promise<any> {
   return directusFetch(endpoint, {
     ...options,
+    bypassCache: true,
     headers: {
       Authorization: `Bearer ${token}`,
       ...options.headers,
@@ -100,6 +109,7 @@ export async function directusAdmin(
   if (!adminToken) throw new Error("DIRECTUS_ADMIN_TOKEN not configured");
   return directusFetch(endpoint, {
     ...options,
+    bypassCache: true,
     headers: {
       Authorization: `Bearer ${adminToken}`,
       ...options.headers,
@@ -167,7 +177,7 @@ export async function getProductoBySlug(
   slug: string
 ): Promise<Producto | null> {
   const res = await directusPublic(
-    `/items/productos?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&fields=*,categoria.id,categoria.nombre,categoria.slug,categoria.parent.*,marca_id.id,marca_id.nombre,marca_id.slug,marca_id.logo&limit=1`
+    `/items/productos?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&fields=*,galeria.directus_files_id,categoria.id,categoria.nombre,categoria.slug,categoria.parent.*,marca_id.id,marca_id.nombre,marca_id.slug,marca_id.logo&limit=1`
   );
   return res.data?.[0] || null;
 }
