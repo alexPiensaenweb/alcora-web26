@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../lib/directus";
+import { directusAdmin, purgeDirectusCache } from "../../../lib/directus";
 
 function slugify(text: string): string {
   return text
@@ -85,6 +85,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         body: JSON.stringify(payload),
       });
     }
+
+    await purgeDirectusCache();
 
     return new Response(JSON.stringify({ ok: true, data: result.data }), {
       status: 200,

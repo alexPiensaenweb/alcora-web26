@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../../lib/directus";
+import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
 import { calculateShipping } from "../../../../lib/shipping";
 
 /**
@@ -57,6 +57,8 @@ export const POST: APIRoute = async ({ params, locals }) => {
         total,
       }),
     });
+
+    await purgeDirectusCache();
 
     return new Response(
       JSON.stringify({

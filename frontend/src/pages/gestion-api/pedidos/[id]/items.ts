@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../../lib/directus";
+import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
 
 /**
  * Admin API for managing presupuesto items (add/update/remove/bulk_discount).
@@ -175,6 +175,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         total: newSubtotal, // presupuestos don't have shipping
       }),
     });
+
+    await purgeDirectusCache();
 
     return new Response(
       JSON.stringify({ ok: true, subtotal: newSubtotal, total: newSubtotal }),
