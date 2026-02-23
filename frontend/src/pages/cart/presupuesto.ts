@@ -41,28 +41,34 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const userPhone = user.telefono || "";
     const userCompany = user.razon_social || "";
 
-    const html = buildPresupuestoHtml({
-      userName,
-      userEmail,
-      userPhone,
-      userCompany,
-      items: items.map((i) => ({
-        nombre: i.nombre,
-        sku: i.sku,
-        cantidad: i.cantidad,
-        precioUnitario: i.precioUnitario,
-        formato: i.formato,
-      })),
+    const itemsData = items.map((i) => ({
+      nombre: i.nombre,
+      sku: i.sku,
+      cantidad: i.cantidad,
+      precioUnitario: i.precioUnitario,
+      formato: i.formato,
+    }));
+
+    const companyEmail = await getCompanyEmail();
+
+    // Build separate emails with context-specific CTAs
+    const adminHtml = buildPresupuestoHtml({
+      userName, userEmail, userPhone, userCompany,
+      items: itemsData,
+      cta: { label: "Ver en el panel de gestion", url: "https://tienda.alcora.es/gestion/pedidos" },
     });
 
-    const subject = `Solicitud de presupuesto - ${userCompany || userName}`;
-    const companyEmail = await getCompanyEmail();
+    const clientHtml = buildPresupuestoHtml({
+      userName, userEmail, userPhone, userCompany,
+      items: itemsData,
+      cta: { label: "Visitar la tienda", url: "https://tienda.alcora.es/catalogo" },
+    });
 
     // Send to company
     await sendMail({
       to: companyEmail,
-      subject,
-      html,
+      subject: `Solicitud de presupuesto - ${userCompany || userName}`,
+      html: adminHtml,
       replyTo: userEmail,
     });
 
@@ -71,7 +77,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       await sendMail({
         to: userEmail,
         subject: `Su solicitud de presupuesto - Alcora Salud Ambiental`,
-        html,
+        html: clientHtml,
         replyTo: companyEmail,
       });
     } catch (emailErr) {

@@ -184,7 +184,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const userCompany = user.razon_social || "";
     const companyEmail = await getCompanyEmail();
 
-    const emailHtml = buildPedidoHtml({
+    const emailBaseData = {
       pedidoId,
       userName,
       userEmail,
@@ -203,6 +203,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       subtotal,
       costoEnvio,
       total,
+    };
+
+    // Build separate emails with context-specific CTAs
+    const adminHtml = buildPedidoHtml({
+      ...emailBaseData,
+      cta: { label: "Gestionar pedido", url: "https://tienda.alcora.es/gestion/pedidos" },
+    });
+
+    const clientHtml = buildPedidoHtml({
+      ...emailBaseData,
+      cta: { label: "Ver mis pedidos", url: "https://tienda.alcora.es/cuenta/pedidos" },
     });
 
     // Send to company (don't fail the order if email fails)
@@ -210,7 +221,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       await sendMail({
         to: companyEmail,
         subject: `Nuevo pedido #${pedidoId} - ${userCompany || userName}`,
-        html: emailHtml,
+        html: adminHtml,
         replyTo: userEmail,
       });
     } catch (emailErr) {
@@ -222,7 +233,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       await sendMail({
         to: userEmail,
         subject: `Su pedido #${pedidoId} - Alcora Salud Ambiental`,
-        html: emailHtml,
+        html: clientHtml,
         replyTo: companyEmail,
       });
     } catch (emailErr) {

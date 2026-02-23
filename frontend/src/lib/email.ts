@@ -16,6 +16,17 @@ const EMAIL_FROM =
 
 const FALLBACK_COMPANY_EMAIL = "central@alcora.es";
 
+const PUBLIC_SITE_URL =
+  process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+const PUBLIC_DIRECTUS_URL =
+  process.env.PUBLIC_DIRECTUS_URL || import.meta.env.PUBLIC_DIRECTUS_URL || "";
+
+// Alcora logo from Directus assets (converted to PNG for email compatibility)
+const LOGO_FILE_ID = "404d6bf9-d9dd-4411-9193-d8c7d3010c77";
+const LOGO_URL = PUBLIC_DIRECTUS_URL
+  ? `${PUBLIC_DIRECTUS_URL}/assets/${LOGO_FILE_ID}?format=png&width=180`
+  : `${PUBLIC_SITE_URL}/assets/${LOGO_FILE_ID}?format=png&width=180`;
+
 let resendClient: Resend | null = null;
 
 function getResend(): Resend {
@@ -90,6 +101,41 @@ export async function sendMail({ to, subject, html, replyTo }: SendMailOptions):
   }
 }
 
+// ─── Shared email template parts ───
+
+function emailHeader(title: string, subtitle?: string): string {
+  return `
+    <div style="padding:24px 32px 16px;text-align:center;">
+      <img src="${LOGO_URL}" alt="Alcora Salud Ambiental" width="160" style="display:inline-block;max-width:160px;height:auto;" />
+    </div>
+    <div style="background:#222d54;padding:24px 32px;">
+      <h1 style="color:#ffffff;margin:0;font-size:20px;">${title}</h1>
+      ${subtitle ? `<p style="color:#a0a8c0;margin:4px 0 0;font-size:14px;">${subtitle}</p>` : ""}
+    </div>`;
+}
+
+function emailCta(label: string, url: string): string {
+  return `
+      <div style="text-align:center;margin:24px 0 8px;">
+        <a href="${url}" style="display:inline-block;background:#2970ff;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:6px;font-size:14px;font-weight:600;">${label}</a>
+      </div>`;
+}
+
+function emailFooter(cta?: { label: string; url: string }): string {
+  const ctaHtml = cta ? emailCta(cta.label, cta.url) : "";
+  return `
+    ${ctaHtml}
+    <div style="background:#f4f6f9;padding:20px 32px;text-align:center;border-top:1px solid #e5e7eb;">
+      <p style="margin:0 0 8px;font-size:12px;color:#6b7589;">
+        Alcora Salud Ambiental S.L. &mdash; <a href="${PUBLIC_SITE_URL}" style="color:#2970ff;text-decoration:none;">tienda.alcora.es</a>
+      </p>
+      <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">
+        Este mensaje ha sido enviado desde la tienda online de Alcora Salud Ambiental.<br>
+        Consulte nuestra <a href="${PUBLIC_SITE_URL}/politica-privacidad" style="color:#9ca3af;text-decoration:underline;">politica de privacidad</a>.
+      </p>
+    </div>`;
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -114,6 +160,7 @@ export function buildPresupuestoHtml(data: {
     precioUnitario: number;
     formato: string | null;
   }[];
+  cta?: { label: string; url: string };
 }): string {
   const itemRows = data.items
     .map(
@@ -134,11 +181,7 @@ export function buildPresupuestoHtml(data: {
 <head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
   <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #c0c4ce;">
-
-    <div style="background:#222d54;padding:24px 32px;">
-      <h1 style="color:#ffffff;margin:0;font-size:20px;">Solicitud de Presupuesto</h1>
-      <p style="color:#a0a8c0;margin:4px 0 0;font-size:14px;">Alcora Salud Ambiental</p>
-    </div>
+    ${emailHeader("Solicitud de Presupuesto", "Alcora Salud Ambiental")}
 
     <div style="padding:24px 32px;">
       <h2 style="color:#222d54;font-size:16px;margin:0 0 16px;">Datos del cliente</h2>
@@ -146,7 +189,7 @@ export function buildPresupuestoHtml(data: {
         <tr><td style="padding:4px 0;color:#6b7589;width:120px;">Nombre:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${escapeHtml(data.userName)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7589;">Empresa:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${escapeHtml(data.userCompany)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7589;">Email:</td><td style="padding:4px 0;"><a href="mailto:${escapeHtml(data.userEmail)}" style="color:#2970ff;">${escapeHtml(data.userEmail)}</a></td></tr>
-        <tr><td style="padding:4px 0;color:#6b7589;">Telefono:</td><td style="padding:4px 0;color:#222d54;">${data.userPhone ? escapeHtml(data.userPhone) : "—"}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Telefono:</td><td style="padding:4px 0;color:#222d54;">${data.userPhone ? escapeHtml(data.userPhone) : "\u2014"}</td></tr>
       </table>
 
       <h2 style="color:#222d54;font-size:16px;margin:0 0 12px;">Productos solicitados</h2>
@@ -169,11 +212,7 @@ export function buildPresupuestoHtml(data: {
       </p>
     </div>
 
-    <div style="background:#f4f6f9;padding:16px 32px;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#6b7589;">
-        Alcora Salud Ambiental S.L. — <a href="https://tienda.alcora.es" style="color:#2970ff;">tienda.alcora.es</a>
-      </p>
-    </div>
+    ${emailFooter(data.cta)}
   </div>
 </body>
 </html>`;
@@ -201,6 +240,7 @@ export function buildPedidoHtml(data: {
   subtotal: number;
   costoEnvio: number;
   total: number;
+  cta?: { label: string; url: string };
 }): string {
   const itemRows = data.items
     .map(
@@ -223,11 +263,7 @@ export function buildPedidoHtml(data: {
 <head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
   <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #c0c4ce;">
-
-    <div style="background:#222d54;padding:24px 32px;">
-      <h1 style="color:#ffffff;margin:0;font-size:20px;">Nuevo Pedido #${data.pedidoId}</h1>
-      <p style="color:#a0a8c0;margin:4px 0 0;font-size:14px;">Alcora Salud Ambiental - Tienda Online</p>
-    </div>
+    ${emailHeader(`Nuevo Pedido #${data.pedidoId}`, "Alcora Salud Ambiental \u2014 Tienda Online")}
 
     <div style="padding:24px 32px;">
       <h2 style="color:#222d54;font-size:16px;margin:0 0 16px;">Datos del cliente</h2>
@@ -271,11 +307,7 @@ export function buildPedidoHtml(data: {
       </p>
     </div>
 
-    <div style="background:#f4f6f9;padding:16px 32px;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#6b7589;">
-        Alcora Salud Ambiental S.L. \u2014 <a href="https://tienda.alcora.es" style="color:#2970ff;">tienda.alcora.es</a>
-      </p>
-    </div>
+    ${emailFooter(data.cta)}
   </div>
 </body>
 </html>`;
@@ -303,11 +335,7 @@ export function buildRegistroHtml(data: {
 <head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
   <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #c0c4ce;">
-
-    <div style="background:#222d54;padding:24px 32px;">
-      <h1 style="color:#ffffff;margin:0;font-size:20px;">Nueva Solicitud de Registro</h1>
-      <p style="color:#a0a8c0;margin:4px 0 0;font-size:14px;">Alcora Salud Ambiental - Tienda Online</p>
-    </div>
+    ${emailHeader("Nueva Solicitud de Registro", "Alcora Salud Ambiental \u2014 Tienda Online")}
 
     <div style="padding:24px 32px;">
       <p style="font-size:14px;color:#222d54;margin:0 0 16px;">
@@ -330,16 +358,12 @@ export function buildRegistroHtml(data: {
 
       <div style="background:#eff4ff;border:1px solid #2970ff;border-radius:6px;padding:16px;text-align:center;">
         <p style="margin:0;font-size:14px;color:#222d54;">
-          Para activar esta cuenta, acceda al <a href="https://tienda.alcora.es/gestion/usuarios" style="color:#2970ff;font-weight:600;">panel de administracion</a> y active el usuario.
+          Para activar esta cuenta, acceda al panel de administracion y active el usuario.
         </p>
       </div>
     </div>
 
-    <div style="background:#f4f6f9;padding:16px 32px;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#6b7589;">
-        Alcora Salud Ambiental S.L. \u2014 <a href="https://tienda.alcora.es" style="color:#2970ff;">tienda.alcora.es</a>
-      </p>
-    </div>
+    ${emailFooter({ label: "Gestionar usuarios", url: `${PUBLIC_SITE_URL}/gestion/usuarios` })}
   </div>
 </body>
 </html>`;
