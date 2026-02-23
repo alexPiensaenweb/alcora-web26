@@ -4,9 +4,11 @@ import BaseLayout from "./BaseLayout.astro";
 interface Props {
   title?: string;
   activeTab?: string;
+  /** Auto-refresh interval in seconds (0 = disabled) */
+  autoRefresh?: number;
 }
 
-const { title = "Mi Cuenta - Tienda Alcora", activeTab = "" } = Astro.props;
+const { title = "Mi Cuenta - Tienda Alcora", activeTab = "", autoRefresh = 0 } = Astro.props;
 const user = Astro.locals.user;
 
 const navItems = [
@@ -66,4 +68,30 @@ const navItems = [
       </div>
     </div>
   </div>
+
+  {/* Auto-refresh: reloads unless user has a focused input/modal open */}
+  {autoRefresh > 0 && (
+    <script define:vars={{ autoRefreshInterval: autoRefresh * 1000 }}>
+      (function() {
+        let timer;
+        function scheduleRefresh() {
+          timer = setTimeout(() => {
+            const active = document.activeElement;
+            const isEditing = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT");
+            const hasModal = document.querySelector("[class*='fixed inset-0']");
+            if (isEditing || hasModal) {
+              scheduleRefresh();
+              return;
+            }
+            window.location.reload();
+          }, autoRefreshInterval);
+        }
+        scheduleRefresh();
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) clearTimeout(timer);
+          else scheduleRefresh();
+        });
+      })();
+    </script>
+  )}
 </BaseLayout>

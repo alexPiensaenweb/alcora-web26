@@ -22,7 +22,7 @@ if (!pedido) return Astro.redirect("/gestion/pedidos");
 const tipoLabel = pedido.tipo === "presupuesto" ? "Presupuesto" : "Pedido";
 ---
 
-<AdminLayout title={`${tipoLabel} #${id} - Admin Alcora`} activeTab="pedidos">
+<AdminLayout title={`${tipoLabel} #${id} - Admin Alcora`} activeTab="pedidos" autoRefresh={60}>
   <div class="space-y-5">
     <!-- Breadcrumb -->
     <div class="flex items-center gap-2 text-sm text-text-muted">

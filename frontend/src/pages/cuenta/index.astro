@@ -20,7 +20,7 @@ const pedidosPendientes = pedidos.filter(
 ).length;
 ---
 
-<AccountLayout title="Mi Cuenta - Tienda Alcora" activeTab="panel">
+<AccountLayout title="Mi Cuenta - Tienda Alcora" activeTab="panel" autoRefresh={60}>
   <div class="space-y-6">
     {/* Welcome */}
     <div class="bg-bg-accent border border-border rounded-lg p-6">

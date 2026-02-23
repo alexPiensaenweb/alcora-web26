@@ -33,7 +33,7 @@ const isPresupuesto = pedido.tipo === "presupuesto";
 const tipoStr = isPresupuesto ? "Presupuesto" : "Pedido";
 ---
 
-<AccountLayout title={`${tipoStr} #${pedido.id} - Tienda Alcora`} activeTab="pedidos">
+<AccountLayout title={`${tipoStr} #${pedido.id} - Tienda Alcora`} activeTab="pedidos" autoRefresh={60}>
   <div class="space-y-6">
     {/* Payment status banners */}
     {pagoStatus === "ok" && (
