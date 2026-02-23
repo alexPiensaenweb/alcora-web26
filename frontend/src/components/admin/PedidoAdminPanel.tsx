@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface PedidoItem {
   id: number;
@@ -37,6 +37,15 @@ interface Pedido {
   } | null;
 }
 
+interface SearchResult {
+  id: string;
+  sku: string;
+  nombre: string;
+  precio_base: number;
+  imagen_principal: string | null;
+  formato: string | null;
+}
+
 const ESTADOS_PEDIDO = [
   { value: "solicitado", label: "Solicitado", color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
   { value: "aprobado_pendiente_pago", label: "Aprobado - Pte. pago", color: "bg-blue-100 text-blue-800 border-blue-200" },
@@ -57,6 +66,116 @@ function formatDate(d: string) {
   });
 }
 
+// ── Product Search Component ──
+function ProductSearch({ onSelect, disabled }: { onSelect: (p: SearchResult) => void; disabled: boolean }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const search = useCallback(async (q: string) => {
+    if (q.length < 2) { setResults([]); setOpen(false); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(`/gestion-api/productos/buscar?q=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      setResults(json.data || []);
+      setOpen(true);
+    } catch {
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  function handleChange(val: string) {
+    setQuery(val);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => search(val), 300);
+  }
+
+  function select(p: SearchResult) {
+    onSelect(p);
+    setQuery("");
+    setResults([]);
+    setOpen(false);
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const directusUrl = typeof document !== "undefined"
+    ? document.body.dataset.directusUrl || ""
+    : "";
+
+  return (
+    <div ref={wrapperRef} className="relative flex-1">
+      <div className="relative">
+        <span className="material-icons text-base text-text-muted absolute left-3 top-1/2 -translate-y-1/2">search</span>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => { if (results.length > 0) setOpen(true); }}
+          placeholder="Buscar por SKU o nombre de producto..."
+          disabled={disabled}
+          className="w-full text-sm border border-border rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-action disabled:opacity-50"
+        />
+        {loading && (
+          <span className="material-icons text-base text-action animate-spin absolute right-3 top-1/2 -translate-y-1/2">sync</span>
+        )}
+      </div>
+      {open && results.length > 0 && (
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+          {results.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => select(p)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-bg-light text-left transition-colors border-b border-border last:border-b-0"
+            >
+              {p.imagen_principal ? (
+                <img
+                  src={`${directusUrl}/assets/${p.imagen_principal}?width=40&height=40&fit=cover`}
+                  alt=""
+                  className="w-10 h-10 rounded object-cover flex-shrink-0 bg-bg-light"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded bg-bg-light flex items-center justify-center flex-shrink-0">
+                  <span className="material-icons text-base text-text-muted">image</span>
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-navy truncate">{p.nombre}</p>
+                <p className="text-xs text-text-muted">
+                  SKU: {p.sku || "—"} · {Number(p.precio_base || 0).toFixed(2)} €
+                  {p.formato ? ` · ${p.formato}` : ""}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      {open && query.length >= 2 && results.length === 0 && !loading && (
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg p-4 text-center text-sm text-text-muted">
+          No se encontraron productos
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Panel ──
 export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pedido }) {
   const [pedido, setPedido] = useState(initialPedido);
   const [saving, setSaving] = useState(false);
@@ -69,14 +188,18 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
   const [editPrecio, setEditPrecio] = useState(0);
   const [converting, setConverting] = useState(false);
   const [addingProduct, setAddingProduct] = useState(false);
-  const [newProductId, setNewProductId] = useState("");
   const [newProductCantidad, setNewProductCantidad] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState<SearchResult | null>(null);
+  // Discount state
+  const [showDiscount, setShowDiscount] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState(5);
 
   const isPresupuesto = pedido.tipo === "presupuesto";
   const estados = isPresupuesto ? ESTADOS_PRESUPUESTO : ESTADOS_PEDIDO;
   const allEstados = [...ESTADOS_PRESUPUESTO, ...ESTADOS_PEDIDO];
   const estadoActual = allEstados.find((e) => e.value === pedido.estado);
   const tipoLabel = isPresupuesto ? "Presupuesto" : "Pedido";
+  const canEdit = isPresupuesto && pedido.estado !== "cancelado";
 
   const clienteNombre = pedido.user_created
     ? pedido.user_created.razon_social ||
@@ -135,7 +258,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
     }
   }
 
-  // ── Presupuesto item editing ──
+  // ── Item editing ──
 
   function startEdit(item: PedidoItem) {
     setEditingItemId(item.id);
@@ -165,7 +288,6 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         throw new Error(d.error || "Error al actualizar item");
       }
       const result = await res.json();
-      // Update local state
       setPedido((prev) => ({
         ...prev,
         subtotal: result.subtotal,
@@ -215,7 +337,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
   }
 
   async function addItem() {
-    if (!newProductId.trim()) return;
+    if (!selectedProduct) return;
     setSaving(true);
     setError("");
     try {
@@ -224,14 +346,13 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "add",
-          data: { producto: newProductId.trim(), cantidad: newProductCantidad },
+          data: { producto: selectedProduct.id, cantidad: newProductCantidad },
         }),
       });
       if (!res.ok) {
         const d = await res.json();
         throw new Error(d.error || "Error al añadir producto");
       }
-      // Reload page to get fresh data
       showMessage("Producto añadido. Recargando...");
       setTimeout(() => window.location.reload(), 500);
     } catch (err: any) {
@@ -240,6 +361,33 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
       setSaving(false);
     }
   }
+
+  // ── Bulk discount ──
+
+  async function applyBulkDiscount() {
+    if (!confirm(`¿Aplicar ${discountPercent}% de descuento a TODOS los productos del presupuesto? Esta accion modifica los precios unitarios.`)) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/gestion-api/pedidos/${pedido.id}/items`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "bulk_discount", percent: discountPercent }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Error al aplicar descuento");
+      }
+      showMessage(`Descuento del ${discountPercent}% aplicado. Recargando...`);
+      setTimeout(() => window.location.reload(), 600);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // ── Convert ──
 
   async function convertirAPedido() {
     if (!confirm("¿Convertir este presupuesto en pedido? Se calculara el envio y el estado cambiara a 'Aprobado - Pendiente de pago'.")) return;
@@ -313,23 +461,59 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         </div>
       )}
 
-      {/* Convert to pedido button (presupuesto only) */}
-      {isPresupuesto && pedido.estado !== "cancelado" && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="font-semibold text-amber-900">Convertir a pedido</h3>
-            <p className="text-sm text-amber-700 mt-1">
-              El presupuesto pasara a ser un pedido con estado "Aprobado - Pendiente de pago" y se calculara el coste de envio.
-            </p>
+      {/* Presupuesto actions bar */}
+      {canEdit && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-amber-900">Acciones de presupuesto</h3>
+              <p className="text-sm text-amber-700 mt-1">
+                Edita productos, aplica descuentos y convierte a pedido cuando estes listo.
+              </p>
+            </div>
+            <button
+              onClick={convertirAPedido}
+              disabled={converting || saving}
+              className="shrink-0 px-5 py-2.5 bg-action text-white rounded-lg font-medium hover:bg-action-hover disabled:opacity-50 transition-colors flex items-center gap-2"
+            >
+              <span className="material-icons text-base">swap_horiz</span>
+              {converting ? "Convirtiendo..." : "Convertir a pedido"}
+            </button>
           </div>
-          <button
-            onClick={convertirAPedido}
-            disabled={converting || saving}
-            className="shrink-0 px-5 py-2.5 bg-action text-white rounded-lg font-medium hover:bg-action-hover disabled:opacity-50 transition-colors flex items-center gap-2"
-          >
-            <span className="material-icons text-base">swap_horiz</span>
-            {converting ? "Convirtiendo..." : "Convertir a pedido"}
-          </button>
+
+          {/* Discount row */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-3 border-t border-amber-200">
+            <button
+              onClick={() => setShowDiscount(!showDiscount)}
+              className="text-sm font-medium text-amber-800 hover:text-amber-950 flex items-center gap-1"
+            >
+              <span className="material-icons text-base">percent</span>
+              Aplicar descuento general
+              <span className="material-icons text-sm">{showDiscount ? "expand_less" : "expand_more"}</span>
+            </button>
+
+            {showDiscount && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                  className="w-20 text-sm border border-amber-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-action text-center"
+                />
+                <span className="text-sm text-amber-800">%</span>
+                <button
+                  onClick={applyBulkDiscount}
+                  disabled={saving}
+                  className="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50 transition-colors"
+                >
+                  Aplicar
+                </button>
+              </div>
+            )}
+
+          </div>
         </div>
       )}
 
@@ -343,32 +527,24 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
               <h2 className="font-semibold text-navy">
                 {isPresupuesto ? "Productos del presupuesto" : "Productos del pedido"}
               </h2>
-              {isPresupuesto && pedido.estado !== "cancelado" && (
+              {canEdit && (
                 <button
-                  onClick={() => setAddingProduct(!addingProduct)}
+                  onClick={() => { setAddingProduct(!addingProduct); setSelectedProduct(null); }}
                   className="text-xs px-3 py-1.5 bg-action text-white rounded-lg hover:bg-action-hover transition-colors flex items-center gap-1"
                 >
-                  <span className="material-icons text-sm">add</span>
-                  Añadir producto
+                  <span className="material-icons text-sm">{addingProduct ? "close" : "add"}</span>
+                  {addingProduct ? "Cerrar" : "Añadir producto"}
                 </button>
               )}
             </div>
 
-            {/* Add product form (presupuesto only) */}
-            {addingProduct && isPresupuesto && (
-              <div className="px-5 py-4 border-b border-border bg-bg-accent">
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                  <div className="flex-1">
-                    <label className="text-xs font-medium text-text-muted mb-1 block">ID del producto (UUID)</label>
-                    <input
-                      type="text"
-                      value={newProductId}
-                      onChange={(e) => setNewProductId(e.target.value)}
-                      placeholder="UUID del producto..."
-                      className="w-full text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:border-action"
-                    />
-                  </div>
-                  <div className="w-24">
+            {/* Add product form with search */}
+            {addingProduct && canEdit && (
+              <div className="px-5 py-4 border-b border-border bg-bg-accent space-y-3">
+                <label className="text-xs font-medium text-text-muted block">Buscar producto</label>
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+                  <ProductSearch onSelect={setSelectedProduct} disabled={saving} />
+                  <div className="w-24 shrink-0">
                     <label className="text-xs font-medium text-text-muted mb-1 block">Cantidad</label>
                     <input
                       type="number"
@@ -378,22 +554,31 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
                       className="w-full text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:border-action"
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <button
+                    onClick={addItem}
+                    disabled={saving || !selectedProduct}
+                    className="px-4 py-2 bg-action text-white rounded-lg text-sm font-medium hover:bg-action-hover disabled:opacity-50 shrink-0"
+                  >
+                    Añadir
+                  </button>
+                </div>
+                {selectedProduct && (
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-action/30">
+                    <span className="material-icons text-base text-action">check_circle</span>
+                    <div className="text-sm">
+                      <span className="font-medium text-navy">{selectedProduct.nombre}</span>
+                      <span className="text-text-muted ml-2">
+                        SKU: {selectedProduct.sku || "—"} · {Number(selectedProduct.precio_base || 0).toFixed(2)} €
+                      </span>
+                    </div>
                     <button
-                      onClick={addItem}
-                      disabled={saving || !newProductId.trim()}
-                      className="px-4 py-2 bg-action text-white rounded-lg text-sm font-medium hover:bg-action-hover disabled:opacity-50"
+                      onClick={() => setSelectedProduct(null)}
+                      className="ml-auto text-text-muted hover:text-navy"
                     >
-                      Añadir
-                    </button>
-                    <button
-                      onClick={() => { setAddingProduct(false); setNewProductId(""); }}
-                      className="px-4 py-2 bg-white border border-border text-text-muted rounded-lg text-sm hover:bg-bg-light"
-                    >
-                      Cancelar
+                      <span className="material-icons text-sm">close</span>
                     </button>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -406,7 +591,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
                     <th className="text-center px-4 py-3 font-semibold">Uds.</th>
                     <th className="text-right px-4 py-3 font-semibold">Precio ud.</th>
                     <th className="text-right px-4 py-3 font-semibold">Subtotal</th>
-                    {isPresupuesto && pedido.estado !== "cancelado" && (
+                    {canEdit && (
                       <th className="text-center px-4 py-3 font-semibold w-24">Acciones</th>
                     )}
                   </tr>
@@ -465,7 +650,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
                           <td className="px-4 py-3 text-center">{item.cantidad}</td>
                           <td className="px-4 py-3 text-right">{Number(item.precio_unitario || 0).toFixed(2)} €</td>
                           <td className="px-4 py-3 text-right font-semibold">{Number(item.subtotal || 0).toFixed(2)} €</td>
-                          {isPresupuesto && pedido.estado !== "cancelado" && (
+                          {canEdit && (
                             <td className="px-4 py-3 text-center">
                               <div className="flex items-center justify-center gap-1">
                                 <button
@@ -491,7 +676,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
                   ))}
                   {(!pedido.items || pedido.items.length === 0) && (
                     <tr>
-                      <td colSpan={isPresupuesto ? 6 : 5} className="px-4 py-8 text-center text-text-muted">
+                      <td colSpan={canEdit ? 6 : 5} className="px-4 py-8 text-center text-text-muted">
                         No hay productos
                       </td>
                     </tr>

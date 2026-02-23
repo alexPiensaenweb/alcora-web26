@@ -42,28 +42,123 @@ breadcrumbs.push({ label: product.nombre });
 
 const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 const marcaObj = typeof product.marca_id === "object" && product.marca_id ? product.marca_id : null;
+const plainDescription = product.descripcion?.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() || "";
 
-// JSON-LD Product schema
+// ─── SEO: Meta description (max ~155 chars, rich with product context) ───
+function buildSeoDescription(): string {
+  // Priority 1: extracto (manually written)
+  if (product.extracto) return product.extracto;
+
+  // Priority 2: build from product fields
+  const parts: string[] = [];
+  parts.push(product.nombre);
+  if (marcaNombre) parts.push(`de ${marcaNombre}`);
+  if (product.formato) parts.push(`- ${product.formato}`);
+  if (categoria) parts.push(`en ${categoria.nombre}`);
+  parts.push("para profesionales.");
+
+  // Append first sentence of description if room
+  let desc = parts.join(" ");
+  if (plainDescription && desc.length < 120) {
+    const firstSentence = plainDescription.split(/[.!?]/)[0];
+    if (firstSentence && firstSentence.length > 10) {
+      const remaining = 155 - desc.length - 2;
+      if (firstSentence.length <= remaining) {
+        desc += " " + firstSentence + ".";
+      }
+    }
+  }
+
+  if (desc.length < 80) {
+    desc += " Comprar online en Alcora Salud Ambiental.";
+  }
+
+  return desc.slice(0, 160);
+}
+
+const seoDescription = buildSeoDescription();
+
+// ─── SEO: Meta title with category context ───
+const seoTitle = [
+  product.nombre,
+  marcaNombre ? `${marcaNombre}` : null,
+  product.formato || null,
+].filter(Boolean).join(" | ") + " - Alcora";
+
+// ─── SEO: Gallery images for schema ───
+const schemaImages: string[] = [];
+if (product.imagen_principal) {
+  schemaImages.push(getAssetUrl(product.imagen_principal, { width: 800, height: 800 }));
+}
+if (product.galeria && Array.isArray(product.galeria)) {
+  for (const item of product.galeria) {
+    const fileId = typeof item === "object" ? item.directus_files_id : item;
+    if (fileId) schemaImages.push(getAssetUrl(fileId, { width: 800, height: 800 }));
+  }
+}
+
+// ─── SEO: JSON-LD Product schema (complete) ───
 const productSchema: Record<string, any> = {
   "@context": "https://schema.org",
   "@type": "Product",
   name: product.nombre,
-  description: product.extracto || product.descripcion?.replace(/<[^>]+>/g, "").slice(0, 200) || `${product.nombre} - producto profesional`,
+  description: product.extracto || plainDescription.slice(0, 500) || `${product.nombre} - producto profesional de salud ambiental`,
   sku: product.sku,
+  mpn: product.sku,
   url: `${siteUrl}/catalogo/${product.slug}`,
-  ...(product.imagen_principal ? { image: getAssetUrl(product.imagen_principal, { width: 800, height: 800 }) } : {}),
-  ...(marcaNombre ? { brand: { "@type": "Brand", name: marcaNombre } } : {}),
+  ...(schemaImages.length === 1 ? { image: schemaImages[0] } : {}),
+  ...(schemaImages.length > 1 ? { image: schemaImages } : {}),
+  ...(marcaNombre ? { brand: { "@type": "Brand", name: marcaNombre, ...(marcaObj?.web ? { url: marcaObj.web } : {}) } } : {}),
   ...(categoria ? { category: categoria.nombre } : {}),
   offers: {
     "@type": "Offer",
     priceCurrency: "EUR",
+    price: product.precio_base.toString(),
+    priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    itemCondition: "https://schema.org/NewCondition",
+    url: `${siteUrl}/catalogo/${product.slug}`,
     seller: {
       "@type": "Organization",
       name: "Alcora Salud Ambiental",
+      url: siteUrl,
     },
   },
 };
+
+// Additional properties: formato, unidad_venta, fichas
+const additionalProperties: Record<string, any>[] = [];
+if (product.formato) {
+  additionalProperties.push({
+    "@type": "PropertyValue",
+    name: "Formato",
+    value: product.formato,
+  });
+}
+if (product.unidad_venta) {
+  additionalProperties.push({
+    "@type": "PropertyValue",
+    name: "Unidad de venta",
+    value: product.unidad_venta,
+  });
+}
+if (product.ficha_tecnica) {
+  additionalProperties.push({
+    "@type": "PropertyValue",
+    name: "Ficha tecnica",
+    value: "Disponible (PDF)",
+  });
+}
+if (product.ficha_seguridad) {
+  additionalProperties.push({
+    "@type": "PropertyValue",
+    name: "Ficha de seguridad",
+    value: "Disponible (PDF)",
+  });
+}
+if (additionalProperties.length > 0) {
+  productSchema.additionalProperty = additionalProperties;
+}
 
 // BreadcrumbList schema
 const breadcrumbSchema = {
@@ -87,12 +182,18 @@ const breadcrumbSchema = {
   ],
 };
 
-const seoDescription = product.extracto
-  || product.descripcion?.replace(/<[^>]+>/g, "").slice(0, 155)
-  || `${product.nombre} - Comprar online para profesionales. ${marcaNombre ? `Marca ${marcaNombre}.` : ""} Stock inmediato - Alcora Salud Ambiental`;
+// ─── SEO: Open Graph product meta tags ───
+const ogProductMeta: { property?: string; name?: string; content: string }[] = [
+  { property: "product:price:amount", content: product.precio_base.toString() },
+  { property: "product:price:currency", content: "EUR" },
+  { property: "product:availability", content: product.stock === 0 ? "out of stock" : "in stock" },
+  ...(marcaNombre ? [{ property: "product:brand", content: marcaNombre }] : []),
+  ...(product.formato ? [{ property: "product:product_link", content: product.formato }] : []),
+  ...(categoria ? [{ name: "article:section", content: categoria.nombre }] : []),
+];
 ---
 
-<BaseLayout title={`${product.nombre}${marcaNombre ? ` - ${marcaNombre}` : ""} | Tienda Alcora`} description={seoDescription} ogImage={product.imagen_principal ? getAssetUrl(product.imagen_principal, { width: 800, height: 800 }) : undefined}>
+<BaseLayout title={seoTitle} description={seoDescription} ogImage={schemaImages[0]} ogType="og:product" extraMeta={ogProductMeta}>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <Breadcrumb items={breadcrumbs} />
 

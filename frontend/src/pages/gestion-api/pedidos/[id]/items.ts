@@ -2,13 +2,14 @@ import type { APIRoute } from "astro";
 import { directusAdmin } from "../../../../lib/directus";
 
 /**
- * Admin API for managing presupuesto items (add/update/remove).
+ * Admin API for managing presupuesto items (add/update/remove/bulk_discount).
  * Only allowed when pedido.tipo === "presupuesto".
  *
  * PATCH /gestion-api/pedidos/[id]/items
  * Body: { action: "update", itemId: number, data: { cantidad?, precio_unitario? } }
  *     | { action: "add", data: { producto: string, cantidad: number } }
  *     | { action: "remove", itemId: number }
+ *     | { action: "bulk_discount", percent: number }   // applies % discount to all items
  */
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   if (!locals.user?.isAdmin) {
@@ -28,8 +29,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
   }
 
   const { action } = body;
-  if (!["update", "add", "remove"].includes(action)) {
-    return new Response(JSON.stringify({ error: "Action invalida: update|add|remove" }), { status: 400 });
+  if (!["update", "add", "remove", "bulk_discount"].includes(action)) {
+    return new Response(JSON.stringify({ error: "Action invalida: update|add|remove|bulk_discount" }), { status: 400 });
   }
 
   try {
@@ -135,6 +136,27 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       await directusAdmin(`/items/pedidos_items/${itemId}`, {
         method: "DELETE",
       });
+
+    } else if (action === "bulk_discount") {
+      const percent = Number(body.percent);
+      if (isNaN(percent) || percent < 0 || percent > 100) {
+        return new Response(JSON.stringify({ error: "Porcentaje invalido (0-100)" }), { status: 400 });
+      }
+
+      const factor = 1 - percent / 100;
+      const itemsRes = await directusAdmin(
+        `/items/pedidos_items?filter[pedido][_eq]=${id}&fields=id,cantidad,precio_unitario`
+      );
+      const items = itemsRes.data || [];
+
+      for (const it of items) {
+        const newPrice = Math.round(Number(it.precio_unitario) * factor * 100) / 100;
+        const newSubtotal = Math.round(newPrice * Number(it.cantidad) * 100) / 100;
+        await directusAdmin(`/items/pedidos_items/${it.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ precio_unitario: newPrice, subtotal: newSubtotal }),
+        });
+      }
     }
 
     // Recalculate presupuesto totals
