@@ -265,6 +265,7 @@ export function buildPedidoHtml(data: {
   const metodoPagoLabels: Record<string, string> = {
     transferencia: "Transferencia bancaria",
     tarjeta: "Pago con tarjeta",
+    bizum: "Pago con Bizum",
     pendiente: "Pendiente de confirmar",
   };
   const metodoPagoLabel = metodoPagoLabels[data.metodoPago] || "Pendiente de confirmar";
@@ -391,7 +392,7 @@ export function buildBienvenidaHtml(data: {
         Su cuenta en la tienda online de Alcora Salud Ambiental ha sido creada correctamente.
       </p>
       <p style="font-size:14px;color:#222d54;margin:0 0 24px;line-height:1.6;">
-        Ya puede explorar nuestro catalogo, realizar pedidos y pagar comodamente con tarjeta.
+        Ya puede explorar nuestro catalogo, realizar pedidos y pagar comodamente con tarjeta o Bizum.
       </p>
 
       <div style="background:#eff4ff;border:1px solid #2970ff;border-radius:6px;padding:16px;text-align:center;margin-bottom:24px;">

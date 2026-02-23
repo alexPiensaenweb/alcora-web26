@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       items: CartItem[];
       direccion_envio: string;
       direccion_facturacion: string;
-      metodo_pago: "transferencia" | "pendiente" | "tarjeta";
+      metodo_pago: "transferencia" | "pendiente" | "tarjeta" | "bizum";
       notas_cliente?: string;
     };
 
@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Validate metodo_pago enum
-    const VALID_METODOS = ["transferencia", "pendiente", "tarjeta"];
+    const VALID_METODOS = ["transferencia", "pendiente", "tarjeta", "bizum"];
     if (metodo_pago && !VALID_METODOS.includes(metodo_pago)) {
       return new Response(
         JSON.stringify({ error: "Metodo de pago no valido" }),
@@ -134,9 +134,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Create pedido using user's token (so user_created is set correctly)
     // Fall back to admin token if user token fails (permission issues)
-    // Estado: tarjeta → "aprobado_pendiente_pago" (awaiting Redsys payment)
+    // Estado: tarjeta/bizum → "aprobado_pendiente_pago" (awaiting Redsys payment)
     //         other methods → "solicitado" (awaiting manual confirmation)
-    const initialEstado = metodo_pago === "tarjeta" ? "aprobado_pendiente_pago" : "solicitado";
+    const isRedsysPayment = metodo_pago === "tarjeta" || metodo_pago === "bizum";
+    const initialEstado = isRedsysPayment ? "aprobado_pendiente_pago" : "solicitado";
     let pedidoRes: any;
     const pedidoData = {
       estado: initialEstado,
@@ -179,9 +180,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Send email notification for non-card payments
-    // Card payments: emails sent after successful Redsys webhook
-    if (metodo_pago !== "tarjeta") {
+    // Send email notification for non-Redsys payments
+    // Card/Bizum payments: emails sent after successful Redsys webhook
+    if (!isRedsysPayment) {
       const user = locals.user;
       const userName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Cliente";
       const userEmail = user.email;

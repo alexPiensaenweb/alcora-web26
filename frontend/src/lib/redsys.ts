@@ -53,12 +53,16 @@ function generateOrderId(pedidoId: number): string {
 
 // ─── Create Payment Request ───
 
+/** Payment channel: card (Visa/MC) or Bizum */
+export type RedsysPayMethod = "card" | "bizum";
+
 interface PaymentRequestInput {
   pedidoId: number;
   totalEur: number;
   merchantUrl: string; // Webhook notification URL (absolute)
   urlOk: string;       // Success redirect URL
   urlKo: string;       // Failure redirect URL
+  payMethod?: RedsysPayMethod; // default: "card"
 }
 
 interface PaymentRequestOutput {
@@ -80,6 +84,9 @@ export function createPaymentRequest(input: PaymentRequestInput): PaymentRequest
   // Amount in smallest currency unit (cents for EUR)
   const amountInCents = Math.round(input.totalEur * 100).toString();
 
+  // Redsys PayMethods: "C" = card only, "z" = Bizum, "T" = transfer, etc.
+  const payMethodCode = input.payMethod === "bizum" ? "z" : "C";
+
   const form = api.createRedirectForm({
     DS_MERCHANT_MERCHANTCODE: merchantCode,
     DS_MERCHANT_TERMINAL: terminal,
@@ -91,6 +98,7 @@ export function createPaymentRequest(input: PaymentRequestInput): PaymentRequest
     DS_MERCHANT_URLOK: input.urlOk,
     DS_MERCHANT_URLKO: input.urlKo,
     DS_MERCHANT_CONSUMERLANGUAGE: "001", // Spanish
+    DS_MERCHANT_PAYMETHODS: payMethodCode,
   });
 
   return {

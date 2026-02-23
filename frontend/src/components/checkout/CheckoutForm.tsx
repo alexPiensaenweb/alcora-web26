@@ -30,7 +30,7 @@ interface CheckoutFormProps {
   };
 }
 
-type MetodoPago = "tarjeta" | "pendiente";
+type MetodoPago = "tarjeta" | "bizum" | "pendiente";
 
 export default function CheckoutForm({ user }: CheckoutFormProps) {
   const items = useStore($cartList);
@@ -82,8 +82,9 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
     );
   }
 
-  // ─── Confirmacion de pedido (non-card) ───
-  if (orderId && metodoPago !== "tarjeta") {
+  // ─── Confirmacion de pedido (non-Redsys methods) ───
+  const isRedsysMethod = metodoPago === "tarjeta" || metodoPago === "bizum";
+  if (orderId && !isRedsysMethod) {
     return (
       <div className="max-w-xl mx-auto py-12">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -154,8 +155,8 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
       const newOrderId = data.pedido.id;
       clearCart();
 
-      // Step 2: If card payment, initiate Redsys
-      if (metodoPago === "tarjeta") {
+      // Step 2: If Redsys payment (card or Bizum), initiate redirect
+      if (metodoPago === "tarjeta" || metodoPago === "bizum") {
         setOrderId(newOrderId);
 
         // Get Redsys form data from our server
@@ -248,7 +249,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
           <h2 className="text-lg font-semibold text-[var(--color-navy)] mb-4">
             Metodo de pago
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               type="button"
               onClick={() => setMetodoPago("tarjeta")}
@@ -266,8 +267,29 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-[var(--color-navy)]">Pago con tarjeta</p>
-                <p className="text-xs text-[var(--color-text-muted)]">Pago seguro con Redsys (Visa, Mastercard)</p>
+                <p className="text-sm font-semibold text-[var(--color-navy)]">Tarjeta</p>
+                <p className="text-xs text-[var(--color-text-muted)]">Visa, Mastercard</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMetodoPago("bizum")}
+              className={`flex items-center gap-3 p-4 border-2 rounded-lg text-left transition-colors ${
+                metodoPago === "bizum"
+                  ? "border-[var(--color-action)] bg-blue-50"
+                  : "border-[var(--color-border)] hover:border-gray-400"
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                metodoPago === "bizum" ? "border-[var(--color-action)]" : "border-gray-300"
+              }`}>
+                {metodoPago === "bizum" && (
+                  <div className="w-3 h-3 rounded-full bg-[var(--color-action)]" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-navy)]">Bizum</p>
+                <p className="text-xs text-[var(--color-text-muted)]">Pago desde el movil</p>
               </div>
             </button>
             <button
@@ -287,17 +309,17 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
                 )}
               </div>
               <div>
-                <p className="text-sm font-semibold text-[var(--color-navy)]">Pendiente de confirmar</p>
-                <p className="text-xs text-[var(--color-text-muted)]">Contactaremos para acordar el pago</p>
+                <p className="text-sm font-semibold text-[var(--color-navy)]">Pendiente</p>
+                <p className="text-xs text-[var(--color-text-muted)]">Contactaremos para acordar</p>
               </div>
             </button>
           </div>
-          {metodoPago === "tarjeta" && (
+          {(metodoPago === "tarjeta" || metodoPago === "bizum") && (
             <p className="mt-3 text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
               <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Sera redirigido a la pasarela segura de Redsys. Sus datos de tarjeta nunca pasan por nuestro servidor.
+              Sera redirigido a la pasarela segura de Redsys. Sus datos nunca pasan por nuestro servidor.
             </p>
           )}
         </div>
@@ -401,7 +423,9 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               ? "Procesando..."
               : metodoPago === "tarjeta"
                 ? "Pagar con tarjeta"
-                : "Enviar Pedido"
+                : metodoPago === "bizum"
+                  ? "Pagar con Bizum"
+                  : "Enviar Pedido"
             }
           </button>
         </div>

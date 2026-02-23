@@ -72,7 +72,7 @@ export const POST: APIRoute = async ({ request }) => {
     let pedido: any;
     try {
       const res = await directusAdmin(
-        `/items/pedidos/${pedidoId}?fields=id,estado,total,user_created,metodo_pago,direccion_envio,direccion_facturacion,notas_cliente,items.*`
+        `/items/pedidos/${pedidoId}?fields=id,estado,total,subtotal,costo_envio,user_created,metodo_pago,direccion_envio,direccion_facturacion,notas_cliente,items.*`
       );
       pedido = res.data;
     } catch (err) {
@@ -181,7 +181,7 @@ async function sendPaymentEmails(pedido: any, redsysOrderId: string, authCode: s
       userCompany,
       direccionEnvio: pedido.direccion_envio || "",
       direccionFacturacion: pedido.direccion_facturacion || "",
-      metodoPago: "tarjeta",
+      metodoPago: pedido.metodo_pago || "tarjeta",
       notasCliente: pedido.notas_cliente || null,
       items,
       subtotal: pedido.subtotal || 0,
@@ -199,7 +199,7 @@ async function sendPaymentEmails(pedido: any, redsysOrderId: string, authCode: s
       });
       await sendMail({
         to: companyEmail,
-        subject: `Pedido #${pedido.id} PAGADO con tarjeta - ${userCompany || userName}`,
+        subject: `Pedido #${pedido.id} PAGADO (${pedido.metodo_pago === "bizum" ? "Bizum" : "tarjeta"}) - ${userCompany || userName}`,
         html: adminHtml,
         replyTo: userEmail,
       });

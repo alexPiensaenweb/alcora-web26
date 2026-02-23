@@ -1,7 +1,7 @@
 /**
  * POST /pago-api/initiate
  *
- * Initiates a Redsys card payment for a pedido.
+ * Initiates a Redsys payment (card or Bizum) for a pedido.
  * - Requires authentication
  * - Verifies pedido ownership
  * - Verifies pedido is in "aprobado_pendiente_pago" state
@@ -9,7 +9,7 @@
  */
 import type { APIRoute } from "astro";
 import { directusAdmin } from "../../lib/directus";
-import { createPaymentRequest, isRedsysConfigured } from "../../lib/redsys";
+import { createPaymentRequest, isRedsysConfigured, type RedsysPayMethod } from "../../lib/redsys";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 
 const PUBLIC_SITE_URL =
@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!isRedsysConfigured()) {
       return new Response(
-        JSON.stringify({ error: "El pago con tarjeta no esta disponible en este momento" }),
+        JSON.stringify({ error: "El pago online no esta disponible en este momento" }),
         { status: 503, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -95,12 +95,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    if (pedido.metodo_pago !== "tarjeta") {
+    // Verify payment method is Redsys-compatible (tarjeta or bizum)
+    const REDSYS_METHODS = ["tarjeta", "bizum"];
+    if (!REDSYS_METHODS.includes(pedido.metodo_pago)) {
       return new Response(
-        JSON.stringify({ error: "El metodo de pago de este pedido no es tarjeta" }),
+        JSON.stringify({ error: "El metodo de pago de este pedido no es compatible con pago online" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    // Map our metodo_pago to Redsys pay method
+    const payMethod: RedsysPayMethod = pedido.metodo_pago === "bizum" ? "bizum" : "card";
 
     // Create Redsys payment request
     const result = createPaymentRequest({
@@ -109,6 +114,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       merchantUrl: `${PUBLIC_SITE_URL}/pago-api/webhook`,
       urlOk: `${PUBLIC_SITE_URL}/pago/ok?pedido=${pedido.id}`,
       urlKo: `${PUBLIC_SITE_URL}/pago/ko?pedido=${pedido.id}`,
+      payMethod,
     });
 
     // Save Redsys order ID for reference
