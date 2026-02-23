@@ -119,6 +119,20 @@ export async function directusAdmin(
   });
 }
 
+/**
+ * Purge the Directus Redis cache.
+ * Call after admin mutations to ensure subsequent reads get fresh data.
+ * This is necessary because CACHE_AUTO_PURGE is not enabled on the server.
+ */
+export async function purgeDirectusCache(): Promise<void> {
+  try {
+    await directusAdmin("/utils/cache/clear", { method: "POST" });
+  } catch (err) {
+    // Non-critical: cache will expire naturally via TTL
+    console.warn("[directus] Cache purge failed:", err instanceof Error ? err.message : err);
+  }
+}
+
 // ─── Collection-specific fetchers ───
 
 import type { Categoria, Producto, Marca, TarifaEspecial, Pedido } from "./types";

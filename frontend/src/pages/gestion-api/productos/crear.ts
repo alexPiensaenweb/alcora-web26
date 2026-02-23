@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../lib/directus";
+import { directusAdmin, purgeDirectusCache } from "../../../lib/directus";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.user?.isAdmin) {
@@ -61,6 +61,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       method: "POST",
       body: JSON.stringify(payload),
     });
+
+    await purgeDirectusCache();
 
     return new Response(
       JSON.stringify({ ok: true, data: res.data }),

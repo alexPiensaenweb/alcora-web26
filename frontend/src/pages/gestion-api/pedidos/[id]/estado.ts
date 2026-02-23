@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../../lib/directus";
+import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   // Admin check
@@ -37,6 +37,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       method: "PATCH",
       body: JSON.stringify({ estado: body.estado }),
     });
+
+    await purgeDirectusCache();
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,

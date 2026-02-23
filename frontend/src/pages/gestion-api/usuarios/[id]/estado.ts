@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../../lib/directus";
+import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
 import { sendMail, buildActivacionHtml, getCompanyEmail } from "../../../../lib/email";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
@@ -67,6 +67,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         // Don't fail the request if email fails - status was already changed
       }
     }
+
+    await purgeDirectusCache();
 
     return new Response(JSON.stringify({ ok: true, emailSent }), {
       status: 200,

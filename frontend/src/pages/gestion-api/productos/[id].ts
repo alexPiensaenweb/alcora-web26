@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { directusAdmin } from "../../../lib/directus";
+import { directusAdmin, purgeDirectusCache } from "../../../lib/directus";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   if (!locals.user?.isAdmin) {
@@ -35,6 +35,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       body: JSON.stringify(payload),
     });
 
+    await purgeDirectusCache();
+
     return new Response(JSON.stringify({ ok: true, data: res.data }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -68,6 +70,8 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     await directusAdmin(`/items/productos/${id}`, {
       method: "DELETE",
     });
+
+    await purgeDirectusCache();
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
