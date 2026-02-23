@@ -688,7 +688,7 @@ async function setupPedidos() {
             options: {
               choices: [
                 { text: "Transferencia bancaria", value: "transferencia" },
-                { text: "Tarjeta (Redsys)", value: "tarjeta" },
+                { text: "Pendiente", value: "pendiente" },
               ],
             },
           },
@@ -697,7 +697,7 @@ async function setupPedidos() {
         {
           field: "referencia_pago",
           type: "string",
-          meta: { interface: "input", width: "half", note: "Referencia del pago (Redsys/transferencia)" },
+          meta: { interface: "input", width: "half", note: "Referencia del pago" },
           schema: { is_nullable: true },
         },
         {

@@ -6,9 +6,9 @@
 import { Resend } from "resend";
 
 const RESEND_API_KEY =
-  import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY || "";
+  process.env.RESEND_API_KEY || import.meta.env.RESEND_API_KEY || "";
 const EMAIL_FROM =
-  import.meta.env.EMAIL_FROM || process.env.EMAIL_FROM || "Alcora Salud Ambiental <noreply@tienda.alcora.es>";
+  process.env.EMAIL_FROM || import.meta.env.EMAIL_FROM || "Alcora Salud Ambiental <noreply@tienda.alcora.es>";
 
 let resendClient: Resend | null = null;
 
@@ -190,7 +190,7 @@ export function buildPedidoHtml(data: {
     )
     .join("");
 
-  const metodoPagoLabel = data.metodoPago === "transferencia" ? "Transferencia bancaria" : data.metodoPago === "tarjeta" ? "Tarjeta (Redsys)" : "Pendiente de confirmar";
+  const metodoPagoLabel = data.metodoPago === "transferencia" ? "Transferencia bancaria" : "Pendiente de confirmar";
 
   return `
 <!DOCTYPE html>
