@@ -165,10 +165,24 @@ export const POST: APIRoute = async ({ request }) => {
       userData.grupo_cliente = grupoCliente;
     }
 
-    await directusAdmin("/users", {
+    const createRes = await directusAdmin("/users", {
       method: "POST",
       body: JSON.stringify(userData),
     });
+
+    const newUserId = createRes.data?.id;
+
+    // For B2C: ensure the user is active (Directus may override status on creation)
+    if (isB2C && newUserId) {
+      try {
+        await directusAdmin(`/users/${newUserId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "active", grupo_cliente: "particular" }),
+        });
+      } catch (patchErr) {
+        console.error("Error activating B2C user:", patchErr);
+      }
+    }
 
     // Send emails
     try {
