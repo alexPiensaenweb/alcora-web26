@@ -262,7 +262,12 @@ export function buildPedidoHtml(data: {
     )
     .join("");
 
-  const metodoPagoLabel = data.metodoPago === "transferencia" ? "Transferencia bancaria" : "Pendiente de confirmar";
+  const metodoPagoLabels: Record<string, string> = {
+    transferencia: "Transferencia bancaria",
+    tarjeta: "Pago con tarjeta",
+    pendiente: "Pendiente de confirmar",
+  };
+  const metodoPagoLabel = metodoPagoLabels[data.metodoPago] || "Pendiente de confirmar";
 
   return `
 <!DOCTYPE html>
@@ -358,6 +363,49 @@ export function buildActivacionHtml(data: {
     </div>
 
     ${emailFooter({ label: "Acceder a mi cuenta", url: `${PUBLIC_SITE_URL}/login` })}
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * Build welcome email HTML for B2C users (auto-activated on registration)
+ */
+export function buildBienvenidaHtml(data: {
+  userName: string;
+  userEmail: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
+  <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #c0c4ce;">
+    ${emailHeader("Bienvenido/a a Alcora", "Alcora Salud Ambiental")}
+
+    <div style="padding:24px 32px;">
+      <p style="font-size:15px;color:#222d54;margin:0 0 16px;line-height:1.6;">
+        Hola <strong>${escapeHtml(data.userName)}</strong>,
+      </p>
+      <p style="font-size:14px;color:#222d54;margin:0 0 16px;line-height:1.6;">
+        Su cuenta en la tienda online de Alcora Salud Ambiental ha sido creada correctamente.
+      </p>
+      <p style="font-size:14px;color:#222d54;margin:0 0 24px;line-height:1.6;">
+        Ya puede explorar nuestro catalogo, realizar pedidos y pagar comodamente con tarjeta.
+      </p>
+
+      <div style="background:#eff4ff;border:1px solid #2970ff;border-radius:6px;padding:16px;text-align:center;margin-bottom:24px;">
+        <p style="margin:0;font-size:14px;color:#222d54;">
+          Acceda con su email: <strong>${escapeHtml(data.userEmail)}</strong>
+        </p>
+      </div>
+
+      <p style="font-size:13px;color:#6b7589;line-height:1.5;">
+        Si tiene cualquier duda, no dude en contactarnos.
+      </p>
+    </div>
+
+    ${emailFooter({ label: "Ir a la tienda", url: `${PUBLIC_SITE_URL}/catalogo` })}
   </div>
 </body>
 </html>`;

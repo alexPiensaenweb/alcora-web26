@@ -10,6 +10,10 @@ interface ImportMetaEnv {
   readonly IBAN: string;
   readonly RESEND_API_KEY: string;
   readonly EMAIL_FROM: string;
+  readonly REDSYS_MERCHANT_CODE: string;
+  readonly REDSYS_SECRET_KEY: string;
+  readonly REDSYS_TERMINAL: string;
+  readonly REDSYS_ENV: string;
 }
 
 interface ImportMeta {

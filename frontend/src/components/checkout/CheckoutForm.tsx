@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
   $cartList,
@@ -26,14 +26,23 @@ interface CheckoutFormProps {
     telefono: string | null;
     direccion_envio: string | null;
     direccion_facturacion: string | null;
+    grupo_cliente: string | null;
   };
 }
+
+type MetodoPago = "tarjeta" | "pendiente";
 
 export default function CheckoutForm({ user }: CheckoutFormProps) {
   const items = useStore($cartList);
   const subtotal = useStore($cartSubtotal);
   const shipping = useStore($shippingCost);
   const total = useStore($cartTotal);
+
+  // Default payment method: tarjeta for particulares, pendiente for B2B
+  const isParticular = user.grupo_cliente === "particular";
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>(
+    isParticular ? "tarjeta" : "pendiente"
+  );
 
   const [direccionEnvio, setDireccionEnvio] = useState(
     user.direccion_envio || user.direccion_facturacion || ""
@@ -50,6 +59,9 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [orderId, setOrderId] = useState<number | null>(null);
+
+  // Hidden form ref for Redsys redirect
+  const redsysFormRef = useRef<HTMLFormElement>(null);
 
   if (items.length === 0 && !orderId) {
     return (
@@ -70,8 +82,8 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
     );
   }
 
-  // ─── Confirmacion de pedido ───
-  if (orderId) {
+  // ─── Confirmacion de pedido (non-card) ───
+  if (orderId && metodoPago !== "tarjeta") {
     return (
       <div className="max-w-xl mx-auto py-12">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -120,6 +132,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
     setError("");
 
     try {
+      // Step 1: Create the order
       const res = await fetch("/cart/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,7 +143,7 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
           })),
           direccion_envio: direccionEnvio,
           direccion_facturacion: mismaDir ? direccionEnvio : direccionFacturacion,
-          metodo_pago: "pendiente",
+          metodo_pago: metodoPago,
           notas_cliente: notasCliente || null,
         }),
       });
@@ -138,8 +151,41 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar el pedido");
 
+      const newOrderId = data.pedido.id;
       clearCart();
-      setOrderId(data.pedido.id);
+
+      // Step 2: If card payment, initiate Redsys
+      if (metodoPago === "tarjeta") {
+        setOrderId(newOrderId);
+
+        // Get Redsys form data from our server
+        const payRes = await fetch("/pago-api/initiate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pedidoId: newOrderId }),
+        });
+
+        const payData = await payRes.json();
+        if (!payRes.ok) throw new Error(payData.error || "Error al iniciar el pago");
+
+        // Auto-submit the hidden form to redirect to Redsys
+        const form = redsysFormRef.current;
+        if (form) {
+          form.action = payData.redsysUrl;
+          // Set hidden fields
+          const sigVersion = form.querySelector<HTMLInputElement>('[name="Ds_SignatureVersion"]');
+          const params = form.querySelector<HTMLInputElement>('[name="Ds_MerchantParameters"]');
+          const sig = form.querySelector<HTMLInputElement>('[name="Ds_Signature"]');
+          if (sigVersion) sigVersion.value = payData.formParams.Ds_SignatureVersion;
+          if (params) params.value = payData.formParams.Ds_MerchantParameters;
+          if (sig) sig.value = payData.formParams.Ds_Signature;
+          form.submit();
+        }
+        return;
+      }
+
+      // Non-card: show confirmation
+      setOrderId(newOrderId);
     } catch (err: any) {
       setError(err.message || "Error desconocido");
     } finally {
@@ -150,6 +196,13 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
   // ─── Render principal ───
   return (
     <div className="flex flex-col lg:flex-row gap-8">
+      {/* Hidden form for Redsys redirect (auto-submitted via JS) */}
+      <form ref={redsysFormRef} method="POST" action="" style={{ display: "none" }}>
+        <input type="hidden" name="Ds_SignatureVersion" value="" />
+        <input type="hidden" name="Ds_MerchantParameters" value="" />
+        <input type="hidden" name="Ds_Signature" value="" />
+      </form>
+
       {/* Main Form */}
       <div className="flex-1 space-y-6">
         {/* Customer info summary */}
@@ -165,14 +218,18 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
                 {[user.first_name, user.last_name].filter(Boolean).join(" ") || "—"}
               </span>
             </div>
-            <div>
-              <span className="text-[var(--color-text-muted)]">Empresa: </span>
-              <span className="text-[var(--color-navy)] font-medium">{user.razon_social || "—"}</span>
-            </div>
-            <div>
-              <span className="text-[var(--color-text-muted)]">CIF/NIF: </span>
-              <span className="text-[var(--color-navy)] font-medium">{user.cif_nif || "—"}</span>
-            </div>
+            {user.razon_social && (
+              <div>
+                <span className="text-[var(--color-text-muted)]">Empresa: </span>
+                <span className="text-[var(--color-navy)] font-medium">{user.razon_social}</span>
+              </div>
+            )}
+            {user.cif_nif && (
+              <div>
+                <span className="text-[var(--color-text-muted)]">CIF/NIF: </span>
+                <span className="text-[var(--color-navy)] font-medium">{user.cif_nif}</span>
+              </div>
+            )}
             <div>
               <span className="text-[var(--color-text-muted)]">Email: </span>
               <span className="text-[var(--color-navy)] font-medium">{user.email}</span>
@@ -184,6 +241,65 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Payment method selector */}
+        <div className="bg-white border border-[var(--color-border)] rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] mb-4">
+            Metodo de pago
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setMetodoPago("tarjeta")}
+              className={`flex items-center gap-3 p-4 border-2 rounded-lg text-left transition-colors ${
+                metodoPago === "tarjeta"
+                  ? "border-[var(--color-action)] bg-blue-50"
+                  : "border-[var(--color-border)] hover:border-gray-400"
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                metodoPago === "tarjeta" ? "border-[var(--color-action)]" : "border-gray-300"
+              }`}>
+                {metodoPago === "tarjeta" && (
+                  <div className="w-3 h-3 rounded-full bg-[var(--color-action)]" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-navy)]">Pago con tarjeta</p>
+                <p className="text-xs text-[var(--color-text-muted)]">Pago seguro con Redsys (Visa, Mastercard)</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMetodoPago("pendiente")}
+              className={`flex items-center gap-3 p-4 border-2 rounded-lg text-left transition-colors ${
+                metodoPago === "pendiente"
+                  ? "border-[var(--color-action)] bg-blue-50"
+                  : "border-[var(--color-border)] hover:border-gray-400"
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                metodoPago === "pendiente" ? "border-[var(--color-action)]" : "border-gray-300"
+              }`}>
+                {metodoPago === "pendiente" && (
+                  <div className="w-3 h-3 rounded-full bg-[var(--color-action)]" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-navy)]">Pendiente de confirmar</p>
+                <p className="text-xs text-[var(--color-text-muted)]">Contactaremos para acordar el pago</p>
+              </div>
+            </button>
+          </div>
+          {metodoPago === "tarjeta" && (
+            <p className="mt-3 text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Sera redirigido a la pasarela segura de Redsys. Sus datos de tarjeta nunca pasan por nuestro servidor.
+            </p>
+          )}
         </div>
 
         {/* Shipping address */}
@@ -281,7 +397,12 @@ export default function CheckoutForm({ user }: CheckoutFormProps) {
             disabled={loading}
             className="flex-1 bg-[var(--color-action)] text-white py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors disabled:opacity-50"
           >
-            {loading ? "Procesando..." : "Enviar Pedido"}
+            {loading
+              ? "Procesando..."
+              : metodoPago === "tarjeta"
+                ? "Pagar con tarjeta"
+                : "Enviar Pedido"
+            }
           </button>
         </div>
 

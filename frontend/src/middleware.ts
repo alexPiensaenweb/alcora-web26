@@ -42,7 +42,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.nonce = "";
 
   // ─── CSRF Protection: verify Origin on state-changing requests ───
-  if (context.request.method !== "GET" && context.request.method !== "HEAD") {
+  // Exempt Redsys webhook (called by Redsys servers, verified by HMAC signature)
+  const csrfExempt = pathname === "/pago-api/webhook";
+
+  if (!csrfExempt && context.request.method !== "GET" && context.request.method !== "HEAD") {
     const origin = context.request.headers.get("origin");
     const host = context.request.headers.get("host");
 
@@ -107,7 +110,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     pathname.startsWith("/cart/") ||
     pathname.startsWith("/gestion-api") ||
     pathname.startsWith("/products-api") ||
-    pathname.startsWith("/search/");
+    pathname.startsWith("/search/") ||
+    pathname.startsWith("/pago-api/");
 
   const isProtected = !isApiRoute && PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
@@ -163,6 +167,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     pathname.startsWith("/cuenta") ||
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/pago/") ||
+    pathname.startsWith("/pago-api/") ||
     pathname.startsWith("/cart/");
   if (isDynamicPage) {
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
@@ -204,10 +209,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       `img-src ${imgSrc}`,
       "connect-src 'self' blob:",
       "worker-src 'self' blob:",
-      "frame-src https://challenges.cloudflare.com",
+      "frame-src https://challenges.cloudflare.com https://sis.redsys.es https://sis-t.redsys.es:25443",
       "font-src 'self' https://fonts.gstatic.com",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://sis.redsys.es https://sis-t.redsys.es:25443",
       "frame-ancestors 'none'",
     ].join("; ")
   );
