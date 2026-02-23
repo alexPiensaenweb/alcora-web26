@@ -212,7 +212,5 @@ export const onRequest = defineMiddleware(async (context, next) => {
     ].join("; ")
   );
 
-  response.headers.set("X-Nonce", nonce);
-
   return response;
 });
