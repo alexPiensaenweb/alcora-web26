@@ -17,7 +17,7 @@ echo "========================================="
 echo ""
 echo "[1/5] Building Astro frontend..."
 cd frontend
-PUBLIC_DIRECTUS_URL=https://tienda.alcora.es PUBLIC_SITE_URL=https://tienda.alcora.es npm run build
+npm run build
 cd ..
 
 # Step 2: Clean remote (remove repo junk)
