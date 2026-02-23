@@ -47,7 +47,7 @@ try {
 const totalPages = Math.ceil(total / limit);
 ---
 
-<AdminLayout title="Productos - Admin Alcora" activeTab="productos">
+<AdminLayout title="Productos - Admin Alcora" activeTab="productos" autoRefresh={60}>
   <ProductosAdminPanel
     client:load
     productosInitial={productos}
