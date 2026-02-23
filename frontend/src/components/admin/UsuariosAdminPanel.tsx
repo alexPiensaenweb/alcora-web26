@@ -6,7 +6,7 @@ interface Usuario {
   first_name: string | null;
   last_name: string | null;
   status: string;
-  date_created: string;
+  last_access: string | null;
   grupo_cliente: string | null;
   razon_social: string | null;
   cif_nif: string | null;
@@ -301,7 +301,7 @@ export default function UsuariosAdminPanel({
                       <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Empresa / CIF</th>
                       <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">Estado</th>
                       <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Grupo</th>
-                      <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Alta</th>
+                      <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Últ. acceso</th>
                       <th className="px-4 py-3 text-right font-semibold">Acciones</th>
                     </tr>
                   </thead>
@@ -331,7 +331,7 @@ export default function UsuariosAdminPanel({
                           {GRUPOS[u.grupo_cliente || ""] || u.grupo_cliente || "—"}
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell text-text-muted text-xs whitespace-nowrap">
-                          {u.date_created ? formatDate(u.date_created) : "—"}
+                          {u.last_access ? formatDate(u.last_access) : "Nunca"}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {u.status === "suspended" && (
@@ -450,12 +450,10 @@ export default function UsuariosAdminPanel({
                     <span>{[selectedUser.ciudad, selectedUser.provincia].filter(Boolean).join(", ")}</span>
                   </div>
                 )}
-                {selectedUser.date_created && (
-                  <div className="flex justify-between">
-                    <span className="text-text-muted text-xs">Fecha de alta</span>
-                    <span>{formatDate(selectedUser.date_created)}</span>
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-text-muted text-xs">Últ. acceso</span>
+                  <span>{selectedUser.last_access ? formatDate(selectedUser.last_access) : "Nunca"}</span>
+                </div>
               </div>
 
               {/* Actions */}
