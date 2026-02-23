@@ -14,7 +14,7 @@ export const GET: APIRoute = async () => {
   // Dynamic: categories
   try {
     const catRes = await directusPublic(
-      "/items/categorias?filter[status][_eq]=published&fields=slug,date_updated&sort=nombre&limit=-1"
+      "/items/categorias?filter[status][_eq]=published&fields=slug&sort=nombre&limit=-1"
     );
     for (const cat of catRes.data || []) {
       urls.push({
@@ -30,7 +30,7 @@ export const GET: APIRoute = async () => {
   // Dynamic: products
   try {
     const prodRes = await directusPublic(
-      "/items/productos?filter[status][_eq]=published&fields=slug,date_updated&sort=-date_updated&limit=-1"
+      "/items/productos?filter[status][_eq]=published&fields=slug&sort=nombre&limit=-1"
     );
     for (const prod of prodRes.data || []) {
       urls.push({
