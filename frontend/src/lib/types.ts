@@ -49,6 +49,7 @@ export interface Producto {
   unidad_venta: string | null;
   marca: string | null;
   marca_id: number | Marca | null;
+  solo_profesional: boolean;
 }
 
 export interface Marca {

@@ -69,7 +69,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       let product: any;
       try {
         const productRes = await directusAdmin(
-          `/items/productos/${encodeURIComponent(item.productoId)}?fields=id,nombre,sku,precio_base,categoria,formato`
+          `/items/productos/${encodeURIComponent(item.productoId)}?fields=id,nombre,sku,precio_base,categoria,formato,solo_profesional`
         );
         product = productRes.data;
       } catch {
@@ -82,6 +82,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!product) {
         return new Response(
           JSON.stringify({ error: `Producto no encontrado: ${item.productoId}` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Block professional-only products for particulares
+      if (product.solo_profesional && locals.user.grupo_cliente === "particular") {
+        return new Response(
+          JSON.stringify({ error: `El producto "${product.nombre}" no esta disponible para particulares` }),
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }

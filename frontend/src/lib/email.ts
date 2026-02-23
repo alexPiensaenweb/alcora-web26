@@ -18,14 +18,9 @@ const FALLBACK_COMPANY_EMAIL = "central@alcora.es";
 
 const PUBLIC_SITE_URL =
   process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
-const PUBLIC_DIRECTUS_URL =
-  process.env.PUBLIC_DIRECTUS_URL || import.meta.env.PUBLIC_DIRECTUS_URL || "";
 
-// Alcora logo from Directus assets (converted to PNG for email compatibility)
-const LOGO_FILE_ID = "404d6bf9-d9dd-4411-9193-d8c7d3010c77";
-const LOGO_URL = PUBLIC_DIRECTUS_URL
-  ? `${PUBLIC_DIRECTUS_URL}/assets/${LOGO_FILE_ID}?format=png&width=180`
-  : `${PUBLIC_SITE_URL}/assets/${LOGO_FILE_ID}?format=png&width=180`;
+// Alcora logo - static PNG hosted on the site (accessible by email clients)
+const LOGO_URL = `${PUBLIC_SITE_URL}/logo-email.png`;
 
 let resendClient: Resend | null = null;
 

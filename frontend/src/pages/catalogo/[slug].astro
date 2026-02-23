@@ -31,8 +31,9 @@ if (user?.grupo_cliente && token) {
   finalPrice = calculatePrice(product.precio_base, descuento);
 }
 
-// Can add to cart only if logged in
-const canAddToCart = !!user;
+// Can add to cart only if logged in AND product is not professional-only for particulares
+const isParticular = user?.grupo_cliente === "particular";
+const canAddToCart = !!user && !(product.solo_profesional && isParticular);
 
 const imageUrl = getAssetUrl(product.imagen_principal, { width: 600, height: 600 });
 const categoria = product.categoria as Categoria | null;
@@ -263,7 +264,16 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
           </div>
         </div>
 
-        {/* Add to cart - only if logged in */}
+        {/* Solo profesionales badge */}
+        {product.solo_profesional && (
+          <div class="mb-4">
+            <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 text-xs rounded-full font-medium">
+              Solo profesionales
+            </span>
+          </div>
+        )}
+
+        {/* Add to cart - only if logged in and allowed */}
         {canAddToCart ? (
           <div class="mb-6" id="add-to-cart-section"
             data-product-id={product.id}
@@ -287,6 +297,15 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
                 Anadir al carrito
               </button>
             </div>
+          </div>
+        ) : product.solo_profesional && isParticular ? (
+          <div class="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-lg">
+            <p class="text-sm text-amber-800 font-medium">
+              Este producto esta disponible solo para clientes profesionales.
+            </p>
+            <p class="text-xs text-amber-600 mt-1">
+              Si necesita este producto, <a href="mailto:central@alcora.es" class="underline">contacte con nosotros</a>.
+            </p>
           </div>
         ) : (
           <div class="mb-6 bg-bg-accent p-4 rounded-lg">

@@ -27,9 +27,11 @@ function getDirectusUrl(): string {
 
 interface CartPageProps {
   isLoggedIn?: boolean;
+  grupoCliente?: string | null;
 }
 
-export default function CartPage({ isLoggedIn = false }: CartPageProps) {
+export default function CartPage({ isLoggedIn = false, grupoCliente = null }: CartPageProps) {
+  const isParticular = grupoCliente === "particular";
   const items = useStore($cartList);
   const subtotal = useStore($cartSubtotal);
   const shipping = useStore($shippingCost);
@@ -64,7 +66,7 @@ export default function CartPage({ isLoggedIn = false }: CartPageProps) {
           Acceda para ver su carrito
         </h2>
         <p className="text-sm text-[var(--color-text-muted)] mb-6">
-          Los precios son exclusivos para clientes profesionales registrados.
+          Inicie sesion para ver su carrito y realizar compras.
         </p>
         <div className="flex gap-3 justify-center">
           <a
@@ -252,67 +254,71 @@ export default function CartPage({ isLoggedIn = false }: CartPageProps) {
             href="/checkout"
             className="block mt-6 w-full bg-[var(--color-action)] text-white text-center py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors"
           >
-            Tramitar Pedido
+            {isParticular ? "Finalizar Compra" : "Tramitar Pedido"}
           </a>
 
-          <button
-            onClick={async () => {
-              setPresupuestoError("");
-              setPresupuestoLoading(true);
-              try {
-                const res = await fetch("/cart/presupuesto", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    items: items.map((i) => ({
-                      productoId: i.productoId,
-                      nombre: i.nombre,
-                      sku: i.sku,
-                      cantidad: i.cantidad,
-                      precioUnitario: i.precioUnitario,
-                      formato: i.formato,
-                    })),
-                  }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || "Error al solicitar presupuesto");
-                setPresupuestoSent(true);
-                if (data.presupuestoId) setPresupuestoId(data.presupuestoId);
-              } catch (err: any) {
-                setPresupuestoError(err.message || "Error desconocido");
-              } finally {
-                setPresupuestoLoading(false);
-              }
-            }}
-            disabled={presupuestoLoading || presupuestoSent}
-            className="block mt-3 w-full border border-[var(--color-action)] text-[var(--color-action)] text-center py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-bg-accent)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {presupuestoLoading
-              ? "Enviando..."
-              : presupuestoSent
-                ? "✓ Presupuesto solicitado"
-                : "Solicitar Presupuesto Personalizado"}
-          </button>
+          {!isParticular && (
+            <>
+              <button
+                onClick={async () => {
+                  setPresupuestoError("");
+                  setPresupuestoLoading(true);
+                  try {
+                    const res = await fetch("/cart/presupuesto", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        items: items.map((i) => ({
+                          productoId: i.productoId,
+                          nombre: i.nombre,
+                          sku: i.sku,
+                          cantidad: i.cantidad,
+                          precioUnitario: i.precioUnitario,
+                          formato: i.formato,
+                        })),
+                      }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || "Error al solicitar presupuesto");
+                    setPresupuestoSent(true);
+                    if (data.presupuestoId) setPresupuestoId(data.presupuestoId);
+                  } catch (err: any) {
+                    setPresupuestoError(err.message || "Error desconocido");
+                  } finally {
+                    setPresupuestoLoading(false);
+                  }
+                }}
+                disabled={presupuestoLoading || presupuestoSent}
+                className="block mt-3 w-full border border-[var(--color-action)] text-[var(--color-action)] text-center py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-bg-accent)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {presupuestoLoading
+                  ? "Enviando..."
+                  : presupuestoSent
+                    ? "✓ Presupuesto solicitado"
+                    : "Solicitar Presupuesto Personalizado"}
+              </button>
 
-          {presupuestoSent && (
-            <div className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-              <p>Hemos recibido su solicitud de presupuesto{presupuestoId ? ` (#${presupuestoId})` : ""}.</p>
-              <p className="mt-1">Le enviaremos la respuesta por email a la mayor brevedad.</p>
-              {presupuestoId && (
-                <a
-                  href={`/cuenta/pedidos/${presupuestoId}`}
-                  className="inline-block mt-2 text-[var(--color-action)] hover:underline font-medium"
-                >
-                  Ver presupuesto →
-                </a>
+              {presupuestoSent && (
+                <div className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                  <p>Hemos recibido su solicitud de presupuesto{presupuestoId ? ` (#${presupuestoId})` : ""}.</p>
+                  <p className="mt-1">Le enviaremos la respuesta por email a la mayor brevedad.</p>
+                  {presupuestoId && (
+                    <a
+                      href={`/cuenta/pedidos/${presupuestoId}`}
+                      className="inline-block mt-2 text-[var(--color-action)] hover:underline font-medium"
+                    >
+                      Ver presupuesto →
+                    </a>
+                  )}
+                </div>
               )}
-            </div>
-          )}
 
-          {presupuestoError && (
-            <p className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2 text-center">
-              {presupuestoError}
-            </p>
+              {presupuestoError && (
+                <p className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                  {presupuestoError}
+                </p>
+              )}
+            </>
           )}
 
           <a

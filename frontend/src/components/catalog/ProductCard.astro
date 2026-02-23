@@ -49,6 +49,13 @@ const imageUrl = getAssetUrl(product.imagen_principal, {
         <p class="text-xs text-text-muted mb-2">{product.formato}</p>
       )}
 
+      {/* Solo profesionales badge */}
+      {product.solo_profesional && (
+        <span class="inline-block mb-2 px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">
+          Solo profesionales
+        </span>
+      )}
+
       {/* Price - always visible */}
       {price !== undefined && price !== null ? (
         <p class="text-lg font-bold text-action">{formatCurrency(price)}</p>

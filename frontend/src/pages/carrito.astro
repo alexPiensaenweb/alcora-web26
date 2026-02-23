@@ -4,12 +4,13 @@ import Breadcrumb from "../components/ui/Breadcrumb.astro";
 import CartPage from "../components/cart/CartPage";
 
 const isLoggedIn = !!Astro.locals.user;
+const grupoCliente = Astro.locals.user?.grupo_cliente || null;
 ---
 
 <BaseLayout title="Carrito - Tienda Alcora">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <Breadcrumb items={[{ label: "Carrito" }]} />
     <h1 class="text-2xl font-bold text-navy mt-4 mb-6">Carrito de compra</h1>
-    <CartPage client:load isLoggedIn={isLoggedIn} />
+    <CartPage client:load isLoggedIn={isLoggedIn} grupoCliente={grupoCliente} />
   </div>
 </BaseLayout>

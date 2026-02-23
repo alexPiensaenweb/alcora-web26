@@ -101,6 +101,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
           fit: "contain",
         }),
         price,
+        solo_profesional: !!product.solo_profesional,
       };
     });
 
