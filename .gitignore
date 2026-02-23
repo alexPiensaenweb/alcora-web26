@@ -53,5 +53,14 @@ Inicio - Tienda Alcora_files/
 web26.zip
 tmp_catalogo.html
 
+# Migration scripts (contain hardcoded tokens/passwords)
+migration/
+
+# MCP config (contains auth tokens)
+.mcp.json
+
+# Temporary/debug files
+response_body.txt
+
 # Claude project files
 .claude/
