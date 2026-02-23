@@ -321,6 +321,49 @@ export function buildPedidoHtml(data: {
 }
 
 /**
+ * Build user activation notification email HTML (sent to user when admin activates their account)
+ */
+export function buildActivacionHtml(data: {
+  userName: string;
+  userEmail: string;
+}): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
+  <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #c0c4ce;">
+    ${emailHeader("Su cuenta ha sido activada", "Alcora Salud Ambiental")}
+
+    <div style="padding:24px 32px;">
+      <p style="font-size:15px;color:#222d54;margin:0 0 16px;line-height:1.6;">
+        Estimado/a <strong>${escapeHtml(data.userName)}</strong>,
+      </p>
+      <p style="font-size:14px;color:#222d54;margin:0 0 16px;line-height:1.6;">
+        Le informamos de que su cuenta en la tienda online de Alcora Salud Ambiental ha sido <strong>activada</strong>.
+      </p>
+      <p style="font-size:14px;color:#222d54;margin:0 0 24px;line-height:1.6;">
+        Ya puede acceder a su cuenta para consultar precios, realizar pedidos y solicitar presupuestos.
+      </p>
+
+      <div style="background:#eff4ff;border:1px solid #2970ff;border-radius:6px;padding:16px;text-align:center;margin-bottom:24px;">
+        <p style="margin:0;font-size:14px;color:#222d54;">
+          Acceda con su email: <strong>${escapeHtml(data.userEmail)}</strong>
+        </p>
+      </div>
+
+      <p style="font-size:13px;color:#6b7589;line-height:1.5;">
+        Si tiene cualquier duda, no dude en contactarnos.
+      </p>
+    </div>
+
+    ${emailFooter({ label: "Acceder a mi cuenta", url: `${PUBLIC_SITE_URL}/login` })}
+  </div>
+</body>
+</html>`;
+}
+
+/**
  * Build new registration notification email HTML
  */
 export function buildRegistroHtml(data: {

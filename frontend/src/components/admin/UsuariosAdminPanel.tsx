@@ -39,7 +39,7 @@ const GRUPOS: Record<string, string> = {
 
 const FILTER_TABS = [
   { value: "", label: "Todos" },
-  { value: "suspended", label: "Pendientes activación" },
+  { value: "suspended", label: "Pendientes" },
   { value: "active", label: "Activos" },
 ];
 
@@ -72,10 +72,15 @@ export default function UsuariosAdminPanel({
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    userId: string;
+    action: "activate" | "suspend";
+    userName: string;
+  } | null>(null);
 
   function showMsg(type: "ok" | "err", text: string) {
     setMsg({ type, text });
-    setTimeout(() => setMsg(null), 4000);
+    setTimeout(() => setMsg(null), 5000);
   }
 
   function goToFilter(status: string) {
@@ -93,18 +98,21 @@ export default function UsuariosAdminPanel({
     window.location.href = `/gestion/usuarios?${params.toString()}`;
   }
 
-  async function cambiarEstado(userId: string, nuevoStatus: string) {
+  async function cambiarEstado(userId: string, nuevoStatus: string, sendEmail: boolean = false) {
     setLoadingId(userId);
+    setConfirmAction(null);
     try {
       const res = await fetch(`/gestion-api/usuarios/${userId}/estado`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nuevoStatus }),
+        body: JSON.stringify({ status: nuevoStatus, sendEmail }),
       });
       if (!res.ok) {
         const d = await res.json();
         throw new Error(d.error || "Error");
       }
+      const data = await res.json();
+
       // Actualizar en lista
       setUsuarios((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, status: nuevoStatus } : u))
@@ -112,7 +120,17 @@ export default function UsuariosAdminPanel({
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => prev ? { ...prev, status: nuevoStatus } : null);
       }
-      showMsg("ok", nuevoStatus === "active" ? "Usuario activado" : nuevoStatus === "suspended" ? "Usuario suspendido" : "Estado actualizado");
+
+      if (nuevoStatus === "active") {
+        showMsg("ok", data.emailSent
+          ? "Usuario activado y email de notificación enviado"
+          : "Usuario activado"
+        );
+      } else if (nuevoStatus === "suspended") {
+        showMsg("ok", "Usuario suspendido");
+      } else {
+        showMsg("ok", "Estado actualizado");
+      }
     } catch (err: any) {
       showMsg("err", err.message || "Error al cambiar estado");
     } finally {
@@ -149,6 +167,9 @@ export default function UsuariosAdminPanel({
   const nombreUsuario = (u: Usuario) =>
     u.razon_social || `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email;
 
+  // Count pending users in current list
+  const pendingCount = usuarios.filter((u) => u.status === "suspended").length;
+
   return (
     <div className="space-y-5">
       {/* Feedback */}
@@ -160,6 +181,74 @@ export default function UsuariosAdminPanel({
         }`}>
           <span className="material-icons text-base">{msg.type === "ok" ? "check_circle" : "error"}</span>
           {msg.text}
+        </div>
+      )}
+
+      {/* Confirmation dialog */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4 p-6">
+            {confirmAction.action === "activate" ? (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="material-icons text-green-600">how_to_reg</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-navy">Activar usuario</h3>
+                </div>
+                <p className="text-sm text-text-muted mb-1">
+                  Se activará la cuenta de <strong className="text-navy">{confirmAction.userName}</strong>.
+                </p>
+                <p className="text-sm text-text-muted mb-6">
+                  Se enviará un email notificándole que su cuenta está activa y puede acceder a la tienda.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setConfirmAction(null)}
+                    className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-bg-light transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => cambiarEstado(confirmAction.userId, "active", true)}
+                    disabled={loadingId === confirmAction.userId}
+                    className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <span className="material-icons text-base">mail</span>
+                    {loadingId === confirmAction.userId ? "Activando..." : "Activar y notificar"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span className="material-icons text-orange-600">person_off</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-navy">Suspender usuario</h3>
+                </div>
+                <p className="text-sm text-text-muted mb-6">
+                  Se suspenderá la cuenta de <strong className="text-navy">{confirmAction.userName}</strong>.
+                  El usuario no podrá acceder a la tienda hasta que vuelva a ser activado.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setConfirmAction(null)}
+                    className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-bg-light transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => cambiarEstado(confirmAction.userId, "suspended")}
+                    disabled={loadingId === confirmAction.userId}
+                    className="px-4 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium disabled:opacity-50"
+                  >
+                    {loadingId === confirmAction.userId ? "Suspendiendo..." : "Suspender"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -177,6 +266,11 @@ export default function UsuariosAdminPanel({
               }`}
             >
               {f.label}
+              {f.value === "suspended" && pendingCount > 0 && estadoFilter !== "suspended" && (
+                <span className="ml-1.5 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -208,7 +302,7 @@ export default function UsuariosAdminPanel({
                       <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">Estado</th>
                       <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Grupo</th>
                       <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Alta</th>
-                      <th className="px-4 py-3"></th>
+                      <th className="px-4 py-3 text-right font-semibold">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -242,16 +336,23 @@ export default function UsuariosAdminPanel({
                         <td className="px-4 py-3 text-right">
                           {u.status === "suspended" && (
                             <button
-                              onClick={(e) => { e.stopPropagation(); cambiarEstado(u.id, "active"); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmAction({ userId: u.id, action: "activate", userName: nombreUsuario(u) });
+                              }}
                               disabled={loadingId === u.id}
-                              className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                              className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium inline-flex items-center gap-1.5"
                             >
-                              {loadingId === u.id ? "..." : "Activar"}
+                              <span className="material-icons text-sm">mail</span>
+                              {loadingId === u.id ? "..." : "Activar y notificar"}
                             </button>
                           )}
                           {u.status === "active" && (
                             <button
-                              onClick={(e) => { e.stopPropagation(); cambiarEstado(u.id, "suspended"); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmAction({ userId: u.id, action: "suspend", userName: nombreUsuario(u) });
+                              }}
                               disabled={loadingId === u.id}
                               className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors font-medium"
                             >
@@ -272,14 +373,14 @@ export default function UsuariosAdminPanel({
                   <div className="flex gap-2">
                     {page > 1 && (
                       <a href={`/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`}
-                         onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`; }}
+                         data-astro-reload
                          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                         ← Anterior
                       </a>
                     )}
                     {page < totalPages && (
                       <a href={`/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`}
-                         onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/usuarios?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`; }}
+                         data-astro-reload
                          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                         Siguiente →
                       </a>
@@ -298,94 +399,122 @@ export default function UsuariosAdminPanel({
 
         {/* User detail panel */}
         {selectedUser && (
-          <div className="lg:w-72 flex-shrink-0">
-            <div className="bg-white border border-border rounded-xl p-5 sticky top-4 space-y-5">
-              <div className="flex items-start justify-between">
-                <h3 className="font-semibold text-navy">Detalle usuario</h3>
-                <button onClick={() => setSelectedUser(null)} className="text-text-muted hover:text-navy">
-                  <span className="material-icons text-lg">close</span>
-                </button>
+          <div className="lg:w-80 flex-shrink-0">
+            <div className="bg-white border border-border rounded-xl sticky top-4">
+              {/* Header */}
+              <div className="p-5 border-b border-border">
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold text-navy">Detalle usuario</h3>
+                  <button onClick={() => setSelectedUser(null)} className="text-text-muted hover:text-navy">
+                    <span className="material-icons text-lg">close</span>
+                  </button>
+                </div>
+                <p className="font-semibold text-navy text-base">{nombreUsuario(selectedUser)}</p>
+                <a href={`mailto:${selectedUser.email}`} className="text-action hover:underline text-xs">{selectedUser.email}</a>
+                <div className="mt-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[selectedUser.status] || "bg-gray-100 text-gray-700"}`}>
+                    {STATUS_LABELS[selectedUser.status] || selectedUser.status}
+                  </span>
+                </div>
               </div>
 
               {/* Info */}
-              <div className="space-y-2 text-sm">
-                <div>
-                  <p className="font-semibold text-navy text-base">{nombreUsuario(selectedUser)}</p>
-                  <a href={`mailto:${selectedUser.email}`} className="text-action hover:underline text-xs">{selectedUser.email}</a>
-                </div>
+              <div className="p-5 border-b border-border space-y-2 text-sm">
                 {selectedUser.razon_social && (
-                  <div><span className="text-text-muted text-xs">Empresa:</span> <span className="font-medium">{selectedUser.razon_social}</span></div>
+                  <div className="flex justify-between">
+                    <span className="text-text-muted text-xs">Empresa</span>
+                    <span className="font-medium text-right">{selectedUser.razon_social}</span>
+                  </div>
                 )}
                 {selectedUser.cif_nif && (
-                  <div><span className="text-text-muted text-xs">CIF/NIF:</span> <span className="font-medium">{selectedUser.cif_nif}</span></div>
+                  <div className="flex justify-between">
+                    <span className="text-text-muted text-xs">CIF/NIF</span>
+                    <span className="font-medium">{selectedUser.cif_nif}</span>
+                  </div>
                 )}
                 {selectedUser.telefono && (
-                  <div><span className="text-text-muted text-xs">Teléf.:</span> <a href={`tel:${selectedUser.telefono}`} className="text-navy hover:text-action">{selectedUser.telefono}</a></div>
+                  <div className="flex justify-between">
+                    <span className="text-text-muted text-xs">Teléfono</span>
+                    <a href={`tel:${selectedUser.telefono}`} className="text-navy hover:text-action">{selectedUser.telefono}</a>
+                  </div>
                 )}
                 {selectedUser.tipo_negocio && (
-                  <div><span className="text-text-muted text-xs">Tipo negocio:</span> <span>{selectedUser.tipo_negocio}</span></div>
+                  <div className="flex justify-between">
+                    <span className="text-text-muted text-xs">Tipo negocio</span>
+                    <span>{selectedUser.tipo_negocio}</span>
+                  </div>
                 )}
                 {(selectedUser.ciudad || selectedUser.provincia) && (
-                  <div><span className="text-text-muted text-xs">Ubicación:</span> <span>{[selectedUser.ciudad, selectedUser.provincia].filter(Boolean).join(", ")}</span></div>
+                  <div className="flex justify-between">
+                    <span className="text-text-muted text-xs">Ubicación</span>
+                    <span>{[selectedUser.ciudad, selectedUser.provincia].filter(Boolean).join(", ")}</span>
+                  </div>
                 )}
                 {selectedUser.date_created && (
-                  <div><span className="text-text-muted text-xs">Alta:</span> <span>{formatDate(selectedUser.date_created)}</span></div>
+                  <div className="flex justify-between">
+                    <span className="text-text-muted text-xs">Fecha de alta</span>
+                    <span>{formatDate(selectedUser.date_created)}</span>
+                  </div>
                 )}
               </div>
 
-              {/* Estado */}
-              <div>
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Estado de cuenta</p>
-                <div className="flex flex-col gap-2">
-                  {["active", "suspended"].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => cambiarEstado(selectedUser.id, s)}
-                      disabled={loadingId === selectedUser.id || selectedUser.status === s}
-                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all text-left ${
-                        selectedUser.status === s
-                          ? `${STATUS_COLORS[s]} cursor-default border-transparent`
-                          : "bg-white border-border text-navy hover:border-action disabled:opacity-50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{STATUS_LABELS[s]}</span>
-                        {selectedUser.status === s && <span className="material-icons text-base">check</span>}
-                      </div>
-                    </button>
-                  ))}
+              {/* Actions */}
+              <div className="p-5 space-y-4">
+                {/* Grupo cliente */}
+                <div>
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Grupo cliente</p>
+                  <select
+                    value={selectedUser.grupo_cliente || ""}
+                    onChange={(e) => cambiarGrupo(selectedUser.id, e.target.value)}
+                    disabled={loadingId === selectedUser.id}
+                    className="w-full text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:border-action disabled:opacity-50"
+                  >
+                    <option value="">Sin grupo</option>
+                    {Object.entries(GRUPOS).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
                 </div>
-              </div>
 
-              {/* Grupo cliente */}
-              <div>
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Grupo cliente</p>
-                <select
-                  value={selectedUser.grupo_cliente || ""}
-                  onChange={(e) => cambiarGrupo(selectedUser.id, e.target.value)}
-                  disabled={loadingId === selectedUser.id}
-                  className="w-full text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:border-action disabled:opacity-50"
-                >
-                  <option value="">Sin grupo</option>
-                  {Object.entries(GRUPOS).map(([val, label]) => (
-                    <option key={val} value={val}>{label}</option>
-                  ))}
-                </select>
+                {/* Estado actions */}
+                <div>
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Estado de cuenta</p>
+                  {selectedUser.status === "suspended" && (
+                    <button
+                      onClick={() => setConfirmAction({ userId: selectedUser.id, action: "activate", userName: nombreUsuario(selectedUser) })}
+                      disabled={loadingId === selectedUser.id}
+                      className="w-full px-3 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <span className="material-icons text-base">mail</span>
+                      Activar y enviar email
+                    </button>
+                  )}
+                  {selectedUser.status === "active" && (
+                    <button
+                      onClick={() => setConfirmAction({ userId: selectedUser.id, action: "suspend", userName: nombreUsuario(selectedUser) })}
+                      disabled={loadingId === selectedUser.id}
+                      className="w-full px-3 py-2.5 bg-white text-orange-700 border border-orange-300 rounded-lg text-sm font-medium hover:bg-orange-50 disabled:opacity-50 transition-colors"
+                    >
+                      Suspender cuenta
+                    </button>
+                  )}
+                </div>
+
                 {loadingId === selectedUser.id && (
-                  <p className="text-xs text-text-muted mt-1">Guardando...</p>
+                  <p className="text-xs text-text-muted text-center">Guardando...</p>
                 )}
-              </div>
 
-              {/* Ver pedidos */}
-              <div className="pt-2 border-t border-border">
-                <a
-                  href={`/gestion/pedidos?email=${encodeURIComponent(selectedUser.email)}`}
-                  onClick={(e) => { e.preventDefault(); window.location.href = `/gestion/pedidos?email=${encodeURIComponent(selectedUser.email)}`; }}
-                  className="flex items-center gap-2 text-sm text-action hover:underline"
-                >
-                  <span className="material-icons text-base">shopping_bag</span>
-                  Ver pedidos de este usuario
-                </a>
+                {/* Ver pedidos */}
+                <div className="pt-2 border-t border-border">
+                  <a
+                    href={`/gestion/pedidos?email=${encodeURIComponent(selectedUser.email)}`}
+                    data-astro-reload
+                    className="flex items-center gap-2 text-sm text-action hover:underline"
+                  >
+                    <span className="material-icons text-base">shopping_bag</span>
+                    Ver pedidos de este usuario
+                  </a>
+                </div>
               </div>
             </div>
           </div>

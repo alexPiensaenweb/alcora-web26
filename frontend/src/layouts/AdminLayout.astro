@@ -75,4 +75,16 @@ const navItems = [
       </div>
     </div>
   </div>
+
+  {/* Force reload when navigating back (bfcache/ViewTransitions) */}
+  <script>
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) window.location.reload();
+    });
+    document.addEventListener("astro:page-load", () => {
+      if (window.navigation && window.navigation.activation?.navigationType === "traverse") {
+        window.location.reload();
+      }
+    });
+  </script>
 </BaseLayout>
