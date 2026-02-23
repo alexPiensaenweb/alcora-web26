@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
+import { validateSchema, pedidoNotasSchema } from "../../../../lib/schemas";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   if (!locals.user?.isAdmin) {
@@ -18,10 +19,15 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
   }
 
+  const validation = validateSchema(pedidoNotasSchema, body);
+  if (!validation.valid) {
+    return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
+  }
+
   try {
     await directusAdmin(`/items/pedidos/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ notas_admin: body.notas_admin ?? null }),
+      body: JSON.stringify({ notas_admin: validation.data.notas ?? null }),
     });
 
     await purgeDirectusCache();

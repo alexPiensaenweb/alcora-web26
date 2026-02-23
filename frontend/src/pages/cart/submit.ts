@@ -4,11 +4,11 @@ import { resolveDiscount, calculatePrice } from "../../lib/pricing";
 import { calculateShipping } from "../../lib/shipping";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { sendMail, buildPedidoHtml, getCompanyEmail } from "../../lib/email";
+import { validateSchema, pedidoSubmitSchema } from "../../lib/schemas";
 import type { CartItem } from "../../lib/types";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    // Rate limit: 10 order submissions per minute per IP
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const rl = rateLimit(`submit:${clientIp}`, 10, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
@@ -20,61 +20,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
-    const {
-      items,
-      direccion_envio,
-      direccion_facturacion,
-      metodo_pago,
-      notas_cliente,
-    } = body as {
-      items: CartItem[];
-      direccion_envio: string;
-      direccion_facturacion: string;
-      metodo_pago: "transferencia" | "pendiente";
-      notas_cliente?: string;
-    };
-
-    if (!items || items.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "El carrito esta vacio" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
     }
 
-    // Validate metodo_pago enum
-    const VALID_METODOS = ["transferencia", "pendiente"];
-    if (metodo_pago && !VALID_METODOS.includes(metodo_pago)) {
-      return new Response(
-        JSON.stringify({ error: "Metodo de pago no valido" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+    const validation = validateSchema(pedidoSubmitSchema, body);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
     }
 
-    // Validate item quantities
-    for (const item of items) {
-      if (
-        typeof item.cantidad !== "number" ||
-        !Number.isInteger(item.cantidad) ||
-        item.cantidad < 1 ||
-        item.cantidad > 10000
-      ) {
-        return new Response(
-          JSON.stringify({ error: "Cantidad no valida. Debe ser un numero entero entre 1 y 10.000" }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
-        );
-      }
-    }
+    const { items, direccion_envio, direccion_facturacion, metodo_pago, notas_cliente } = validation.data;
 
-    // Limit max items per order
-    if (items.length > 100) {
-      return new Response(
-        JSON.stringify({ error: "Demasiados productos en el pedido (maximo 100)" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Get user's discount tariffs
     const grupoCliente = locals.user.grupo_cliente;
     let tarifas: any[] = [];
     if (grupoCliente) {

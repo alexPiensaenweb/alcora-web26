@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
+import { validateSchema, usuarioGrupoSchema } from "../../../../lib/schemas";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   if (!locals.user?.isAdmin) {
@@ -18,15 +19,15 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
   }
 
-  const VALID_GRUPOS = ["distribuidor", "empresa", "hospital", "particular", ""];
-  if (!VALID_GRUPOS.includes(body.grupo_cliente ?? "")) {
-    return new Response(JSON.stringify({ error: "Grupo inválido" }), { status: 400 });
+  const validation = validateSchema(usuarioGrupoSchema, body);
+  if (!validation.valid) {
+    return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
   }
 
   try {
     await directusAdmin(`/users/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ grupo_cliente: body.grupo_cliente || null }),
+      body: JSON.stringify({ grupo_cliente: validation.data.grupo_cliente || null }),
     });
 
     await purgeDirectusCache();

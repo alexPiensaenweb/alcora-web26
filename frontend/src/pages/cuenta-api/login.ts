@@ -2,17 +2,28 @@ import type { APIRoute } from "astro";
 import { loginWithCredentials, setAuthCookies, getCurrentUser } from "../../lib/auth";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { verifyTurnstile } from "../../lib/turnstile";
+import { validateSchema, loginSchema } from "../../lib/schemas";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    // Rate limit: 5 login attempts per minute per IP
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const rl = rateLimit(`login:${clientIp}`, 5, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const { email, password, turnstileToken } = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
+    }
 
-    // Verify Turnstile CAPTCHA (mandatory when secret key is configured)
+    const validation = validateSchema(loginSchema, body);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
+    }
+
+    const { email, password, turnstileToken } = validation.data;
+
     const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || import.meta.env.TURNSTILE_SECRET_KEY || "";
     const turnstileRequired = !!TURNSTILE_SECRET && !TURNSTILE_SECRET.startsWith("1x00000");
     if (turnstileRequired && !turnstileToken) {
@@ -29,13 +40,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           { status: 403, headers: { "Content-Type": "application/json" } }
         );
       }
-    }
-
-    if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: "Email y contrasena son requeridos" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
     }
 
     // Try login - will fail if user is suspended/inactive

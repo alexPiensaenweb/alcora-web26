@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { directusAuth } from "../../lib/directus";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
+import { validateSchema, profileUpdateSchema } from "../../lib/schemas";
 
 export const PATCH: APIRoute = async ({ request, locals }) => {
   try {
@@ -11,12 +12,23 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Rate limit: 10 profile updates per minute per IP
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const rl = rateLimit(`profile:${clientIp}`, 10, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
+    }
+
+    const validation = validateSchema(profileUpdateSchema, body);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
+    }
+
+    const updates: Record<string, any> = {};
     const allowedFields = [
       "first_name",
       "last_name",
@@ -25,11 +37,9 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
       "direccion_envio",
     ];
 
-    // Only allow whitelisted fields
-    const updates: Record<string, any> = {};
     for (const field of allowedFields) {
-      if (field in body) {
-        updates[field] = body[field];
+      if (field in validation.data && validation.data[field as keyof typeof validation.data] !== undefined) {
+        updates[field] = validation.data[field as keyof typeof validation.data];
       }
     }
 

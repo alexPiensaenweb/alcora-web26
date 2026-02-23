@@ -3,15 +3,24 @@ import { directusAdmin } from "../../lib/directus";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { verifyTurnstile } from "../../lib/turnstile";
 import { sendMail, buildRegistroHtml, getCompanyEmail } from "../../lib/email";
+import { validateSchema, registerSchema } from "../../lib/schemas";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    // Rate limit: 3 registrations per 5 minutes per IP
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const rl = rateLimit(`register:${clientIp}`, 3, 300_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await request.json();
+
+    const validation = validateSchema(registerSchema, body);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const {
       turnstileToken,
       email,
@@ -30,11 +39,12 @@ export const POST: APIRoute = async ({ request }) => {
       codigo_postal,
       acepta_proteccion_datos,
       acepta_comunicaciones,
-    } = body;
+    } = validation.data;
 
-    // Verify Turnstile CAPTCHA (mandatory when secret key is configured)
     const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || import.meta.env.TURNSTILE_SECRET_KEY || "";
-    const turnstileRequired = !!TURNSTILE_SECRET && !TURNSTILE_SECRET.startsWith("1x00000");
+    const isDevKey = TURNSTILE_SECRET.startsWith("1x00000");
+    const turnstileRequired = !!TURNSTILE_SECRET && !isDevKey;
+
     if (turnstileRequired && !turnstileToken) {
       return new Response(
         JSON.stringify({ error: "Verificacion de seguridad requerida. Recargue la pagina." }),
@@ -51,78 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    // Validate required fields
-    if (!email || !password || !first_name || !last_name) {
-      return new Response(
-        JSON.stringify({ error: "Nombre, apellidos, email y contrasena son obligatorios" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!razon_social || !cif_nif) {
-      return new Response(
-        JSON.stringify({ error: "La razon social y CIF/NIF son obligatorios" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!tipo_negocio) {
-      return new Response(
-        JSON.stringify({ error: "Seleccione el tipo de negocio" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    if (password.length < 8) {
-      return new Response(
-        JSON.stringify({ error: "La contrasena debe tener al menos 8 caracteres" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Password complexity: at least one uppercase, one lowercase, one digit
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-      return new Response(
-        JSON.stringify({ error: "La contrasena debe incluir al menos una mayuscula, una minuscula y un numero" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Input format validations
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return new Response(
-        JSON.stringify({ error: "Formato de email no valido" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // CIF/NIF format: letter + 8 digits, or 8 digits + letter
-    const cifNifRegex = /^[A-Za-z]\d{7,8}[A-Za-z0-9]?$|^\d{8}[A-Za-z]$/;
-    if (!cifNifRegex.test(cif_nif.trim())) {
-      return new Response(
-        JSON.stringify({ error: "Formato de CIF/NIF no valido (ej: B12345678, 12345678A)" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Postal code: exactly 5 digits
-    if (codigo_postal && !/^\d{5}$/.test(codigo_postal.trim())) {
-      return new Response(
-        JSON.stringify({ error: "El codigo postal debe tener 5 digitos" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Strip HTML tags from text fields to prevent stored XSS
-    const stripHtml = (s: string) => (s || "").replace(/<[^>]*>/g, "").trim();
-
-    if (!acepta_proteccion_datos) {
-      return new Response(
-        JSON.stringify({ error: "Debe aceptar la politica de proteccion de datos" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    const stripHtml = (s: string | undefined) => (s || "").replace(/<[^>]*>/g, "").trim();
 
     // Get the "Cliente" role ID
     const rolesRes = await directusAdmin("/roles?filter[name][_eq]=Cliente&fields=id");

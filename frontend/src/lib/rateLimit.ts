@@ -1,9 +1,3 @@
-/**
- * In-memory rate limiter
- *
- * For production with multiple processes, replace with Redis-backed implementation.
- */
-
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -11,7 +5,6 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>();
 
-// Clean expired entries every 5 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of store) {

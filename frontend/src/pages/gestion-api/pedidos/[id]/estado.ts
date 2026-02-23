@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
 import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
+import { validateSchema, pedidoEstadoSchema } from "../../../../lib/schemas";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
-  // Admin check
   if (!locals.user?.isAdmin) {
     return new Response(JSON.stringify({ error: "No autorizado" }), { status: 403 });
   }
@@ -19,17 +19,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
   }
 
-  const VALID_ESTADOS = [
-    "solicitado",
-    "presupuesto_solicitado",
-    "aprobado_pendiente_pago",
-    "pagado",
-    "enviado",
-    "cancelado",
-  ];
-
-  if (!VALID_ESTADOS.includes(body.estado)) {
-    return new Response(JSON.stringify({ error: "Estado inválido" }), { status: 400 });
+  const validation = validateSchema(pedidoEstadoSchema, body);
+  if (!validation.valid) {
+    return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
   }
 
   try {

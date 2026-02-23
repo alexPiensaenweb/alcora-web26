@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { directusAdmin, purgeDirectusCache } from "../../../../lib/directus";
 import { sendMail, buildActivacionHtml, getCompanyEmail } from "../../../../lib/email";
+import { validateSchema, usuarioEstadoSchema } from "../../../../lib/schemas";
 
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   if (!locals.user?.isAdmin) {
@@ -19,33 +20,31 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: "Body inválido" }), { status: 400 });
   }
 
-  const VALID_STATUS = ["active", "suspended", "invited", "draft"];
-  if (!VALID_STATUS.includes(body.status)) {
-    return new Response(JSON.stringify({ error: "Status inválido" }), { status: 400 });
+  const validation = validateSchema(usuarioEstadoSchema, body);
+  if (!validation.valid) {
+    return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
   }
 
-  // No permitir modificar al propio usuario admin
   if (id === locals.user.id) {
     return new Response(JSON.stringify({ error: "No puedes modificar tu propio estado" }), { status: 400 });
   }
 
+  const { status, sendEmail } = validation.data;
+
   try {
-    // Fetch user data before updating (needed for email)
     let userData: any = null;
-    if (body.status === "active" && body.sendEmail) {
+    if (status === "active" && sendEmail) {
       const userRes = await directusAdmin(`/users/${id}?fields=id,email,first_name,last_name,razon_social,status`);
       userData = userRes.data;
     }
 
-    // Update status
     await directusAdmin(`/users/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ status: body.status }),
+      body: JSON.stringify({ status }),
     });
 
-    // Send activation email if activating and requested
     let emailSent = false;
-    if (body.status === "active" && body.sendEmail && userData?.email) {
+    if (status === "active" && sendEmail && userData?.email) {
       try {
         const userName = userData.razon_social ||
           `${userData.first_name || ""} ${userData.last_name || ""}`.trim() ||
