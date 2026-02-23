@@ -20,5 +20,6 @@ declare namespace App {
   interface Locals {
     user: import("./lib/types").DirectusUser | null;
     token: string | null;
+    nonce: string;
   }
 }
