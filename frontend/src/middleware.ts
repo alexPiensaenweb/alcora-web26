@@ -156,9 +156,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // ─── Process request ───
   const response = await next();
 
-  // ─── Cache Control for admin pages ───
+  // ─── Cache Control for dynamic pages ───
   // Prevent ViewTransitions/bfcache from showing stale data
-  if (pathname.startsWith("/gestion")) {
+  // Applies to all user-specific pages (account, checkout, admin, payment)
+  const isDynamicPage =
+    pathname.startsWith("/gestion") ||
+    pathname.startsWith("/cuenta") ||
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/pago/") ||
+    pathname.startsWith("/cart/");
+  if (isDynamicPage) {
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     response.headers.set("Pragma", "no-cache");
     response.headers.set("Expires", "0");
