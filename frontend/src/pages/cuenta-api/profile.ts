@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { directusAuth } from "../../lib/directus";
+import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 
 export const PATCH: APIRoute = async ({ request, locals }) => {
   try {
@@ -9,6 +10,11 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
+
+    // Rate limit: 10 profile updates per minute per IP
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rl = rateLimit(`profile:${clientIp}`, 10, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     const body = await request.json();
     const allowedFields = [

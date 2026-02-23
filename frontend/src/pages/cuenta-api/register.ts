@@ -32,7 +32,15 @@ export const POST: APIRoute = async ({ request }) => {
       acepta_comunicaciones,
     } = body;
 
-    // Verify Turnstile CAPTCHA
+    // Verify Turnstile CAPTCHA (mandatory when secret key is configured)
+    const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || import.meta.env.TURNSTILE_SECRET_KEY || "";
+    const turnstileRequired = !!TURNSTILE_SECRET && !TURNSTILE_SECRET.startsWith("1x00000");
+    if (turnstileRequired && !turnstileToken) {
+      return new Response(
+        JSON.stringify({ error: "Verificacion de seguridad requerida. Recargue la pagina." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
     if (turnstileToken) {
       const turnstileOk = await verifyTurnstile(turnstileToken);
       if (!turnstileOk) {
