@@ -2,7 +2,7 @@
 import AccountLayout from "../../../layouts/AccountLayout.astro";
 import { getPedidoById, getAssetUrl } from "../../../lib/directus";
 import { formatCurrency } from "../../../lib/pricing";
-import { estadoLabel, estadoColor, formatDate } from "../../../lib/utils";
+import { estadoLabel, estadoColor, tipoLabel, tipoColor, formatDate } from "../../../lib/utils";
 import type { Producto } from "../../../lib/types";
 
 const { id } = Astro.params;
@@ -28,9 +28,12 @@ try {
 if (!pedido) {
   return Astro.redirect("/cuenta/pedidos");
 }
+
+const isPresupuesto = pedido.tipo === "presupuesto";
+const tipoStr = isPresupuesto ? "Presupuesto" : "Pedido";
 ---
 
-<AccountLayout title={`Pedido #${pedido.id} - Tienda Alcora`} activeTab="pedidos">
+<AccountLayout title={`${tipoStr} #${pedido.id} - Tienda Alcora`} activeTab="pedidos">
   <div class="space-y-6">
     {/* Payment status banners */}
     {pagoStatus === "ok" && (
@@ -62,7 +65,7 @@ if (!pedido) {
         <a href="/cuenta/pedidos" class="text-sm text-action hover:underline mb-2 inline-block">
           &larr; Volver a pedidos
         </a>
-        <h2 class="text-xl font-bold text-navy">Pedido #{pedido.id}</h2>
+        <h2 class="text-xl font-bold text-navy">{tipoStr} #{pedido.id}</h2>
         <p class="text-sm text-text-muted">{formatDate(pedido.date_created)}</p>
       </div>
       <span class={`px-3 py-1.5 text-sm rounded-full font-medium ${estadoColor(pedido.estado)}`}>
@@ -121,31 +124,47 @@ if (!pedido) {
             <span class="text-text-muted">Subtotal</span>
             <span class="font-medium">{formatCurrency(pedido.subtotal)}</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-text-muted">Envio</span>
-            <span class={`font-medium ${pedido.costo_envio === 0 ? "text-green-600" : ""}`}>
-              {pedido.costo_envio === 0 ? "Gratis" : formatCurrency(pedido.costo_envio)}
-            </span>
-          </div>
-          <hr class="border-border" />
-          <div class="flex justify-between text-base font-bold">
-            <span>Total</span>
-            <span class="text-action">{formatCurrency(pedido.total)}</span>
-          </div>
-        </div>
-
-        <div class="mt-4 pt-4 border-t border-border space-y-2 text-sm">
-          <div class="flex justify-between">
-            <span class="text-text-muted">Metodo de pago</span>
-            <span class="font-medium capitalize">{pedido.metodo_pago || "—"}</span>
-          </div>
-          {pedido.referencia_pago && (
+          {!isPresupuesto && (
             <div class="flex justify-between">
-              <span class="text-text-muted">Ref. pago</span>
-              <span class="font-mono text-xs">{pedido.referencia_pago}</span>
+              <span class="text-text-muted">Envio</span>
+              <span class={`font-medium ${pedido.costo_envio === 0 ? "text-green-600" : ""}`}>
+                {pedido.costo_envio === 0 ? "Gratis" : formatCurrency(pedido.costo_envio)}
+              </span>
             </div>
           )}
+          <hr class="border-border" />
+          <div class="flex justify-between text-base font-bold">
+            <span>{isPresupuesto ? "Subtotal" : "Total"}</span>
+            <span class="text-action">{formatCurrency(pedido.total)}</span>
+          </div>
+          {isPresupuesto && (
+            <p class="text-xs text-text-muted">* Precios sin IVA. El envio se calculara al confirmar el pedido.</p>
+          )}
         </div>
+
+        {!isPresupuesto && (
+          <div class="mt-4 pt-4 border-t border-border space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-text-muted">Metodo de pago</span>
+              <span class="font-medium capitalize">{pedido.metodo_pago || "—"}</span>
+            </div>
+            {pedido.referencia_pago && (
+              <div class="flex justify-between">
+                <span class="text-text-muted">Ref. pago</span>
+                <span class="font-mono text-xs">{pedido.referencia_pago}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {isPresupuesto && (
+          <div class="mt-4 pt-4 border-t border-border">
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p class="text-sm text-amber-800 font-medium">Presupuesto pendiente de confirmacion</p>
+              <p class="text-xs text-amber-700 mt-1">Nos pondremos en contacto con usted para confirmar las condiciones y plazos.</p>
+            </div>
+          </div>
+        )}
 
       </div>
 

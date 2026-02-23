@@ -18,15 +18,17 @@ try {
 }
 
 if (!pedido) return Astro.redirect("/gestion/pedidos");
+
+const tipoLabel = pedido.tipo === "presupuesto" ? "Presupuesto" : "Pedido";
 ---
 
-<AdminLayout title={`Pedido #${id} - Admin Alcora`} activeTab="pedidos">
+<AdminLayout title={`${tipoLabel} #${id} - Admin Alcora`} activeTab="pedidos">
   <div class="space-y-5">
     <!-- Breadcrumb -->
     <div class="flex items-center gap-2 text-sm text-text-muted">
       <a href="/gestion/pedidos" class="hover:text-action transition-colors">Pedidos</a>
       <span>/</span>
-      <span class="text-navy font-medium">#{id}</span>
+      <span class="text-navy font-medium">{tipoLabel} #{id}</span>
     </div>
 
     <!-- Panel interactivo (React island) -->

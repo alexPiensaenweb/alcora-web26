@@ -149,6 +149,7 @@ function escapeHtml(str: string): string {
  * Build presupuesto email HTML
  */
 export function buildPresupuestoHtml(data: {
+  presupuestoId?: number;
   userName: string;
   userEmail: string;
   userPhone: string;
@@ -160,6 +161,7 @@ export function buildPresupuestoHtml(data: {
     precioUnitario: number;
     formato: string | null;
   }[];
+  subtotal?: number;
   cta?: { label: string; url: string };
 }): string {
   const itemRows = data.items
@@ -181,7 +183,7 @@ export function buildPresupuestoHtml(data: {
 <head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
   <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #c0c4ce;">
-    ${emailHeader("Solicitud de Presupuesto", "Alcora Salud Ambiental")}
+    ${emailHeader(data.presupuestoId ? `Presupuesto #${data.presupuestoId}` : "Solicitud de Presupuesto", "Alcora Salud Ambiental")}
 
     <div style="padding:24px 32px;">
       <h2 style="color:#222d54;font-size:16px;margin:0 0 16px;">Datos del cliente</h2>
@@ -206,9 +208,14 @@ export function buildPresupuestoHtml(data: {
         <tbody>${itemRows}</tbody>
       </table>
 
+      ${data.subtotal != null ? `
+      <table style="width:100%;font-size:14px;margin-bottom:24px;">
+        <tr><td style="padding:8px 0 0;text-align:right;font-weight:700;color:#222d54;font-size:16px;">Subtotal:</td><td style="padding:8px 0 0 16px;text-align:right;font-weight:700;color:#2970ff;font-size:16px;">${Number(data.subtotal).toFixed(2)} \u20AC</td></tr>
+      </table>` : ""}
+
       <p style="font-size:13px;color:#6b7589;line-height:1.5;">
-        Este presupuesto ha sido solicitado desde la tienda online.
-        Por favor, contacten con el cliente para confirmar condiciones y plazos.
+        * Precios sin IVA. Este presupuesto ha sido solicitado desde la tienda online.
+        Los precios y condiciones quedan pendientes de confirmacion.
       </p>
     </div>
 

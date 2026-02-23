@@ -36,6 +36,7 @@ export default function CartPage({ isLoggedIn = false }: CartPageProps) {
   const total = useStore($cartTotal);
   const [presupuestoLoading, setPresupuestoLoading] = useState(false);
   const [presupuestoSent, setPresupuestoSent] = useState(false);
+  const [presupuestoId, setPresupuestoId] = useState<number | null>(null);
   const [presupuestoError, setPresupuestoError] = useState("");
 
   // If not logged in, don't show cart with prices - clear stale data
@@ -276,6 +277,7 @@ export default function CartPage({ isLoggedIn = false }: CartPageProps) {
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || "Error al solicitar presupuesto");
                 setPresupuestoSent(true);
+                if (data.presupuestoId) setPresupuestoId(data.presupuestoId);
               } catch (err: any) {
                 setPresupuestoError(err.message || "Error desconocido");
               } finally {
@@ -293,9 +295,18 @@ export default function CartPage({ isLoggedIn = false }: CartPageProps) {
           </button>
 
           {presupuestoSent && (
-            <p className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-2 text-center">
-              Hemos recibido su solicitud. Le enviaremos el presupuesto por email a la mayor brevedad.
-            </p>
+            <div className="mt-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+              <p>Hemos recibido su solicitud de presupuesto{presupuestoId ? ` (#${presupuestoId})` : ""}.</p>
+              <p className="mt-1">Le enviaremos la respuesta por email a la mayor brevedad.</p>
+              {presupuestoId && (
+                <a
+                  href={`/cuenta/pedidos/${presupuestoId}`}
+                  className="inline-block mt-2 text-[var(--color-action)] hover:underline font-medium"
+                >
+                  Ver presupuesto →
+                </a>
+              )}
+            </div>
           )}
 
           {presupuestoError && (

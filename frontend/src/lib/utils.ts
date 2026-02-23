@@ -24,6 +24,16 @@ export function formatDate(dateString: string): string {
   });
 }
 
+export function tipoLabel(tipo: string): string {
+  return tipo === "presupuesto" ? "Presupuesto" : "Pedido";
+}
+
+export function tipoColor(tipo: string): string {
+  return tipo === "presupuesto"
+    ? "bg-amber-100 text-amber-800"
+    : "bg-blue-100 text-blue-800";
+}
+
 export function estadoLabel(estado: string): string {
   const labels: Record<string, string> = {
     solicitado: "Solicitado",

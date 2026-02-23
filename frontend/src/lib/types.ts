@@ -76,8 +76,11 @@ export type EstadoPedido =
   | "enviado"
   | "cancelado";
 
+export type TipoPedido = "pedido" | "presupuesto";
+
 export interface Pedido {
   id: number;
+  tipo: TipoPedido;
   estado: EstadoPedido;
   user_created: string | DirectusUser;
   date_created: string;

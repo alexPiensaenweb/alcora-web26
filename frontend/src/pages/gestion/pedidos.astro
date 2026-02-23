@@ -4,6 +4,7 @@ import { directusAdmin } from "../../lib/directus";
 
 const url = new URL(Astro.request.url);
 const estadoFilter = url.searchParams.get("estado") || "";
+const tipoFilter = url.searchParams.get("tipo") || "";
 const page = parseInt(url.searchParams.get("page") || "1");
 const limit = 20;
 const offset = (page - 1) * limit;
@@ -12,9 +13,12 @@ let pedidos: any[] = [];
 let total = 0;
 
 try {
-  const filters = estadoFilter ? `&filter[estado][_eq]=${estadoFilter}` : "";
+  let filters = "";
+  if (estadoFilter) filters += `&filter[estado][_eq]=${estadoFilter}`;
+  if (tipoFilter) filters += `&filter[tipo][_eq]=${tipoFilter}`;
+
   const res = await directusAdmin(
-    `/items/pedidos?sort=-date_created&limit=${limit}&offset=${offset}&fields=id,estado,date_created,total,subtotal,costo_envio,metodo_pago,user_created.id,user_created.first_name,user_created.last_name,user_created.razon_social,user_created.email,user_created.telefono${filters}&meta=filter_count`
+    `/items/pedidos?sort=-date_created&limit=${limit}&offset=${offset}&fields=id,tipo,estado,date_created,total,subtotal,costo_envio,metodo_pago,user_created.id,user_created.first_name,user_created.last_name,user_created.razon_social,user_created.email,user_created.telefono${filters}&meta=filter_count`
   );
   pedidos = res.data || [];
   total = res.meta?.filter_count || 0;
@@ -24,17 +28,23 @@ try {
 
 const totalPages = Math.ceil(total / limit);
 
+const TIPOS = [
+  { value: "", label: "Todos" },
+  { value: "pedido", label: "Pedidos" },
+  { value: "presupuesto", label: "Presupuestos" },
+];
+
 const ESTADOS = [
   { value: "", label: "Todos" },
   { value: "solicitado", label: "Solicitados" },
-  { value: "presupuesto_solicitado", label: "Presupuestos" },
+  { value: "presupuesto_solicitado", label: "Ppto. solicitado" },
   { value: "aprobado_pendiente_pago", label: "Pendiente pago" },
   { value: "pagado", label: "Pagados" },
   { value: "enviado", label: "Enviados" },
   { value: "cancelado", label: "Cancelados" },
 ];
 
-const estadoLabel: Record<string, string> = {
+const estadoLabelMap: Record<string, string> = {
   solicitado: "Solicitado",
   presupuesto_solicitado: "Presupuesto",
   aprobado_pendiente_pago: "Pte. pago",
@@ -43,7 +53,7 @@ const estadoLabel: Record<string, string> = {
   cancelado: "Cancelado",
 };
 
-const estadoColor: Record<string, string> = {
+const estadoColorMap: Record<string, string> = {
   solicitado: "bg-yellow-100 text-yellow-800",
   presupuesto_solicitado: "bg-amber-100 text-amber-800",
   aprobado_pendiente_pago: "bg-blue-100 text-blue-800",
@@ -61,6 +71,11 @@ function clienteNombre(p: any) {
   if (!u) return "—";
   return u.razon_social || `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email || "—";
 }
+
+function buildFilterUrl(params: Record<string, string>) {
+  const qs = Object.entries(params).filter(([_, v]) => v).map(([k, v]) => `${k}=${v}`).join("&");
+  return qs ? `/gestion/pedidos?${qs}` : "/gestion/pedidos";
+}
 ---
 
 <AdminLayout title="Pedidos - Admin Alcora" activeTab="pedidos">
@@ -69,19 +84,37 @@ function clienteNombre(p: any) {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-navy">Pedidos</h1>
+        <h1 class="text-2xl font-bold text-navy">Pedidos y Presupuestos</h1>
         <p class="text-text-muted text-sm mt-0.5">{total} resultado{total !== 1 ? "s" : ""}</p>
       </div>
     </div>
 
-    <!-- Filtros -->
+    <!-- Filtros tipo -->
+    <div class="flex flex-wrap gap-2">
+      {TIPOS.map((t) => (
+        <a
+          href={buildFilterUrl({ tipo: t.value, estado: estadoFilter })}
+          data-astro-reload
+          class:list={[
+            "px-4 py-2 rounded-lg text-sm font-semibold transition-colors border",
+            tipoFilter === t.value
+              ? "bg-navy text-white border-navy"
+              : "bg-white text-navy border-border hover:border-navy",
+          ]}
+        >
+          {t.label}
+        </a>
+      ))}
+    </div>
+
+    <!-- Filtros estado -->
     <div class="flex flex-wrap gap-2">
       {ESTADOS.map((e) => (
         <a
-          href={e.value ? `/gestion/pedidos?estado=${e.value}` : "/gestion/pedidos"}
+          href={buildFilterUrl({ tipo: tipoFilter, estado: e.value })}
           data-astro-reload
           class:list={[
-            "px-3 py-1.5 rounded-full text-sm font-medium transition-colors border",
+            "px-3 py-1.5 rounded-full text-xs font-medium transition-colors border",
             estadoFilter === e.value
               ? "bg-action text-white border-action"
               : "bg-white text-navy border-border hover:border-action hover:text-action",
@@ -100,7 +133,8 @@ function clienteNombre(p: any) {
             <table class="w-full text-sm">
               <thead>
                 <tr class="bg-bg-light border-b border-border text-xs text-text-muted uppercase tracking-wide">
-                  <th class="text-left px-4 py-3 font-semibold">Pedido</th>
+                  <th class="text-left px-4 py-3 font-semibold">N.°</th>
+                  <th class="text-left px-4 py-3 font-semibold">Tipo</th>
                   <th class="text-left px-4 py-3 font-semibold">Cliente</th>
                   <th class="text-left px-4 py-3 font-semibold">Fecha</th>
                   <th class="text-left px-4 py-3 font-semibold">Estado</th>
@@ -114,17 +148,26 @@ function clienteNombre(p: any) {
                   <tr class="hover:bg-bg-light transition-colors">
                     <td class="px-4 py-3 font-semibold text-navy">#{p.id}</td>
                     <td class="px-4 py-3">
+                      <span class={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        p.tipo === "presupuesto" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"
+                      }`}>
+                        {p.tipo === "presupuesto" ? "Presupuesto" : "Pedido"}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3">
                       <div class="font-medium text-navy">{clienteNombre(p)}</div>
                       {p.user_created?.email && <div class="text-xs text-text-muted">{p.user_created.email}</div>}
                     </td>
                     <td class="px-4 py-3 text-text-muted whitespace-nowrap">{formatDate(p.date_created)}</td>
                     <td class="px-4 py-3">
-                      <span class={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoColor[p.estado] || "bg-gray-100 text-gray-700"}`}>
-                        {estadoLabel[p.estado] || p.estado}
+                      <span class={`px-2 py-0.5 rounded-full text-xs font-medium ${estadoColorMap[p.estado] || "bg-gray-100 text-gray-700"}`}>
+                        {estadoLabelMap[p.estado] || p.estado}
                       </span>
                     </td>
                     <td class="px-4 py-3 text-text-muted text-xs capitalize">
-                      {p.metodo_pago === "transferencia" ? "Transferencia" : p.metodo_pago === "tarjeta" ? "Tarjeta" : "—"}
+                      {p.tipo === "presupuesto" ? "—" :
+                       p.metodo_pago === "transferencia" ? "Transferencia" :
+                       p.metodo_pago === "pendiente" ? "Pendiente" : "—"}
                     </td>
                     <td class="px-4 py-3 text-right font-semibold text-navy">{Number(p.total || 0).toFixed(2)} €</td>
                     <td class="px-4 py-3 text-right">
@@ -141,16 +184,16 @@ function clienteNombre(p: any) {
           {/* Pagination */}
           {totalPages > 1 && (
             <div class="flex items-center justify-between px-4 py-3 border-t border-border bg-bg-light">
-              <p class="text-xs text-text-muted">Página {page} de {totalPages}</p>
+              <p class="text-xs text-text-muted">Pagina {page} de {totalPages}</p>
               <div class="flex gap-2">
                 {page > 1 && (
-                  <a href={`/gestion/pedidos?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page - 1}`}
+                  <a href={buildFilterUrl({ tipo: tipoFilter, estado: estadoFilter, page: String(page - 1) })}
                      data-astro-reload class="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                     ← Anterior
                   </a>
                 )}
                 {page < totalPages && (
-                  <a href={`/gestion/pedidos?${estadoFilter ? `estado=${estadoFilter}&` : ""}page=${page + 1}`}
+                  <a href={buildFilterUrl({ tipo: tipoFilter, estado: estadoFilter, page: String(page + 1) })}
                      data-astro-reload class="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-white transition-colors">
                     Siguiente →
                   </a>

@@ -2,7 +2,7 @@
 import AccountLayout from "../../layouts/AccountLayout.astro";
 import { getPedidosForUser } from "../../lib/directus";
 import { formatCurrency } from "../../lib/pricing";
-import { estadoLabel, estadoColor, formatDate } from "../../lib/utils";
+import { estadoLabel, estadoColor, tipoLabel, tipoColor, formatDate } from "../../lib/utils";
 
 const token = Astro.locals.token!;
 let pedidos: any[] = [];
@@ -13,9 +13,9 @@ try {
 }
 ---
 
-<AccountLayout title="Mis Pedidos - Tienda Alcora" activeTab="pedidos">
+<AccountLayout title="Mis Pedidos y Presupuestos - Tienda Alcora" activeTab="pedidos">
   <div>
-    <h2 class="text-xl font-bold text-navy mb-6">Mis Pedidos</h2>
+    <h2 class="text-xl font-bold text-navy mb-6">Mis Pedidos y Presupuestos</h2>
 
     {pedidos.length > 0 ? (
       <div class="bg-white border border-border rounded-lg overflow-hidden">
@@ -24,7 +24,8 @@ try {
           <table class="w-full text-sm">
             <thead class="bg-bg-light text-left">
               <tr>
-                <th class="px-4 py-3 font-medium text-text-muted">Pedido</th>
+                <th class="px-4 py-3 font-medium text-text-muted">N.°</th>
+                <th class="px-4 py-3 font-medium text-text-muted">Tipo</th>
                 <th class="px-4 py-3 font-medium text-text-muted">Fecha</th>
                 <th class="px-4 py-3 font-medium text-text-muted">Estado</th>
                 <th class="px-4 py-3 font-medium text-text-muted">Productos</th>
@@ -36,6 +37,11 @@ try {
               {pedidos.map((pedido) => (
                 <tr class="hover:bg-bg-light transition-colors">
                   <td class="px-4 py-3 font-medium text-navy">#{pedido.id}</td>
+                  <td class="px-4 py-3">
+                    <span class={`px-2 py-0.5 text-xs rounded-full font-medium ${tipoColor(pedido.tipo || "pedido")}`}>
+                      {tipoLabel(pedido.tipo || "pedido")}
+                    </span>
+                  </td>
                   <td class="px-4 py-3 text-text-muted">
                     {formatDate(pedido.date_created)}
                   </td>
@@ -72,7 +78,10 @@ try {
               class="block p-4 hover:bg-bg-light transition-colors"
             >
               <div class="flex items-center justify-between mb-2">
-                <span class="font-medium text-navy">Pedido #{pedido.id}</span>
+                <span class="font-medium text-navy">
+                  <span class={`mr-2 px-2 py-0.5 text-xs rounded-full font-medium ${tipoColor(pedido.tipo || "pedido")}`}>{tipoLabel(pedido.tipo || "pedido")}</span>
+                  #{pedido.id}
+                </span>
                 <span class={`px-2 py-1 text-xs rounded-full font-medium ${estadoColor(pedido.estado)}`}>
                   {estadoLabel(pedido.estado)}
                 </span>
