@@ -7,12 +7,11 @@
  * 3. Auto-refreshes if expired
  * 4. Injects user into Astro.locals
  * 5. Protects specific routes
- * 6. Adds security headers (CSP with nonce)
+ * 6. Adds security headers
  * 7. CSRF protection on state-changing requests
  */
 
 import { defineMiddleware } from "astro:middleware";
-import { randomBytes } from "node:crypto";
 import {
   getSessionToken,
   getRefreshToken,
@@ -37,13 +36,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { cookies, url, redirect } = context;
   const pathname = url.pathname;
 
-  // ─── Generate CSP nonce for this request ───
-  const nonce = randomBytes(16).toString("base64");
-  context.locals.nonce = nonce;
-
   // Default: no user
   context.locals.user = null;
   context.locals.token = null;
+  context.locals.nonce = "";
 
   // ─── CSRF Protection: verify Origin on state-changing requests ───
   if (context.request.method !== "GET" && context.request.method !== "HEAD") {
@@ -191,7 +187,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     );
   }
 
-  // Content Security Policy with nonce
+  // Content Security Policy
+  // Note: 'unsafe-inline' is required because Astro ViewTransitions and
+  // hydration inject inline scripts that cannot receive nonce attributes.
+  // Cloudflare Turnstile also injects inline scripts.
   const imgSrc = PUBLIC_DIRECTUS_URL
     ? `'self' data: blob: ${PUBLIC_DIRECTUS_URL}`
     : "'self' data: blob:";
@@ -200,7 +199,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' blob: https://challenges.cloudflare.com`,
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       `img-src ${imgSrc}`,
       "connect-src 'self' blob:",
