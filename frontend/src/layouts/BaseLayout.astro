@@ -20,7 +20,7 @@ const whatsappNumber = empresa?.telefono_whatsapp || null;
 const publicDirectusUrl =
   process.env.PUBLIC_DIRECTUS_URL || import.meta.env.PUBLIC_DIRECTUS_URL || "https://tienda.alcora.es";
 const turnstileSiteKey =
-  import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+  process.env.PUBLIC_TURNSTILE_SITE_KEY || import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 ---
 
 <!doctype html>
