@@ -78,9 +78,13 @@ export default function UsuariosAdminPanel({
     userName: string;
   } | null>(null);
 
-  function showMsg(type: "ok" | "err", text: string) {
+  function showMsg(type: "ok" | "err", text: string, reload = false) {
     setMsg({ type, text });
-    setTimeout(() => setMsg(null), 5000);
+    if (reload) {
+      setTimeout(() => window.location.reload(), 600);
+    } else {
+      setTimeout(() => setMsg(null), 5000);
+    }
   }
 
   function goToFilter(status: string) {
@@ -113,23 +117,15 @@ export default function UsuariosAdminPanel({
       }
       const data = await res.json();
 
-      // Actualizar en lista
-      setUsuarios((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, status: nuevoStatus } : u))
-      );
-      if (selectedUser?.id === userId) {
-        setSelectedUser((prev) => prev ? { ...prev, status: nuevoStatus } : null);
-      }
-
       if (nuevoStatus === "active") {
         showMsg("ok", data.emailSent
           ? "Usuario activado y email de notificación enviado"
-          : "Usuario activado"
+          : "Usuario activado", true
         );
       } else if (nuevoStatus === "suspended") {
-        showMsg("ok", "Usuario suspendido");
+        showMsg("ok", "Usuario suspendido", true);
       } else {
-        showMsg("ok", "Estado actualizado");
+        showMsg("ok", "Estado actualizado", true);
       }
     } catch (err: any) {
       showMsg("err", err.message || "Error al cambiar estado");
@@ -150,13 +146,7 @@ export default function UsuariosAdminPanel({
         const d = await res.json();
         throw new Error(d.error || "Error");
       }
-      setUsuarios((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, grupo_cliente: nuevoGrupo } : u))
-      );
-      if (selectedUser?.id === userId) {
-        setSelectedUser((prev) => prev ? { ...prev, grupo_cliente: nuevoGrupo } : null);
-      }
-      showMsg("ok", "Grupo actualizado");
+      showMsg("ok", "Grupo actualizado", true);
     } catch (err: any) {
       showMsg("err", err.message || "Error al cambiar grupo");
     } finally {

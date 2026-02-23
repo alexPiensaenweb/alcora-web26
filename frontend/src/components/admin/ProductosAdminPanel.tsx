@@ -92,9 +92,13 @@ export default function ProductosAdminPanel({
   const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function showMsg(type: "ok" | "err", text: string) {
+  function showMsg(type: "ok" | "err", text: string, reload = false) {
     setMsg({ type, text });
-    setTimeout(() => setMsg(null), 4000);
+    if (reload) {
+      setTimeout(() => window.location.reload(), 600);
+    } else {
+      setTimeout(() => setMsg(null), 4000);
+    }
   }
 
   function goToSearch(e: React.FormEvent) {
@@ -133,12 +137,7 @@ export default function ProductosAdminPanel({
         const d = await res.json();
         throw new Error(d.error || "Error al guardar");
       }
-      setProductos((prev) =>
-        prev.map((p) => p.id === selectedProduct.id ? { ...p, ...editData } : p)
-      );
-      setSelectedProduct((prev) => prev ? { ...prev, ...editData } : null);
-      setEditMode(false);
-      showMsg("ok", "Producto actualizado");
+      showMsg("ok", "Producto actualizado", true);
     } catch (err: any) {
       showMsg("err", err.message || "Error desconocido");
     } finally {
@@ -156,9 +155,7 @@ export default function ProductosAdminPanel({
         body: JSON.stringify({ status: nuevo }),
       });
       if (!res.ok) throw new Error("Error");
-      setProductos((prev) => prev.map((x) => x.id === p.id ? { ...x, status: nuevo } : x));
-      if (selectedProduct?.id === p.id) setSelectedProduct((prev) => prev ? { ...prev, status: nuevo } : null);
-      showMsg("ok", nuevo === "published" ? "Producto publicado" : "Producto desactivado");
+      showMsg("ok", nuevo === "published" ? "Producto publicado" : "Producto desactivado", true);
     } catch {
       showMsg("err", "Error al cambiar estado");
     } finally {
@@ -177,10 +174,7 @@ export default function ProductosAdminPanel({
         const d = await res.json();
         throw new Error(d.error || "Error al eliminar");
       }
-      setProductos((prev) => prev.filter((x) => x.id !== p.id));
-      setSelectedProduct(null);
-      setDeleteConfirm(null);
-      showMsg("ok", `Producto "${p.nombre}" eliminado`);
+      showMsg("ok", `Producto "${p.nombre}" eliminado`, true);
     } catch (err: any) {
       showMsg("err", err.message || "Error al eliminar producto");
     } finally {
