@@ -207,9 +207,13 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
       pedido.user_created.email
     : "—";
 
-  function showMessage(msg: string) {
+  function showMessage(msg: string, reload = false) {
     setSavedMsg(msg);
-    setTimeout(() => setSavedMsg(""), 3000);
+    if (reload) {
+      setTimeout(() => window.location.reload(), 600);
+    } else {
+      setTimeout(() => setSavedMsg(""), 3000);
+    }
   }
 
   async function cambiarEstado(nuevoEstado: string) {
@@ -226,8 +230,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         const d = await res.json();
         throw new Error(d.error || "Error al cambiar estado");
       }
-      setPedido((prev) => ({ ...prev, estado: nuevoEstado }));
-      showMessage("Estado actualizado correctamente");
+      showMessage("Estado actualizado correctamente", true);
     } catch (err: any) {
       setError(err.message || "Error desconocido");
     } finally {
@@ -249,8 +252,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         const d = await res.json();
         throw new Error(d.error || "Error al guardar notas");
       }
-      setPedido((prev) => ({ ...prev, notas_admin: notasAdmin }));
-      showMessage("Notas guardadas");
+      showMessage("Notas guardadas", true);
     } catch (err: any) {
       setError(err.message || "Error desconocido");
     } finally {
@@ -287,19 +289,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         const d = await res.json();
         throw new Error(d.error || "Error al actualizar item");
       }
-      const result = await res.json();
-      setPedido((prev) => ({
-        ...prev,
-        subtotal: result.subtotal,
-        total: result.total,
-        items: prev.items.map((i) =>
-          i.id === itemId
-            ? { ...i, cantidad: editCantidad, precio_unitario: editPrecio, subtotal: Math.round(editCantidad * editPrecio * 100) / 100 }
-            : i
-        ),
-      }));
-      setEditingItemId(null);
-      showMessage("Item actualizado");
+      showMessage("Item actualizado", true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -321,14 +311,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         const d = await res.json();
         throw new Error(d.error || "Error al eliminar item");
       }
-      const result = await res.json();
-      setPedido((prev) => ({
-        ...prev,
-        subtotal: result.subtotal,
-        total: result.total,
-        items: prev.items.filter((i) => i.id !== itemId),
-      }));
-      showMessage("Producto eliminado del presupuesto");
+      showMessage("Producto eliminado del presupuesto", true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -353,8 +336,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         const d = await res.json();
         throw new Error(d.error || "Error al añadir producto");
       }
-      showMessage("Producto añadido. Recargando...");
-      setTimeout(() => window.location.reload(), 500);
+      showMessage("Producto añadido", true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -378,8 +360,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         const d = await res.json();
         throw new Error(d.error || "Error al aplicar descuento");
       }
-      showMessage(`Descuento del ${discountPercent}% aplicado. Recargando...`);
-      setTimeout(() => window.location.reload(), 600);
+      showMessage(`Descuento del ${discountPercent}% aplicado`, true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -402,15 +383,7 @@ export default function PedidoAdminPanel({ pedido: initialPedido }: { pedido: Pe
         const d = await res.json();
         throw new Error(d.error || "Error al convertir");
       }
-      const result = await res.json();
-      setPedido((prev) => ({
-        ...prev,
-        tipo: "pedido",
-        estado: "aprobado_pendiente_pago",
-        costo_envio: result.pedido.costoEnvio,
-        total: result.pedido.total,
-      }));
-      showMessage("Presupuesto convertido a pedido correctamente");
+      showMessage("Presupuesto convertido a pedido correctamente", true);
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -49,6 +49,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
       }
 
       setMessage("Perfil actualizado correctamente");
+      setTimeout(() => window.location.reload(), 800);
     } catch (err: any) {
       setError(err.message || "Error desconocido");
     } finally {
