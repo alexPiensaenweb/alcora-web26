@@ -10,8 +10,9 @@ deploy-frontend/.env
 # Dependencies
 node_modules/
 
-# Build output
+# Build output (except deploy-frontend which IS the production deploy)
 dist/
+!deploy-frontend/dist/
 .astro/
 
 # Directus uploads (large binary files)

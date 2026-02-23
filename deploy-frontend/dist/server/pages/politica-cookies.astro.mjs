@@ -1,0 +1,41 @@
+/* empty css                                       */
+import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_VyRwZjg8.mjs';
+import 'piccolore';
+import { $ as $$BaseLayout } from '../chunks/BaseLayout_BgOPDYG0.mjs';
+export { renderers } from '../renderers.mjs';
+
+const $$PoliticaCookies = createComponent(($$result, $$props, $$slots) => {
+  return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, { "title": "Pol\xEDtica de Cookies - Tienda Alcora" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12"> <h1 class="text-3xl font-bold text-navy mb-8">Política de Cookies</h1> <div class="prose prose-sm max-w-none text-navy space-y-6"> <section> <h2 class="text-xl font-semibold text-navy">1. Qué son las cookies</h2> <p class="text-text-muted">
+Las cookies son pequeños archivos de texto que se almacenan en su navegador cuando visita
+          una web. Permiten recordar sus preferencias y mejorar su experiencia de navegación.
+</p> </section> <section> <h2 class="text-xl font-semibold text-navy">2. Cookies que utilizamos</h2> <h3 class="text-lg font-medium text-navy mt-4">Cookies necesarias (siempre activas)</h3> <div class="overflow-x-auto"> <table class="w-full text-sm text-text-muted border border-border"> <thead class="bg-bg-light"> <tr> <th class="px-3 py-2 text-left border-b border-border">Cookie</th> <th class="px-3 py-2 text-left border-b border-border">Finalidad</th> <th class="px-3 py-2 text-left border-b border-border">Duración</th> </tr> </thead> <tbody> <tr class="border-b border-border"> <td class="px-3 py-2 font-mono text-xs">alcora_session</td> <td class="px-3 py-2">Sesión de usuario autenticado</td> <td class="px-3 py-2">15 minutos</td> </tr> <tr class="border-b border-border"> <td class="px-3 py-2 font-mono text-xs">alcora_refresh</td> <td class="px-3 py-2">Renovación de sesión</td> <td class="px-3 py-2">7 días</td> </tr> <tr class="border-b border-border"> <td class="px-3 py-2 font-mono text-xs">cc_cookie</td> <td class="px-3 py-2">Preferencias de cookies</td> <td class="px-3 py-2">182 días</td> </tr> </tbody> </table> </div> <p class="text-text-muted mt-3">
+Además, el carrito de compras se almacena en <strong>localStorage</strong> del navegador
+          (no es una cookie), y se borra automáticamente al cerrar la sesión o completar un pedido.
+</p> </section> <section> <h2 class="text-xl font-semibold text-navy">3. Cómo gestionar las cookies</h2> <p class="text-text-muted">
+Puede modificar sus preferencias de cookies en cualquier momento haciendo clic en el
+          botón de configuración de cookies en la parte inferior de la página, o configurando
+          su navegador para rechazar cookies.
+</p> <p class="text-text-muted">
+Tenga en cuenta que rechazar las cookies necesarias puede afectar al funcionamiento
+          de la tienda (no podrá iniciar sesión ni realizar pedidos).
+</p> </section> <section> <h2 class="text-xl font-semibold text-navy">4. Contacto</h2> <p class="text-text-muted">
+Para cualquier consulta sobre nuestra política de cookies, contacte con
+<a href="mailto:central@alcora.es" class="text-action">central@alcora.es</a>.
+</p> </section> <p class="text-xs text-text-muted pt-4 border-t border-border">
+Última actualización: febrero 2026
+</p> </div> </div> ` })}`;
+}, "C:/Users/Piensaenweb/Documents/Claude/alcora/web26/frontend/src/pages/politica-cookies.astro", void 0);
+
+const $$file = "C:/Users/Piensaenweb/Documents/Claude/alcora/web26/frontend/src/pages/politica-cookies.astro";
+const $$url = "/politica-cookies";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$PoliticaCookies,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };

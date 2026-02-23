@@ -1,0 +1,1 @@
+import{a}from"./index.3whys8t3.js";const o=a(!1),e=a(null);function s(t){e.set(t),o.set(t!==null&&(t.status==="active"||t.isAdmin===!0))}function c(){e.set(null),o.set(!1)}async function l(){try{await fetch("/cuenta-api/logout",{method:"POST"})}catch{}try{localStorage.removeItem("alcora-cart")}catch{}c(),window.location.href="/login"}export{l,s};

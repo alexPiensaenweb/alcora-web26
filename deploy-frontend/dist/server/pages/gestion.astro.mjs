@@ -1,0 +1,82 @@
+/* empty css                                       */
+import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead, h as addAttribute } from '../chunks/astro/server_VyRwZjg8.mjs';
+import 'piccolore';
+import { $ as $$AdminLayout } from '../chunks/AdminLayout_g9L0Gq9n.mjs';
+import { directusAdmin } from '../chunks/directus_tOieuaro.mjs';
+import { a as formatDate } from '../chunks/utils_BzKe2XRh.mjs';
+export { renderers } from '../renderers.mjs';
+
+const $$Index = createComponent(async ($$result, $$props, $$slots) => {
+  let stats = {
+    totalPedidos: 0,
+    pedidosPendientes: 0,
+    totalUsuarios: 0,
+    usuariosPendientes: 0,
+    totalProductos: 0
+  };
+  let recentPedidos = [];
+  try {
+    const [pedidosRes, usuariosRes, productosRes, pendientesRes] = await Promise.all([
+      directusAdmin("/items/pedidos?aggregate[count]=id&meta=filter_count"),
+      directusAdmin("/users?aggregate[count]=id&meta=filter_count"),
+      directusAdmin("/items/productos?aggregate[count]=id&meta=filter_count"),
+      directusAdmin("/items/pedidos?filter[estado][_in]=solicitado,aprobado_pendiente_pago&aggregate[count]=id&meta=filter_count")
+    ]);
+    stats.totalPedidos = pedidosRes.meta?.filter_count || pedidosRes.data?.[0]?.count?.id || 0;
+    stats.totalUsuarios = usuariosRes.meta?.filter_count || usuariosRes.data?.[0]?.count?.id || 0;
+    stats.totalProductos = productosRes.meta?.filter_count || productosRes.data?.[0]?.count?.id || 0;
+    stats.pedidosPendientes = pendientesRes.meta?.filter_count || pendientesRes.data?.[0]?.count?.id || 0;
+    const suspRes = await directusAdmin("/users?filter[status][_eq]=suspended&aggregate[count]=id&meta=filter_count");
+    stats.usuariosPendientes = suspRes.meta?.filter_count || suspRes.data?.[0]?.count?.id || 0;
+    const recRes = await directusAdmin(
+      "/items/pedidos?sort=-date_created&limit=8&fields=id,estado,date_created,total,metodo_pago,user_created.first_name,user_created.last_name,user_created.razon_social,user_created.email"
+    );
+    recentPedidos = recRes.data || [];
+  } catch (err) {
+    console.error("[admin] Error loading stats:", err);
+  }
+  const estadoLabel = {
+    solicitado: "Solicitado",
+    presupuesto_solicitado: "Presupuesto",
+    aprobado_pendiente_pago: "Pendiente pago",
+    pagado: "Pagado",
+    enviado: "Enviado",
+    cancelado: "Cancelado"
+  };
+  const estadoColor = {
+    solicitado: "bg-yellow-100 text-yellow-800",
+    presupuesto_solicitado: "bg-amber-100 text-amber-800",
+    aprobado_pendiente_pago: "bg-blue-100 text-blue-800",
+    pagado: "bg-green-100 text-green-800",
+    enviado: "bg-emerald-100 text-emerald-800",
+    cancelado: "bg-red-100 text-red-800"
+  };
+  return renderTemplate`${renderComponent($$result, "AdminLayout", $$AdminLayout, { "title": "Dashboard - Admin Alcora", "activeTab": "dashboard" }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="space-y-6"> <!-- Header --> <div> <h1 class="text-2xl font-bold text-navy">Dashboard</h1> <p class="text-text-muted text-sm mt-1">Resumen general de la tienda</p> </div> <!-- Stats Grid --> <div class="grid grid-cols-2 lg:grid-cols-4 gap-4"> <a href="/gestion/pedidos" data-astro-reload class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group"> <div class="flex items-start justify-between"> <div> <p class="text-3xl font-bold text-navy group-hover:text-action transition-colors">${stats.totalPedidos}</p> <p class="text-sm text-text-muted mt-1">Pedidos totales</p> </div> <span class="material-icons text-2xl text-action opacity-60">shopping_bag</span> </div> ${stats.pedidosPendientes > 0 && renderTemplate`<div class="mt-3 flex items-center gap-1.5"> <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span> <span class="text-xs text-yellow-700 font-medium">${stats.pedidosPendientes} pendientes</span> </div>`} </a> <a href="/gestion/usuarios" data-astro-reload class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group"> <div class="flex items-start justify-between"> <div> <p class="text-3xl font-bold text-navy group-hover:text-action transition-colors">${stats.totalUsuarios}</p> <p class="text-sm text-text-muted mt-1">Usuarios</p> </div> <span class="material-icons text-2xl text-action opacity-60">group</span> </div> ${stats.usuariosPendientes > 0 && renderTemplate`<div class="mt-3 flex items-center gap-1.5"> <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span> <span class="text-xs text-orange-700 font-medium">${stats.usuariosPendientes} por activar</span> </div>`} </a> <a href="/gestion/productos" data-astro-reload class="bg-white border border-border rounded-xl p-5 hover:border-action hover:shadow-sm transition-all group"> <div class="flex items-start justify-between"> <div> <p class="text-3xl font-bold text-navy group-hover:text-action transition-colors">${stats.totalProductos}</p> <p class="text-sm text-text-muted mt-1">Productos</p> </div> <span class="material-icons text-2xl text-action opacity-60">inventory_2</span> </div> </a> <div class="bg-navy text-white rounded-xl p-5"> <div class="flex items-start justify-between"> <div> <p class="text-3xl font-bold">${stats.pedidosPendientes + stats.usuariosPendientes}</p> <p class="text-sm opacity-70 mt-1">Acciones pendientes</p> </div> <span class="material-icons text-2xl opacity-60">notifications_active</span> </div> ${stats.pedidosPendientes + stats.usuariosPendientes > 0 && renderTemplate`<div class="mt-3 text-xs opacity-70">Requieren atención</div>`} </div> </div> <!-- Quick actions + Recent orders --> <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"> <!-- Recent orders --> <div class="lg:col-span-2 bg-white border border-border rounded-xl overflow-hidden"> <div class="flex items-center justify-between px-5 py-4 border-b border-border"> <h2 class="font-semibold text-navy">Pedidos recientes</h2> <a href="/gestion/pedidos" data-astro-reload class="text-xs text-action hover:underline">Ver todos →</a> </div> ${recentPedidos.length > 0 ? renderTemplate`<div class="divide-y divide-border"> ${recentPedidos.map((p) => {
+    const cliente = typeof p.user_created === "object" ? p.user_created?.razon_social || `${p.user_created?.first_name || ""} ${p.user_created?.last_name || ""}`.trim() || p.user_created?.email : "\u2014";
+    return renderTemplate`<a${addAttribute(`/gestion/pedidos/${p.id}`, "href")} data-astro-reload class="flex items-center justify-between px-5 py-3 hover:bg-bg-light transition-colors"> <div class="min-w-0"> <p class="text-sm font-medium text-navy">#${p.id} · ${cliente}</p> <p class="text-xs text-text-muted">${formatDate(p.date_created)}</p> </div> <div class="flex items-center gap-3 flex-shrink-0 ml-3"> <span${addAttribute(`px-2 py-0.5 rounded-full text-xs font-medium ${estadoColor[p.estado] || "bg-gray-100 text-gray-700"}`, "class")}> ${estadoLabel[p.estado] || p.estado} </span> <span class="text-sm font-semibold text-navy">${Number(p.total || 0).toFixed(2)} €</span> </div> </a>`;
+  })} </div>` : renderTemplate`<div class="p-8 text-center text-text-muted text-sm">No hay pedidos todavía</div>`} </div> <!-- Quick links --> <div class="space-y-4"> <div class="bg-white border border-border rounded-xl p-5"> <h2 class="font-semibold text-navy mb-4">Acceso rápido</h2> <div class="space-y-2"> <a href="/gestion/pedidos?estado=solicitado" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy"> <span class="material-icons text-base text-yellow-600">pending</span>
+Pedidos nuevos
+${stats.pedidosPendientes > 0 && renderTemplate`<span class="ml-auto bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full font-medium">${stats.pedidosPendientes}</span>`} </a> <a href="/gestion/usuarios?estado=suspended" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy"> <span class="material-icons text-base text-orange-500">person_add</span>
+Solicitudes de registro
+${stats.usuariosPendientes > 0 && renderTemplate`<span class="ml-auto bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full font-medium">${stats.usuariosPendientes}</span>`} </a> <a href="/gestion/productos/nuevo" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy"> <span class="material-icons text-base text-green-600">add_circle</span>
+Añadir producto
+</a> <a href="/gestion/productos?importar=1" data-astro-reload class="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-light transition-colors text-sm text-navy"> <span class="material-icons text-base text-action">upload_file</span>
+Importar Excel
+</a> </div> </div> <div class="bg-bg-accent border border-action/20 rounded-xl p-5"> <h3 class="text-sm font-semibold text-action mb-2">Directus CMS</h3> <p class="text-xs text-text-muted mb-3">Acceso avanzado a la base de datos y configuración</p> <a href="https://tienda.alcora.es/admin" target="_blank" rel="noopener" class="text-xs text-action hover:underline flex items-center gap-1"> <span class="material-icons text-sm">open_in_new</span>
+Abrir Directus
+</a> </div> </div> </div> </div> ` })}`;
+}, "C:/Users/Piensaenweb/Documents/Claude/alcora/web26/frontend/src/pages/gestion/index.astro", void 0);
+
+const $$file = "C:/Users/Piensaenweb/Documents/Claude/alcora/web26/frontend/src/pages/gestion/index.astro";
+const $$url = "/gestion";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$Index,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };

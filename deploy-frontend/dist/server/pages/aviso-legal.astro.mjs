@@ -1,0 +1,42 @@
+/* empty css                                       */
+import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_VyRwZjg8.mjs';
+import 'piccolore';
+import { $ as $$BaseLayout } from '../chunks/BaseLayout_BgOPDYG0.mjs';
+export { renderers } from '../renderers.mjs';
+
+const $$AvisoLegal = createComponent(($$result, $$props, $$slots) => {
+  return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, { "title": "Aviso Legal - Tienda Alcora" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12"> <h1 class="text-3xl font-bold text-navy mb-8">Aviso Legal</h1> <div class="prose prose-sm max-w-none text-navy space-y-6"> <section> <h2 class="text-xl font-semibold text-navy">1. Datos identificativos</h2> <ul class="text-text-muted list-none space-y-1"> <li><strong>Denominación social:</strong> Alcora Salud Ambiental S.L.</li> <li><strong>Domicilio social:</strong> Pol. Malpica, C/ F Oeste Nave 98, 50016 Zaragoza</li> <li><strong>Email:</strong> <a href="mailto:central@alcora.es" class="text-action">central@alcora.es</a></li> <li><strong>Teléfono:</strong> 976 29 10 19</li> <li><strong>Actividad:</strong> Distribución de productos de salud ambiental, limpieza profesional y control de plagas</li> </ul> </section> <section> <h2 class="text-xl font-semibold text-navy">2. Objeto</h2> <p class="text-text-muted">
+A través de este sitio web, Alcora Salud Ambiental S.L. facilita a sus clientes
+          profesionales del sector el acceso a su catálogo de productos y la realización de pedidos.
+          El acceso a precios y la compra requieren registro previo y aprobación por parte del
+          equipo de Alcora.
+</p> </section> <section> <h2 class="text-xl font-semibold text-navy">3. Condiciones de uso</h2> <p class="text-text-muted">
+El uso de este sitio web implica la aceptación de las presentes condiciones. Alcora
+          se reserva el derecho a modificar los precios, condiciones de venta y disponibilidad
+          de productos sin previo aviso. Los precios mostrados no incluyen IVA salvo indicación
+          expresa.
+</p> </section> <section> <h2 class="text-xl font-semibold text-navy">4. Propiedad intelectual</h2> <p class="text-text-muted">
+Todos los contenidos del sitio web (textos, imágenes, logotipos, fichas técnicas)
+          son propiedad de Alcora Salud Ambiental S.L. o de sus proveedores, y están protegidos
+          por la legislación vigente en materia de propiedad intelectual e industrial.
+</p> </section> <section> <h2 class="text-xl font-semibold text-navy">5. Condiciones de envío</h2> <ul class="text-text-muted list-disc pl-5 space-y-1"> <li>Gastos de envío: 15,00 EUR (IVA no incluido)</li> <li>Envío gratuito para pedidos superiores a 500,00 EUR</li> <li>Entregas en península ibérica</li> <li>Plazo de entrega estimado: 2-5 días laborables</li> </ul> </section> <section> <h2 class="text-xl font-semibold text-navy">6. Formas de pago</h2> <ul class="text-text-muted list-disc pl-5 space-y-1"> <li>Transferencia bancaria</li> </ul> </section> <section> <h2 class="text-xl font-semibold text-navy">7. Legislación aplicable</h2> <p class="text-text-muted">
+Las presentes condiciones se rigen por la legislación española. Para cualquier
+          controversia, las partes se someten a los Juzgados y Tribunales de Zaragoza.
+</p> </section> <p class="text-xs text-text-muted pt-4 border-t border-border">
+Última actualización: febrero 2026
+</p> </div> </div> ` })}`;
+}, "C:/Users/Piensaenweb/Documents/Claude/alcora/web26/frontend/src/pages/aviso-legal.astro", void 0);
+
+const $$file = "C:/Users/Piensaenweb/Documents/Claude/alcora/web26/frontend/src/pages/aviso-legal.astro";
+const $$url = "/aviso-legal";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$AvisoLegal,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };
