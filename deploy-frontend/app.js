@@ -12,8 +12,8 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// PM2 doesn't auto-load .env files. Load .env first (same dir as app.js)
-// so process.env.* is available before Astro SSR starts.
+// Load .env file - OVERRIDES any existing env vars (including Plesk defaults)
+// because Plesk may inject stale/test values. .env is our source of truth.
 try {
   const envFile = resolve(__dirname, ".env");
   const content = readFileSync(envFile, "utf-8");
@@ -24,11 +24,11 @@ try {
     if (eqIndex === -1) continue;
     const key = trimmed.slice(0, eqIndex).trim();
     const value = trimmed.slice(eqIndex + 1).trim();
-    if (key && !(key in process.env)) {
+    if (key && value) {
       process.env[key] = value;
     }
   }
-  console.log("[app.js] Loaded .env");
+  console.log("[app.js] Loaded .env (overrides Plesk env)");
 } catch (err) {
   console.log("[app.js] No .env found, using existing env vars");
 }
