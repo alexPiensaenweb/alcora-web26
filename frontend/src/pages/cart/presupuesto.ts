@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { sendMail, buildPresupuestoHtml, COMPANY_EMAILS } from "../../lib/email";
+import { sendMail, buildPresupuestoHtml, getCompanyEmail } from "../../lib/email";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -56,20 +56,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     const subject = `Solicitud de presupuesto - ${userCompany || userName}`;
+    const companyEmail = await getCompanyEmail();
 
     // Send to company
     await sendMail({
-      to: COMPANY_EMAILS,
+      to: companyEmail,
       subject,
       html,
+      replyTo: userEmail,
     });
 
-    // Send copy to client
+    // Send copy to client (Reply-To: company email)
     try {
       await sendMail({
         to: userEmail,
         subject: `Su solicitud de presupuesto - Alcora Salud Ambiental`,
         html,
+        replyTo: companyEmail,
       });
     } catch (emailErr) {
       // Don't fail the whole request if client copy fails

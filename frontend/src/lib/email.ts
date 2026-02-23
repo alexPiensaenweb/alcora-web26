@@ -2,13 +2,19 @@
  * Email utility - uses Resend API
  * Set RESEND_API_KEY in .env
  * Set EMAIL_FROM in .env (default: Alcora <noreply@tienda.alcora.es>)
+ *
+ * Resend free plan: 100 emails/day, 3,000/month
+ * Company contact email is read from Directus (empresa collection)
  */
 import { Resend } from "resend";
+import { getEmpresa } from "./directus";
 
 const RESEND_API_KEY =
   process.env.RESEND_API_KEY || import.meta.env.RESEND_API_KEY || "";
 const EMAIL_FROM =
   process.env.EMAIL_FROM || import.meta.env.EMAIL_FROM || "Alcora Salud Ambiental <noreply@tienda.alcora.es>";
+
+const FALLBACK_COMPANY_EMAIL = "central@alcora.es";
 
 let resendClient: Resend | null = null;
 
@@ -22,16 +28,37 @@ function getResend(): Resend {
   return resendClient;
 }
 
+/** Get company contact email from Directus empresa collection */
+let _cachedCompanyEmail: string | null = null;
+let _cacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+export async function getCompanyEmail(): Promise<string> {
+  const now = Date.now();
+  if (_cachedCompanyEmail && now - _cacheTime < CACHE_TTL) {
+    return _cachedCompanyEmail;
+  }
+  try {
+    const empresa = await getEmpresa();
+    _cachedCompanyEmail = empresa?.email || FALLBACK_COMPANY_EMAIL;
+    _cacheTime = now;
+    return _cachedCompanyEmail;
+  } catch {
+    return _cachedCompanyEmail || FALLBACK_COMPANY_EMAIL;
+  }
+}
+
 interface SendMailOptions {
   to: string | string[];
   subject: string;
   html: string;
+  replyTo?: string;
 }
 
 /**
  * Send an email through Resend.
  */
-export async function sendMail({ to, subject, html }: SendMailOptions): Promise<void> {
+export async function sendMail({ to, subject, html, replyTo }: SendMailOptions): Promise<void> {
   const recipients = Array.isArray(to) ? to : [to];
 
   console.log(`sendMail: Sending to ${recipients.join(", ")} via Resend`);
@@ -43,6 +70,7 @@ export async function sendMail({ to, subject, html }: SendMailOptions): Promise<
       to: recipients,
       subject,
       html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
     });
 
     if (error) {
@@ -61,9 +89,6 @@ export async function sendMail({ to, subject, html }: SendMailOptions): Promise<
     );
   }
 }
-
-/** Centralized company notification emails */
-export const COMPANY_EMAILS = ["alex@piensaenweb.com"];
 
 function escapeHtml(str: string): string {
   return str

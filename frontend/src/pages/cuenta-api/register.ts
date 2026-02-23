@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { directusAdmin } from "../../lib/directus";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { verifyTurnstile } from "../../lib/turnstile";
-import { sendMail, buildRegistroHtml, COMPANY_EMAILS } from "../../lib/email";
+import { sendMail, buildRegistroHtml, getCompanyEmail } from "../../lib/email";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -191,10 +191,12 @@ export const POST: APIRoute = async ({ request }) => {
         codigoPostal: cleanCodigoPostal,
       });
 
+      const companyEmail = await getCompanyEmail();
       await sendMail({
-        to: COMPANY_EMAILS,
+        to: companyEmail,
         subject: `Nueva solicitud de registro - ${cleanRazonSocial || cleanFirstName + " " + cleanLastName}`,
         html: registroHtml,
+        replyTo: email.trim().toLowerCase(),
       });
     } catch (emailErr) {
       console.error("Error sending registration notification:", emailErr);

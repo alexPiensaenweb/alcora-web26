@@ -3,7 +3,7 @@ import { directusAuth, directusAdmin, getTarifasForGrupo } from "../../lib/direc
 import { resolveDiscount, calculatePrice } from "../../lib/pricing";
 import { calculateShipping } from "../../lib/shipping";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
-import { sendMail, buildPedidoHtml, COMPANY_EMAILS } from "../../lib/email";
+import { sendMail, buildPedidoHtml, getCompanyEmail } from "../../lib/email";
 import type { CartItem } from "../../lib/types";
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -182,6 +182,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const userEmail = user.email;
     const userPhone = user.telefono || "";
     const userCompany = user.razon_social || "";
+    const companyEmail = await getCompanyEmail();
 
     const emailHtml = buildPedidoHtml({
       pedidoId,
@@ -207,20 +208,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Send to company (don't fail the order if email fails)
     try {
       await sendMail({
-        to: COMPANY_EMAILS,
+        to: companyEmail,
         subject: `Nuevo pedido #${pedidoId} - ${userCompany || userName}`,
         html: emailHtml,
+        replyTo: userEmail,
       });
     } catch (emailErr) {
       console.error("Error sending order notification to company:", emailErr);
     }
 
-    // Send confirmation copy to client
+    // Send confirmation copy to client (Reply-To: company email)
     try {
       await sendMail({
         to: userEmail,
         subject: `Su pedido #${pedidoId} - Alcora Salud Ambiental`,
         html: emailHtml,
+        replyTo: companyEmail,
       });
     } catch (emailErr) {
       console.error("Error sending order confirmation to client:", emailErr);
