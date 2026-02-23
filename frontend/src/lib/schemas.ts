@@ -4,6 +4,10 @@
 
 import { z } from "zod";
 
+/** Helper: treat empty strings as undefined (for optional fields with regex) */
+const emptyToUndefined = (val: unknown) =>
+  typeof val === "string" && val.trim() === "" ? undefined : val;
+
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(1, "Contraseña requerida"),
@@ -22,19 +26,25 @@ export const registerSchema = z.object({
   last_name: z.string().min(1, "Apellidos requeridos").max(100),
   tipo_usuario: z.enum(["particular", "empresa"]).default("empresa"),
   // B2B fields (optional here, validated conditionally in endpoint)
-  razon_social: z.string().max(200).optional(),
-  cif_nif: z
-    .string()
-    .regex(/^[A-Za-z]\d{7,8}[A-Za-z0-9]?$|^\d{8}[A-Za-z]$/, "CIF/NIF inválido")
-    .optional(),
-  telefono: z.string().max(20).optional(),
-  cargo: z.string().max(100).optional(),
-  tipo_negocio: z.string().max(100).optional(),
-  numero_roesb: z.string().max(50).optional(),
-  direccion_facturacion: z.string().max(500).optional(),
-  ciudad: z.string().max(100).optional(),
-  provincia: z.string().max(100).optional(),
-  codigo_postal: z.string().regex(/^\d{5}$/, "Código postal inválido").optional(),
+  // preprocess empty strings → undefined so optional regex fields pass for Particulares
+  razon_social: z.preprocess(emptyToUndefined, z.string().max(200).optional()),
+  cif_nif: z.preprocess(
+    emptyToUndefined,
+    z.string()
+      .regex(/^[A-Za-z]\d{7,8}[A-Za-z0-9]?$|^\d{8}[A-Za-z]$/, "CIF/NIF inválido")
+      .optional(),
+  ),
+  telefono: z.preprocess(emptyToUndefined, z.string().max(20).optional()),
+  cargo: z.preprocess(emptyToUndefined, z.string().max(100).optional()),
+  tipo_negocio: z.preprocess(emptyToUndefined, z.string().max(100).optional()),
+  numero_roesb: z.preprocess(emptyToUndefined, z.string().max(50).optional()),
+  direccion_facturacion: z.preprocess(emptyToUndefined, z.string().max(500).optional()),
+  ciudad: z.preprocess(emptyToUndefined, z.string().max(100).optional()),
+  provincia: z.preprocess(emptyToUndefined, z.string().max(100).optional()),
+  codigo_postal: z.preprocess(
+    emptyToUndefined,
+    z.string().regex(/^\d{5}$/, "Código postal inválido").optional(),
+  ),
   acepta_proteccion_datos: z.literal(true, {
     errorMap: () => ({ message: "Debe aceptar la política de protección de datos" }),
   }),
