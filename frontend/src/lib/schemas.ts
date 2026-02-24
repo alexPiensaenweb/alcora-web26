@@ -119,6 +119,49 @@ export const pedidoNotasSchema = z.object({
   notas: z.string().max(2000).optional(),
 });
 
+export const pedidoGuestSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        productoId: z.string(),
+        cantidad: z.number().int().min(1).max(10000),
+      })
+    )
+    .min(1, "Carrito vacío")
+    .max(100, "Máximo 100 productos"),
+  guest_email: z.string().email("Email inválido"),
+  guest_nombre: z.string().min(1, "Nombre requerido").max(200),
+  guest_telefono: z
+    .preprocess(
+      (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
+      z.string().max(20).optional()
+    ),
+  guest_direccion: z.string().min(1, "Dirección requerida").max(500),
+  notas_cliente: z.string().max(1000).optional(),
+  metodo_pago: z.enum(["tarjeta", "bizum"]),
+  turnstileToken: z.string().min(1, "Token de seguridad requerido"),
+});
+
+export const articuloSchema = z.object({
+  id: z.number(),
+  status: z.enum(["published", "draft", "archived"]),
+  slug: z.string(),
+  titulo: z.string(),
+  extracto: z.string().nullable().optional(),
+  contenido: z.string().nullable().optional(),
+  imagen_principal: z.string().nullable().optional(),
+  categoria_blog: z
+    .enum(["guia", "consejo", "producto", "noticia"])
+    .nullable()
+    .optional(),
+  fecha_publicacion: z.string().nullable().optional(),
+  meta_description: z.string().nullable().optional(),
+  seo_title: z.string().nullable().optional(),
+  date_created: z.string(),
+  date_updated: z.string().nullable().optional(),
+  productos_relacionados: z.array(z.any()).nullable().optional(),
+});
+
 /**
  * Validates and parses input against a schema
  * Returns null if valid, error message if invalid
