@@ -7,6 +7,7 @@
 
 import { atom } from "nanostores";
 import type { DirectusUser } from "../lib/types";
+import { clearCart } from "./cart";
 
 export const $isLoggedIn = atom<boolean>(false);
 export const $currentUser = atom<DirectusUser | null>(null);
@@ -31,7 +32,7 @@ export async function logout(): Promise<void> {
   }
   // Clear cart on logout - prices are user-specific, must not persist
   try {
-    localStorage.removeItem("alcora-cart");
+    clearCart();
   } catch {}
   clearUser();
   window.location.href = "/login";

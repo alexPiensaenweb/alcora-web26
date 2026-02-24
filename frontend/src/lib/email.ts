@@ -62,37 +62,63 @@ interface SendMailOptions {
 }
 
 /**
- * Send an email through Resend.
+ * Internal helper: send a single email via Resend API.
+ * Throws on any error (caller handles retry logic).
+ */
+async function _sendViaResend(
+  recipients: string[],
+  subject: string,
+  html: string,
+  replyTo?: string
+): Promise<void> {
+  const resend = getResend();
+  const { error } = await resend.emails.send({
+    from: EMAIL_FROM,
+    to: recipients,
+    subject,
+    html,
+    ...(replyTo ? { reply_to: replyTo } : {}),
+  });
+
+  if (error) {
+    throw new Error(`Resend API error: ${error.message}`);
+  }
+}
+
+/**
+ * Send an email through Resend with structured logging and 1-retry.
+ *
+ * - Logs structured JSON on every attempt (recipients, subject, error).
+ * - On first failure, waits 30s and retries once.
+ * - On final failure, logs and returns silently (never throws).
  */
 export async function sendMail({ to, subject, html, replyTo }: SendMailOptions): Promise<void> {
   const recipients = Array.isArray(to) ? to : [to];
+  const logContext = { recipients: recipients.join(", "), subject };
 
-  console.log(`sendMail: Sending to ${recipients.join(", ")} via Resend`);
+  console.log("[email] Sending:", JSON.stringify(logContext));
 
+  // Attempt 1
   try {
-    const resend = getResend();
-    const { error } = await resend.emails.send({
-      from: EMAIL_FROM,
-      to: recipients,
-      subject,
-      html,
-      ...(replyTo ? { reply_to: replyTo } : {}),
-    });
-
-    if (error) {
-      console.error("sendMail: Resend error:", error);
-      throw new Error(`Error enviando email: ${error.message}`);
-    }
-
-    console.log("sendMail: Email sent successfully via Resend");
+    await _sendViaResend(recipients, subject, html, replyTo);
+    console.log("[email] Sent OK:", JSON.stringify(logContext));
+    return;
   } catch (err) {
-    if (err instanceof Error && err.message.startsWith("Error enviando")) {
-      throw err;
-    }
-    console.error("sendMail: Error:", err);
-    throw new Error(
-      `Cannot send email: ${err instanceof Error ? err.message : "unknown"}`
-    );
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[email] FAILED (attempt 1):", JSON.stringify({ ...logContext, error: errMsg }));
+  }
+
+  // Wait 30 seconds before retry
+  await new Promise((resolve) => setTimeout(resolve, 30_000));
+
+  // Attempt 2 (final)
+  try {
+    await _sendViaResend(recipients, subject, html, replyTo);
+    console.log("[email] Sent OK (retry):", JSON.stringify(logContext));
+  } catch (err) {
+    const retryMsg = err instanceof Error ? err.message : String(err);
+    console.error("[email] FAILED (attempt 2, final):", JSON.stringify({ ...logContext, error: retryMsg }));
+    // Do NOT throw — email failures must not break order submission or payment flows
   }
 }
 
