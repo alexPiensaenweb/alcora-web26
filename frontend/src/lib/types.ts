@@ -50,6 +50,8 @@ export interface Producto {
   marca: string | null;
   marca_id: number | Marca | null;
   solo_profesional: boolean;
+  segmento_venta: 'b2b' | 'b2c' | 'ambos';
+  tipo_iva: 21 | 10 | 4;
 }
 
 export interface Marca {
@@ -83,7 +85,7 @@ export interface Pedido {
   id: number;
   tipo: TipoPedido;
   estado: EstadoPedido;
-  user_created: string | DirectusUser;
+  user_created: string | DirectusUser | null;
   date_created: string;
   notas_cliente: string | null;
   notas_admin: string | null;
@@ -94,6 +96,11 @@ export interface Pedido {
   referencia_pago: string | null;
   direccion_envio: string | null;
   direccion_facturacion: string | null;
+  tipo_cliente: 'profesional' | 'particular' | 'invitado' | null;
+  guest_email: string | null;
+  guest_nombre: string | null;
+  guest_telefono: string | null;
+  guest_direccion: string | null;
   items: PedidoItem[];
 }
 
@@ -106,6 +113,30 @@ export interface PedidoItem {
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
+}
+
+export interface ArticuloBlog {
+  id: number;
+  status: 'published' | 'draft' | 'archived';
+  slug: string;
+  titulo: string;
+  extracto: string | null;
+  contenido: string | null;
+  imagen_principal: string | null;
+  categoria_blog: 'guia' | 'consejo' | 'producto' | 'noticia' | null;
+  fecha_publicacion: string | null;
+  meta_description: string | null;
+  seo_title: string | null;
+  date_created: string;
+  date_updated: string | null;
+  productos_relacionados: { productos_id: string | Producto }[] | null;
+}
+
+export interface GuestPedidoData {
+  guest_email: string;
+  guest_nombre: string;
+  guest_telefono: string | null;
+  guest_direccion: string;
 }
 
 // ─── Frontend Types ───
