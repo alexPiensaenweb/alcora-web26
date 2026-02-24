@@ -81,11 +81,14 @@ export const GET: APIRoute = async ({ url, locals }) => {
           ? product.categoria?.id
           : product.categoria;
 
-      // Always show price (precio_base). Apply discount if user has tarifas.
-      let price: number = product.precio_base;
-      if (tarifas.length > 0) {
-        const descuento = resolveDiscount(tarifas, product.id, categoriaId || null);
-        price = calculatePrice(product.precio_base, descuento);
+      // Only show price to authenticated users
+      let price: number | null = null;
+      if (user) {
+        price = product.precio_base;
+        if (tarifas.length > 0) {
+          const descuento = resolveDiscount(tarifas, product.id, categoriaId || null);
+          price = calculatePrice(product.precio_base, descuento);
+        }
       }
 
       return {

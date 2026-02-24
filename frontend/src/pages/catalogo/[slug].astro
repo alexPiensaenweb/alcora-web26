@@ -22,13 +22,16 @@ const user = Astro.locals.user;
 const token = Astro.locals.token;
 let descuento = 0;
 
-// Always show price (precio_base). Apply B2B discount if user has tarifas.
-let finalPrice: number = product.precio_base;
-if (user?.grupo_cliente && token) {
-  const tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
-  const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
-  descuento = resolveDiscount(tarifas, product.id, categoriaId);
-  finalPrice = calculatePrice(product.precio_base, descuento);
+// Only show price to authenticated users
+let finalPrice: number | null = null;
+if (user) {
+  finalPrice = product.precio_base;
+  if (user.grupo_cliente && token) {
+    const tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
+    const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
+    descuento = resolveDiscount(tarifas, product.id, categoriaId);
+    finalPrice = calculatePrice(product.precio_base, descuento);
+  }
 }
 
 // Can add to cart only if logged in AND product is not professional-only for particulares
@@ -115,20 +118,34 @@ const productSchema: Record<string, any> = {
   ...(schemaImages.length > 1 ? { image: schemaImages } : {}),
   ...(marcaNombre ? { brand: { "@type": "Brand", name: marcaNombre, ...(marcaObj?.web ? { url: marcaObj.web } : {}) } } : {}),
   ...(categoria ? { category: categoria.nombre } : {}),
-  offers: {
-    "@type": "Offer",
-    priceCurrency: "EUR",
-    price: product.precio_base.toString(),
-    priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-    itemCondition: "https://schema.org/NewCondition",
-    url: `${siteUrl}/catalogo/${product.slug}`,
-    seller: {
-      "@type": "Organization",
-      name: "Alcora Salud Ambiental",
-      url: siteUrl,
+  ...(finalPrice !== null ? {
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "EUR",
+      price: finalPrice.toString(),
+      priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+      url: `${siteUrl}/catalogo/${product.slug}`,
+      seller: {
+        "@type": "Organization",
+        name: "Alcora Salud Ambiental",
+        url: siteUrl,
+      },
     },
-  },
+  } : {
+    offers: {
+      "@type": "Offer",
+      availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+      url: `${siteUrl}/catalogo/${product.slug}`,
+      seller: {
+        "@type": "Organization",
+        name: "Alcora Salud Ambiental",
+        url: siteUrl,
+      },
+    },
+  }),
 };
 
 // Additional properties: formato, unidad_venta, fichas
@@ -189,8 +206,10 @@ const breadcrumbSchema = {
 
 // ─── SEO: Open Graph product meta tags ───
 const ogProductMeta: { property?: string; name?: string; content: string }[] = [
-  { property: "product:price:amount", content: product.precio_base.toString() },
-  { property: "product:price:currency", content: "EUR" },
+  ...(finalPrice !== null ? [
+    { property: "product:price:amount", content: finalPrice.toString() },
+    { property: "product:price:currency", content: "EUR" },
+  ] : []),
   { property: "product:availability", content: product.stock === 0 ? "out of stock" : "in stock" },
   ...(marcaNombre ? [{ property: "product:brand", content: marcaNombre }] : []),
   ...(product.formato ? [{ property: "product:product_link", content: product.formato }] : []),
@@ -244,24 +263,33 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
           </p>
         )}
 
-        {/* Price - always visible */}
+        {/* Price - only visible to authenticated users */}
         <div class="border-t border-b border-border py-4 my-4">
-          <div>
-            {descuento > 0 && (
-              <p class="text-sm text-text-muted line-through">
-                PVP: {formatCurrency(product.precio_base)}
+          {finalPrice !== null ? (
+            <div>
+              {descuento > 0 && (
+                <p class="text-sm text-text-muted line-through">
+                  PVP: {formatCurrency(product.precio_base)}
+                </p>
+              )}
+              <p class="text-3xl font-bold text-action">
+                {formatCurrency(finalPrice)}
               </p>
-            )}
-            <p class="text-3xl font-bold text-action">
-              {formatCurrency(finalPrice)}
-            </p>
-            {descuento > 0 && (
-              <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
-                -{descuento}% dto. {user?.grupo_cliente}
-              </span>
-            )}
-            <p class="text-xs text-text-muted mt-1">Precio sin IVA</p>
-          </div>
+              {descuento > 0 && (
+                <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                  -{descuento}% dto. {user?.grupo_cliente}
+                </span>
+              )}
+              <p class="text-xs text-text-muted mt-1">Precio sin IVA</p>
+            </div>
+          ) : (
+            <div>
+              <p class="text-2xl font-bold text-navy">Consultar precio</p>
+              <p class="text-xs text-text-muted mt-1">
+                <a href="/login" class="text-action hover:underline">Inicie sesión</a> para ver precios
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Solo profesionales badge */}
@@ -281,7 +309,7 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
             data-product-sku={product.sku}
             data-product-slug={product.slug}
             data-product-image={product.imagen_principal || ""}
-            data-product-price={finalPrice}
+            data-product-price={finalPrice!}
             data-product-formato={product.formato || ""}
           >
             <div class="flex items-center gap-3">
