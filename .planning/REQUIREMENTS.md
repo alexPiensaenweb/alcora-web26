@@ -166,19 +166,19 @@
 | NFR-1.2 | Phase 4 | Pending |
 | NFR-1.3 | Phase 3 | Pending |
 | NFR-1.4 | Phase 4 | Pending |
-| NFR-1.5 | Phase 2 | Pending |
+| NFR-1.5 | Phase 2 | Complete |
 | NFR-2.1 | Phase 1 | Complete |
 | NFR-2.2 | Phase 5 | Pending |
 | NFR-2.3 | Phase 3 | Pending |
-| NFR-3.1 | Phase 2 | Pending |
-| NFR-3.2 | Phase 2 | Pending |
+| NFR-3.1 | Phase 2 | Complete |
+| NFR-3.2 | Phase 2 | Complete |
 | NFR-3.3 | Phase 2 | Complete |
 | NFR-4.1 | Phase 3 | Pending |
 | NFR-4.2 | Phase 4 | Pending |
 | NFR-4.3 | Phase 4 | Pending |
 | NFR-4.4 | Phase 1 | Complete |
-| NFR-5.1 | Phase 2 | Pending |
-| NFR-5.2 | Phase 2 | Pending |
+| NFR-5.1 | Phase 2 | Complete |
+| NFR-5.2 | Phase 2 | Complete |
 
 ---
 

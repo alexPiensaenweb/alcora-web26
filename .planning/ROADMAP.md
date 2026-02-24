@@ -11,7 +11,7 @@ The existing B2B-only tienda (live in production) gains a consumer-facing layer 
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Directus Schema and Data Foundation** - Add all new Directus fields and collections required by B2C before any frontend code ships
-- [ ] **Phase 2: Infrastructure and Security Prerequisites** - Harden pre-existing vulnerabilities that become critical once unauthenticated users can initiate payments
+- [x] **Phase 2: Infrastructure and Security Prerequisites** - Harden pre-existing vulnerabilities that become critical once unauthenticated users can initiate payments
 - [ ] **Phase 3: B2C Product Catalog and Pricing** - Make products visible with correct prices to consumers and enforce the B2B/B2C segmentation boundary
 - [ ] **Phase 4: B2C Checkout and Guest Orders** - Deliver the complete end-to-end B2C purchase path with guest checkout, payment restriction, and legal compliance
 - [ ] **Phase 5: SEO Content Infrastructure and Blog** - Build the technical blog and structured data layer that turns content investment into organic consumer acquisition
@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Install ioredis, create Redis singleton client, rewrite rateLimit.ts with Redis INCR+EXPIRE, update all 6 call sites to async, expose Redis port in docker-compose, add REDIS_URL env vars
-- [ ] 02-02-PLAN.md — Fix cart-clear-on-logout with clearCart() from Nano Stores, enhance email.ts with structured logging and 1-retry, create B2B smoke test checklist, verify Resend plan capacity
+- [x] 02-01-PLAN.md — Install ioredis, create Redis singleton client, rewrite rateLimit.ts with Redis INCR+EXPIRE, update all 6 call sites to async, expose Redis port in docker-compose, add REDIS_URL env vars
+- [x] 02-02-PLAN.md — Fix cart-clear-on-logout with clearCart() from Nano Stores, enhance email.ts with structured logging and 1-retry, create B2B smoke test checklist, verify Resend plan capacity
 
 ### Phase 3: B2C Product Catalog and Pricing
 **Goal**: Consumers and guests see correct IVA-inclusive prices on B2C-eligible products and are shown an informative, conversion-friendly screen when they reach a professional-only product.
@@ -112,7 +112,7 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Directus Schema and Data Foundation | 3/3 | Complete | 2026-02-24 |
-| 2. Infrastructure and Security Prerequisites | 0/2 | Not started | - |
+| 2. Infrastructure and Security Prerequisites | 2/2 | Complete | 2026-02-24 |
 | 3. B2C Product Catalog and Pricing | 0/3 | Not started | - |
 | 4. B2C Checkout and Guest Orders | 0/4 | Not started | - |
 | 5. SEO Content Infrastructure and Blog | 0/2 | Not started | - |
@@ -165,20 +165,20 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 | FR-9.3 | Phase 3 | Pending |
 | FR-9.4 | Phase 3 | Pending |
 | FR-9.5 | Phase 3 | Pending |
-| NFR-1.1 | Phase 2 | Pending |
+| NFR-1.1 | Phase 2 | Complete |
 | NFR-1.2 | Phase 4 | Pending |
 | NFR-1.3 | Phase 3 | Pending |
 | NFR-1.4 | Phase 4 | Pending |
-| NFR-1.5 | Phase 2 | Pending |
+| NFR-1.5 | Phase 2 | Complete |
 | NFR-2.1 | Phase 1 | Complete |
 | NFR-2.2 | Phase 5 | Pending |
 | NFR-2.3 | Phase 3 | Pending |
-| NFR-3.1 | Phase 2 | Pending |
-| NFR-3.2 | Phase 2 | Pending |
-| NFR-3.3 | Phase 2 | Pending |
+| NFR-3.1 | Phase 2 | Complete |
+| NFR-3.2 | Phase 2 | Complete |
+| NFR-3.3 | Phase 2 | Complete |
 | NFR-4.1 | Phase 3 | Pending |
 | NFR-4.2 | Phase 4 | Pending |
 | NFR-4.3 | Phase 4 | Pending |
 | NFR-4.4 | Phase 1 | Complete |
-| NFR-5.1 | Phase 2 | Pending |
-| NFR-5.2 | Phase 2 | Pending |
+| NFR-5.1 | Phase 2 | Complete |
+| NFR-5.2 | Phase 2 | Complete |

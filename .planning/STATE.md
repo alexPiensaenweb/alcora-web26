@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Professionals order and quote efficiently; consumers buy B2C-eligible products without friction — one store, professional tone, dual audience.
-**Current focus:** Phase 2 — Infrastructure and Security Prerequisites
+**Current focus:** Phase 3 — B2C Product Catalog and Pricing
 
 ## Current Position
 
-Phase: 2 of 5 (Infrastructure and Security Prerequisites)
-Plan: 2 of 2 in current phase
+Phase: 3 of 5 (B2C Product Catalog and Pricing)
+Plan: 1 of 3 in current phase
 Status: Ready
-Last activity: 2026-02-24 — Completed 02-01 (Redis rate limiting)
+Last activity: 2026-02-24 — Completed 02-02 (Cart/email hardening + B2B smoke test)
 
-Progress: [████░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 2.5min
-- Total execution time: 10min
+- Total plans completed: 5
+- Average duration: 2.6min
+- Total execution time: 13min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-directus-schema-data-foundation | 3 | 7min | 2.3min |
-| 02-infrastructure-security-prerequisites | 1 | 3min | 3min |
+| 02-infrastructure-security-prerequisites | 2 | 6min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3min), 01-02 (2min), 01-03 (2min), 02-01 (3min)
+- Last 5 plans: 01-02 (2min), 01-03 (2min), 02-01 (3min), 02-02 (3min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -57,6 +57,9 @@ Recent decisions affecting current work:
 - Payment endpoint locked at 5 req/15min per user decision (NFR-3.3)
 - Fail-open on Redis errors to avoid blocking legitimate requests during transient outages
 - Production Redis bound to 127.0.0.1 only to prevent internet exposure
+- Free Resend plan (100/day, 3,000/month) sufficient for current B2C volume -- upgrade deferred until traffic warrants it
+- Email retry: 30s delay, 1 retry max, never throws on final failure to protect order/payment flows
+- B2B smoke test is manual checklist only, no automation
 
 ### Pending Todos
 
@@ -72,5 +75,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02-01-PLAN.md (Redis rate limiting)
+Stopped at: Completed 02-02-PLAN.md (Cart/email hardening + B2B smoke test) -- Phase 2 complete
 Resume file: None
