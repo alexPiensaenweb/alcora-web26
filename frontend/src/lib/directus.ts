@@ -160,6 +160,7 @@ export async function getProductos(params?: {
   page?: number;
   limit?: number;
   search?: string;
+  segmento?: 'b2b' | 'b2c' | 'ambos' | 'b2c_ambos';
 }): Promise<{ data: Producto[]; meta: { total_count: number } }> {
   const limit = params?.limit || 12;
   const page = params?.page || 1;
@@ -180,7 +181,17 @@ export async function getProductos(params?: {
     filters.push(`search=${encodeURIComponent(params.search)}`);
   }
 
-  const qs = `${filters.join("&")}&fields=id,sku,nombre,slug,extracto,precio_base,stock,imagen_principal,formato,categoria.id,categoria.nombre,categoria.slug&sort=nombre&limit=${limit}&offset=${offset}&meta=filter_count`;
+  // B2C/B2B visibility filter
+  if (params?.segmento === 'b2c_ambos') {
+    // Guests and particulares: show only b2c and ambos products
+    filters.push('filter[segmento_venta][_in]=b2c,ambos');
+  } else if (params?.segmento) {
+    // Specific segmento value (e.g., 'b2b', 'b2c', 'ambos')
+    filters.push(`filter[segmento_venta][_eq]=${encodeURIComponent(params.segmento)}`);
+  }
+  // If segmento is not provided: no filter (B2B users see all products — existing behavior)
+
+  const qs = `${filters.join("&")}&fields=id,sku,nombre,slug,extracto,precio_base,stock,imagen_principal,formato,categoria.id,categoria.nombre,categoria.slug,segmento_venta,tipo_iva&sort=nombre&limit=${limit}&offset=${offset}&meta=filter_count`;
 
   const res = await directusPublic(`/items/productos?${qs}`);
   return {
