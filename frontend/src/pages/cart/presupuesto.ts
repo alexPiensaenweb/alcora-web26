@@ -9,7 +9,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Rate limit: 3 presupuesto requests per 5 minutes per IP
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const rl = rateLimit(`presupuesto:${clientIp}`, 3, 300_000);
+    const rl = await rateLimit(`presupuesto:${clientIp}`, 3, 300_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     if (!locals.user || !locals.token) {

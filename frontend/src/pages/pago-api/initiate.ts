@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Rate limit: 10 payment initiations per minute per IP
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const rl = rateLimit(`pago-init:${clientIp}`, 10, 60_000);
+    const rl = await rateLimit(`pago-init:${clientIp}`, 5, 900_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     if (!locals.user || !locals.token) {

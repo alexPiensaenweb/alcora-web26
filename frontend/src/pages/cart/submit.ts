@@ -9,7 +9,7 @@ import { validateSchema, pedidoSubmitSchema } from "../../lib/schemas";
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const rl = rateLimit(`submit:${clientIp}`, 10, 60_000);
+    const rl = await rateLimit(`submit:${clientIp}`, 5, 300_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     if (!locals.user || !locals.token) {

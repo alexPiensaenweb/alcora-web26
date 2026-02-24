@@ -8,7 +8,7 @@ import { validateSchema, registerSchema } from "../../lib/schemas";
 export const POST: APIRoute = async ({ request }) => {
   try {
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const rl = rateLimit(`register:${clientIp}`, 3, 300_000);
+    const rl = await rateLimit(`register:${clientIp}`, 3, 900_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     let body: unknown;

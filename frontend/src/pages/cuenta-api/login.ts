@@ -7,7 +7,7 @@ import { validateSchema, loginSchema } from "../../lib/schemas";
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const rl = rateLimit(`login:${clientIp}`, 5, 60_000);
+    const rl = await rateLimit(`login:${clientIp}`, 10, 900_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     let body: unknown;

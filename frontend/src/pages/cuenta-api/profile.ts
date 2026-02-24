@@ -13,7 +13,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     }
 
     const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const rl = rateLimit(`profile:${clientIp}`, 10, 60_000);
+    const rl = await rateLimit(`profile:${clientIp}`, 10, 300_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
     let body: unknown;
