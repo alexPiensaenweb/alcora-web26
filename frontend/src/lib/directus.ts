@@ -135,7 +135,7 @@ export async function purgeDirectusCache(): Promise<void> {
 
 // ─── Collection-specific fetchers ───
 
-import type { Categoria, Producto, Marca, TarifaEspecial, Pedido } from "./types";
+import type { Categoria, Producto, Marca, TarifaEspecial, Pedido, ArticuloBlog } from "./types";
 
 export async function getCategorias(): Promise<Categoria[]> {
   const res = await directusPublic(
@@ -280,4 +280,38 @@ export async function getEmpresa(): Promise<{
   } catch {
     return null;
   }
+}
+
+// ─── Articulos (Blog) ───
+
+export async function getArticulos(params?: {
+  page?: number;
+  limit?: number;
+  categoria?: 'guia' | 'consejo' | 'producto' | 'noticia';
+}): Promise<{ data: ArticuloBlog[]; meta: { total_count: number } }> {
+  const limit = params?.limit || 10;
+  const page = params?.page || 1;
+  const offset = (page - 1) * limit;
+
+  const filters: string[] = ['filter[status][_eq]=published'];
+  if (params?.categoria) {
+    filters.push(`filter[categoria_blog][_eq]=${encodeURIComponent(params.categoria)}`);
+  }
+
+  const qs = `${filters.join('&')}&fields=id,slug,titulo,extracto,imagen_principal,categoria_blog,fecha_publicacion,date_created&sort=-fecha_publicacion,-date_created&limit=${limit}&offset=${offset}&meta=filter_count`;
+
+  const res = await directusPublic(`/items/articulos?${qs}`);
+  return {
+    data: res.data,
+    meta: { total_count: res.meta?.filter_count || 0 },
+  };
+}
+
+export async function getArticuloBySlug(
+  slug: string
+): Promise<ArticuloBlog | null> {
+  const res = await directusPublic(
+    `/items/articulos?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&fields=*,productos_relacionados.productos_id.id,productos_relacionados.productos_id.nombre,productos_relacionados.productos_id.slug,productos_relacionados.productos_id.imagen_principal,productos_relacionados.productos_id.precio_base,productos_relacionados.productos_id.extracto,productos_relacionados.productos_id.segmento_venta,productos_relacionados.productos_id.tipo_iva&limit=1`
+  );
+  return res.data?.[0] || null;
 }
