@@ -1,44 +1,46 @@
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
+import { getRedis } from "./redis";
 
-const store = new Map<string, RateLimitEntry>();
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now > entry.resetAt) store.delete(key);
-  }
-}, 5 * 60 * 1000);
-
-export function rateLimit(
+/**
+ * Redis-backed rate limiter using atomic INCR + EXPIRE.
+ * Counters persist across Node process restarts.
+ * Fails open on Redis errors (allows request, logs error).
+ */
+export async function rateLimit(
   key: string,
   maxRequests: number,
   windowMs: number
-): { allowed: boolean; remaining: number; retryAfterMs: number } {
-  const now = Date.now();
-  const entry = store.get(key);
+): Promise<{ allowed: boolean; remaining: number; retryAfterMs: number }> {
+  const redisKey = `rl:${key}`;
+  const windowSec = Math.ceil(windowMs / 1000);
 
-  if (!entry || now > entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: maxRequests - 1, retryAfterMs: 0 };
-  }
+  try {
+    const redis = getRedis();
+    const count = await redis.incr(redisKey);
 
-  if (entry.count >= maxRequests) {
+    // Set expiry only on the first request in the window
+    if (count === 1) {
+      await redis.expire(redisKey, windowSec);
+    }
+
+    if (count > maxRequests) {
+      const ttl = await redis.ttl(redisKey);
+      return {
+        allowed: false,
+        remaining: 0,
+        retryAfterMs: ttl > 0 ? ttl * 1000 : windowMs,
+      };
+    }
+
     return {
-      allowed: false,
-      remaining: 0,
-      retryAfterMs: entry.resetAt - now,
+      allowed: true,
+      remaining: maxRequests - count,
+      retryAfterMs: 0,
     };
+  } catch (err) {
+    // Fail open: allow the request if Redis is unavailable
+    console.error("[rateLimit] Redis error, failing open:", err);
+    return { allowed: true, remaining: maxRequests, retryAfterMs: 0 };
   }
-
-  entry.count++;
-  return {
-    allowed: true,
-    remaining: maxRequests - entry.count,
-    retryAfterMs: 0,
-  };
 }
 
 export function rateLimitResponse(retryAfterMs: number): Response {

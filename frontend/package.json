@@ -19,6 +19,7 @@
     "astro": "^5.0.0",
     "astro-seo": "^0.8.0",
     "date-fns": "^4.0.0",
+    "ioredis": "^5.9.3",
     "nanostores": "^0.11.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
