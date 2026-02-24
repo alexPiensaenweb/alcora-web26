@@ -10,7 +10,7 @@ The existing B2B-only tienda (live in production) gains a consumer-facing layer 
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Directus Schema and Data Foundation** - Add all new Directus fields and collections required by B2C before any frontend code ships
+- [x] **Phase 1: Directus Schema and Data Foundation** - Add all new Directus fields and collections required by B2C before any frontend code ships
 - [ ] **Phase 2: Infrastructure and Security Prerequisites** - Harden pre-existing vulnerabilities that become critical once unauthenticated users can initiate payments
 - [ ] **Phase 3: B2C Product Catalog and Pricing** - Make products visible with correct prices to consumers and enforce the B2B/B2C segmentation boundary
 - [ ] **Phase 4: B2C Checkout and Guest Orders** - Deliver the complete end-to-end B2C purchase path with guest checkout, payment restriction, and legal compliance
@@ -31,9 +31,9 @@ The existing B2B-only tienda (live in production) gains a consumer-facing layer 
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Add B2C type definitions to types.ts (segmento_venta, tipo_iva on Producto; guest fields on Pedido; ArticuloBlog, GuestPedidoData) and Zod schemas to schemas.ts (pedidoGuestSchema, articuloSchema)
-- [ ] 01-02-PLAN.md — Add segmento filter param to getProductos(); add getArticulos() and getArticuloBySlug() to directus.ts
-- [ ] 01-03-PLAN.md — Verify Directus schema via API and human checkpoint: confirm all fields exist with correct names, types, and defaults; confirm articulos collection permissions
+- [x] 01-01-PLAN.md — Add B2C type definitions to types.ts (segmento_venta, tipo_iva on Producto; guest fields on Pedido; ArticuloBlog, GuestPedidoData) and Zod schemas to schemas.ts (pedidoGuestSchema, articuloSchema)
+- [x] 01-02-PLAN.md — Add segmento filter param to getProductos(); add getArticulos() and getArticuloBySlug() to directus.ts
+- [x] 01-03-PLAN.md — Verify Directus schema via API and human checkpoint: confirm all fields exist with correct names, types, and defaults; confirm articulos collection permissions
 
 ### Phase 2: Infrastructure and Security Prerequisites
 **Goal**: Pre-existing vulnerabilities that are low-severity for authenticated B2B traffic become critical when unauthenticated users can initiate Redsys payments — fix them all before any guest-facing feature ships.
@@ -45,11 +45,11 @@ Plans:
   3. Email send failures are logged with enough context (recipient, template, error) that a failed transactional email is detectable within 24 hours
   4. All existing B2B flows pass smoke test checklist: login → browse catalog → add to cart → checkout → confirm "Confirmar pedido sin pago" option is present
   5. Resend account is on Starter plan ($20/month) with daily limit sufficient for B2C order volume
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Replace in-memory rate limiting with Redis-backed implementation across all sensitive endpoints
-- [ ] 02-02: Fix cart-clear-on-logout bug; add email failure logging/alerting; document B2B smoke test checklist; confirm Resend plan upgrade
+- [ ] 02-01-PLAN.md — Install ioredis, create Redis singleton client, rewrite rateLimit.ts with Redis INCR+EXPIRE, update all 6 call sites to async, expose Redis port in docker-compose, add REDIS_URL env vars
+- [ ] 02-02-PLAN.md — Fix cart-clear-on-logout with clearCart() from Nano Stores, enhance email.ts with structured logging and 1-retry, create B2B smoke test checklist, verify Resend plan capacity
 
 ### Phase 3: B2C Product Catalog and Pricing
 **Goal**: Consumers and guests see correct IVA-inclusive prices on B2C-eligible products and are shown an informative, conversion-friendly screen when they reach a professional-only product.
@@ -77,7 +77,7 @@ Plans:
   2. A `particular` logged-in user reaches checkout and sees only tarjeta and Bizum as payment options — transferencia and "sin pago" are absent from the UI and blocked server-side
   3. A `profesional` logged-in user reaches checkout and sees "Confirmar pedido" (sin pago) and "Solicitar presupuesto" options alongside all existing payment methods
   4. The checkout order summary displays IVA breakdown (base imponible + IVA + shipping = total) and shipping cost before the payment step
-  5. The checkout form includes and requires acceptance of: condiciones de venta, política de devoluciones (14 days), and RGPD — links to each policy page are present and reachable
+  5. The checkout form includes and requires acceptance of: condiciones de venta, politica de devoluciones (14 days), and RGPD — links to each policy page are present and reachable
   6. The guest checkout form is protected by Cloudflare Turnstile; guest order confirmation URLs include a non-guessable token
 **Plans**: TBD
 
@@ -111,7 +111,7 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Directus Schema and Data Foundation | 0/3 | Planned | - |
+| 1. Directus Schema and Data Foundation | 3/3 | Complete | 2026-02-24 |
 | 2. Infrastructure and Security Prerequisites | 0/2 | Not started | - |
 | 3. B2C Product Catalog and Pricing | 0/3 | Not started | - |
 | 4. B2C Checkout and Guest Orders | 0/4 | Not started | - |
@@ -121,11 +121,11 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FR-1.1 | Phase 1 | Pending |
-| FR-1.2 | Phase 1 | Pending |
+| FR-1.1 | Phase 1 | Complete |
+| FR-1.2 | Phase 1 | Complete |
 | FR-1.3 | Phase 3 | Pending |
 | FR-1.4 | Phase 3 | Pending |
-| FR-1.5 | Phase 1 | Pending |
+| FR-1.5 | Phase 1 | Complete |
 | FR-2.1 | Phase 3 | Pending |
 | FR-2.2 | Phase 3 | Pending |
 | FR-2.3 | Phase 3 | Pending |
@@ -137,8 +137,8 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 | FR-3.4 | Phase 3 | Pending |
 | FR-4.1 | Phase 4 | Pending |
 | FR-4.2 | Phase 4 | Pending |
-| FR-4.3 | Phase 1 | Pending |
-| FR-4.4 | Phase 1 | Pending |
+| FR-4.3 | Phase 1 | Complete |
+| FR-4.4 | Phase 1 | Complete |
 | FR-4.5 | Phase 4 | Pending |
 | FR-4.6 | Phase 4 | Pending |
 | FR-4.7 | Phase 4 | Pending |
@@ -151,7 +151,7 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 | FR-6.2 | Phase 4 | Pending |
 | FR-6.3 | Phase 4 | Pending |
 | FR-6.4 | Phase 4 | Pending |
-| FR-7.1 | Phase 1 | Pending |
+| FR-7.1 | Phase 1 | Complete |
 | FR-7.2 | Phase 5 | Pending |
 | FR-7.3 | Phase 5 | Pending |
 | FR-7.4 | Phase 5 | Pending |
@@ -170,7 +170,7 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 | NFR-1.3 | Phase 3 | Pending |
 | NFR-1.4 | Phase 4 | Pending |
 | NFR-1.5 | Phase 2 | Pending |
-| NFR-2.1 | Phase 1 | Pending |
+| NFR-2.1 | Phase 1 | Complete |
 | NFR-2.2 | Phase 5 | Pending |
 | NFR-2.3 | Phase 3 | Pending |
 | NFR-3.1 | Phase 2 | Pending |
@@ -179,6 +179,6 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 | NFR-4.1 | Phase 3 | Pending |
 | NFR-4.2 | Phase 4 | Pending |
 | NFR-4.3 | Phase 4 | Pending |
-| NFR-4.4 | Phase 1 | Pending |
+| NFR-4.4 | Phase 1 | Complete |
 | NFR-5.1 | Phase 2 | Pending |
 | NFR-5.2 | Phase 2 | Pending |
