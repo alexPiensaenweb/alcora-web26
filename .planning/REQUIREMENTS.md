@@ -136,7 +136,7 @@
 | FR-4.2 | Phase 4 | Complete |
 | FR-4.3 | Phase 1 | Complete |
 | FR-4.4 | Phase 1 | Complete |
-| FR-4.5 | Phase 4 | Pending |
+| FR-4.5 | Phase 4 | Complete |
 | FR-4.6 | Phase 4 | Complete |
 | FR-4.7 | Phase 4 | Complete |
 | FR-5.1 | Phase 4 | Complete |
@@ -174,8 +174,8 @@
 | NFR-3.2 | Phase 2 | Complete |
 | NFR-3.3 | Phase 2 | Complete |
 | NFR-4.1 | Phase 3 | Complete |
-| NFR-4.2 | Phase 4 | Pending |
-| NFR-4.3 | Phase 4 | Pending |
+| NFR-4.2 | Phase 4 | Complete |
+| NFR-4.3 | Phase 4 | Complete |
 | NFR-4.4 | Phase 1 | Complete |
 | NFR-5.1 | Phase 2 | Complete |
 | NFR-5.2 | Phase 2 | Complete |

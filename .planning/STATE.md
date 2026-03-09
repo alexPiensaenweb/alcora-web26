@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-09T15:25:00.000Z"
+last_updated: "2026-03-09T15:31:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 12
 ---
 
 # Project State
@@ -22,19 +22,19 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 4 of 5 (B2C Checkout and Guest Orders)
-Plan: 2 of 4 in current phase
-Status: In Progress
-Last activity: 2026-03-09 — Completed 04-02 (Unified checkout page, guest submit endpoint, payment validation)
+Phase: 4 of 5 (B2C Checkout and Guest Orders) -- COMPLETE
+Plan: 4 of 4 in current phase
+Status: Phase 04 Complete
+Last activity: 2026-03-09 — Completed 04-04 (Guest order confirmation page and legal pages)
 
-Progress: [████████░░] 83%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 3.9min
-- Total execution time: 39min
+- Total plans completed: 12
+- Average duration: 3.8min
+- Total execution time: 46min
 
 **By Phase:**
 
@@ -46,13 +46,15 @@ Progress: [████████░░] 83%
 | 03-b2c-product-catalog-and-pricing | 3 | 15min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (5min), 03-03 (3min), 03-02 (7min), 04-01 (6min), 04-02 (5min)
+- Last 5 plans: 03-02 (7min), 04-01 (6min), 04-02 (5min), 04-03 (4min), 04-04 (3min)
 - Trend: Stable
 
 *Updated after each plan completion*
 | Phase 03 P02 | 7min | 3 tasks | 8 files |
 | Phase 04 P01 | 6min | 3 tasks | 7 files |
 | Phase 04 P02 | 5min | 2 tasks | 4 files |
+| Phase 04 P03 | 4min | 2 tasks | 5 files |
+| Phase 04 P04 | 3min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -97,6 +99,13 @@ Recent decisions affecting current work:
 - [Phase 04]: Guest orders use dedicated /cart/guest-submit endpoint (separate from auth submit)
 - [Phase 04]: Payment initiate for guests passes guest_token for Redsys return URL reconciliation
 - [Phase 04]: B2C shipping includes 21% IVA in cart/submit.ts (matching guest-submit behavior)
+- [Phase 04]: Guest payment initiation uses guest_token body param for ownership verification (not auth session)
+- [Phase 04]: Guest Redsys return URLs use /pedido/[token]?status=ok|ko (non-guessable, NFR-1.4)
+- [Phase 04]: Webhook branches on tipo_cliente=invitado for email routing: guests use pedido guest_* fields, auth fetches /users/{id}
+- [Phase 04]: Admin email always uses buildPedidoHtml; guest client email uses buildGuestPedidoHtml with IVA-inclusive pricing
+- [Phase 04]: pago/ok and pago/ko no longer redirect unauthenticated users to login
+- [Phase 04]: Guest order page fetches by guest_token filter (not numeric ID) for security -- prevents enumeration attacks
+- [Phase 04]: Legal pages contain substantive Spanish law references (LGDCU RDL 1/2007, RGPD) with advisory disclaimer
 
 ### Pending Todos
 
@@ -106,11 +115,11 @@ None yet.
 
 - **OD-1**: B2C shipping rates unconfirmed by client — proposal is 6.99 flat, free >= 100. Must resolve before Phase 4 implementation.
 - **OD-2**: IVA rates per product category — default 21% is safe but may overcharge on some hygiene products. Confirm with Alcora's asesor fiscal.
-- **OD-4**: Legal pages (condiciones de venta, devoluciones) — may need to be drafted. Blocks Phase 4 legal checkboxes.
+- **OD-4**: ~~Legal pages (condiciones de venta, devoluciones) — may need to be drafted. Blocks Phase 4 legal checkboxes.~~ RESOLVED in 04-04.
 - **Phase 4 research flag**: Redsys guest order reconciliation behavior (stateless pedidoId-in-return-URL) has not been verified empirically in this environment. Plan 04-01 is a verification step before implementation.
 
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Completed 04-02-PLAN.md (Unified checkout, guest submit, payment validation)
+Stopped at: Completed 04-03-PLAN.md (Guest payment flow - initiation, webhook, email, result pages)
 Resume file: None
