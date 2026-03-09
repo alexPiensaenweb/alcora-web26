@@ -118,8 +118,8 @@ export const POST: APIRoute = async ({ request }) => {
     const cleanProvincia = stripHtml(provincia);
     const cleanCodigoPostal = stripHtml(codigo_postal);
 
-    // Build full address string from components
-    const fullAddress = [
+    // Build full address string from components (B2B only — B2C collects address at checkout)
+    const fullAddress = isB2C ? null : [
       cleanDireccion,
       [cleanCodigoPostal, cleanCiudad].filter(Boolean).join(" "),
       cleanProvincia,
@@ -141,15 +141,19 @@ export const POST: APIRoute = async ({ request }) => {
       last_name: cleanLastName,
       status: userStatus,
       role: clienteRoleId,
-      telefono: cleanTelefono,
-      direccion_facturacion: fullAddress,
-      direccion_envio: fullAddress,
-      ciudad: cleanCiudad,
-      provincia: cleanProvincia,
-      codigo_postal: cleanCodigoPostal,
       acepta_proteccion_datos: !!acepta_proteccion_datos,
       acepta_comunicaciones: !!acepta_comunicaciones,
     };
+
+    // Only set address and phone fields if provided (B2B always provides them, B2C may not)
+    if (cleanTelefono) userData.telefono = cleanTelefono;
+    if (fullAddress) {
+      userData.direccion_facturacion = fullAddress;
+      userData.direccion_envio = fullAddress;
+    }
+    if (cleanCiudad) userData.ciudad = cleanCiudad;
+    if (cleanProvincia) userData.provincia = cleanProvincia;
+    if (cleanCodigoPostal) userData.codigo_postal = cleanCodigoPostal;
 
     // B2B-specific fields
     if (!isB2C) {
