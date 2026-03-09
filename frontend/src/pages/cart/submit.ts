@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { directusAuth, directusAdmin, getTarifasForGrupo } from "../../lib/directus";
-import { resolveDiscount, calculatePrice } from "../../lib/pricing";
+import { resolveDiscount, calculatePrice, isProfessionalUser } from "../../lib/pricing";
 import { calculateShipping } from "../../lib/shipping";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { sendMail, buildPedidoHtml, getCompanyEmail } from "../../lib/email";
@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       let product: any;
       try {
         const productRes = await directusAdmin(
-          `/items/productos/${encodeURIComponent(item.productoId)}?fields=id,nombre,sku,precio_base,categoria,solo_profesional`
+          `/items/productos/${encodeURIComponent(item.productoId)}?fields=id,nombre,sku,precio_base,categoria,solo_profesional,segmento_venta`
         );
         product = productRes.data;
       } catch {
@@ -66,6 +66,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       // Block professional-only products for particulares
       if (product.solo_profesional && locals.user.grupo_cliente === "particular") {
+        return new Response(
+          JSON.stringify({ error: `El producto "${product.nombre}" no esta disponible para particulares` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Block B2B-only products for non-professionals (segmento_venta check)
+      if (product.segmento_venta === 'b2b' && !isProfessionalUser(locals.user)) {
         return new Response(
           JSON.stringify({ error: `El producto "${product.nombre}" no esta disponible para particulares` }),
           { status: 400, headers: { "Content-Type": "application/json" } }

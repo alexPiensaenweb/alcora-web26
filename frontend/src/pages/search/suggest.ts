@@ -1,7 +1,8 @@
 import type { APIRoute } from "astro";
 import { directusPublic, getPublicAssetUrl } from "../../lib/directus";
+import { isProfessionalUser } from "../../lib/pricing";
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   try {
     const q = (url.searchParams.get("q") || "").trim().slice(0, 100);
     if (q.length < 2) {
@@ -11,8 +12,16 @@ export const GET: APIRoute = async ({ url }) => {
       });
     }
 
+    const user = locals.user;
+    const isProfessional = isProfessionalUser(user);
+
+    let filterBase = `filter[status][_eq]=published`;
+    if (!isProfessional) {
+      filterBase += `&filter[segmento_venta][_in]=b2c,ambos`;
+    }
+
     const res = await directusPublic(
-      `/items/productos?filter[status][_eq]=published&search=${encodeURIComponent(
+      `/items/productos?${filterBase}&search=${encodeURIComponent(
         q
       )}&fields=nombre,slug,sku,imagen_principal,marca,marca_id.nombre&sort=nombre&limit=8`
     );
