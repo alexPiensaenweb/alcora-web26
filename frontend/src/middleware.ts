@@ -21,7 +21,7 @@ import {
   clearAuthCookies,
 } from "./lib/auth";
 
-const PROTECTED_ROUTES = ["/cuenta", "/checkout"];
+const PROTECTED_ROUTES = ["/cuenta"];
 const ADMIN_ROUTES = ["/gestion"];
 const LOGIN_ROUTE = "/login";
 
@@ -168,7 +168,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/pago/") ||
     pathname.startsWith("/pago-api/") ||
-    pathname.startsWith("/cart/");
+    pathname.startsWith("/cart/") ||
+    pathname.startsWith("/pedido/");
   if (isDynamicPage) {
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     response.headers.set("Pragma", "no-cache");

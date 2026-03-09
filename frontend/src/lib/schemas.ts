@@ -74,6 +74,9 @@ export const pedidoSubmitSchema = z.object({
   direccion_facturacion: z.string().max(500).optional(),
   metodo_pago: z.enum(["transferencia", "pendiente", "tarjeta", "bizum"]),
   notas_cliente: z.string().max(1000).optional(),
+  acepta_legal: z.literal(true, {
+    errorMap: () => ({ message: "Debe aceptar las condiciones de venta, politica de devolucion y politica de privacidad" }),
+  }),
 });
 
 export const productoCreateSchema = z.object({
@@ -140,6 +143,9 @@ export const pedidoGuestSchema = z.object({
   notas_cliente: z.string().max(1000).optional(),
   metodo_pago: z.enum(["tarjeta", "bizum"]),
   turnstileToken: z.string().min(1, "Token de seguridad requerido"),
+  acepta_legal: z.literal(true, {
+    errorMap: () => ({ message: "Debe aceptar las condiciones de venta, politica de devolucion y politica de privacidad" }),
+  }),
 });
 
 export const articuloSchema = z.object({

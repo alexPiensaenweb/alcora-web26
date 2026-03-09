@@ -101,6 +101,7 @@ export interface Pedido {
   guest_nombre: string | null;
   guest_telefono: string | null;
   guest_direccion: string | null;
+  guest_token: string | null;
   items: PedidoItem[];
 }
 
@@ -149,6 +150,7 @@ export interface CartItem {
   imagen: string | null;
   cantidad: number;
   precioUnitario: number;
+  tipoIva: 21 | 10 | 4;
   formato: string | null;
 }
 
