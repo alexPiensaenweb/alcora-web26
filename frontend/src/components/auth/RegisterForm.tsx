@@ -71,17 +71,18 @@ function validateField(name: string, value: string, form?: any, tipoUsuario?: Ti
       return isB2C ? "" : (value.trim() ? "" : "El telefono es obligatorio");
     case "tipo_negocio":
       return isB2C ? "" : (value ? "" : "Seleccione el tipo de negocio");
-    // Shared fields
+    // Address fields (B2B only — B2C collects address at checkout)
     case "direccion_facturacion":
-      return value.trim() ? "" : "La direccion es obligatoria";
+      return isB2C ? "" : (value.trim() ? "" : "La direccion es obligatoria");
     case "codigo_postal": {
+      if (isB2C) return "";
       if (!value.trim()) return "El codigo postal es obligatorio";
       return /^\d{5}$/.test(value.trim()) ? "" : "Debe tener 5 digitos";
     }
     case "ciudad":
-      return value.trim() ? "" : "La ciudad es obligatoria";
+      return isB2C ? "" : (value.trim() ? "" : "La ciudad es obligatoria");
     case "provincia":
-      return value ? "" : "Seleccione una provincia";
+      return isB2C ? "" : (value ? "" : "Seleccione una provincia");
     default:
       return "";
   }
@@ -130,6 +131,11 @@ export default function RegisterForm() {
         delete next.cif_nif;
         delete next.telefono;
         delete next.tipo_negocio;
+        // Also clear address errors for B2C
+        delete next.direccion_facturacion;
+        delete next.codigo_postal;
+        delete next.ciudad;
+        delete next.provincia;
         return next;
       });
     }
@@ -167,15 +173,15 @@ export default function RegisterForm() {
     const isB2C = tipoUsuario === "particular";
 
     // Required fields based on user type
-    const sharedRequired = [
+    const b2cRequired = [
       "first_name", "last_name", "email", "password", "password_confirm",
-      "direccion_facturacion", "codigo_postal", "ciudad", "provincia",
     ];
     const b2bRequired = [
-      ...sharedRequired,
+      ...b2cRequired,
+      "direccion_facturacion", "codigo_postal", "ciudad", "provincia",
       "razon_social", "cif_nif", "telefono", "tipo_negocio",
     ];
-    const requiredFields = isB2C ? sharedRequired : b2bRequired;
+    const requiredFields = isB2C ? b2cRequired : b2bRequired;
 
     const newErrors: FieldErrors = {};
     let hasErrors = false;
@@ -297,8 +303,8 @@ export default function RegisterForm() {
   const isB2C = tipoUsuario === "particular";
   // Section numbering adjusts based on user type
   const sectionEmpresa = isB2C ? null : 2;
-  const sectionDireccion = isB2C ? 2 : 3;
-  const sectionPassword = isB2C ? 3 : 4;
+  const sectionDireccion = isB2C ? null : 3;  // Hidden for B2C (address collected at checkout)
+  const sectionPassword = isB2C ? 2 : 4;       // B2C: only 2 sections
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-xl mx-auto">
@@ -472,66 +478,68 @@ export default function RegisterForm() {
         </section>
       )}
 
-      {/* Direccion */}
-      <section>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{sectionDireccion}</span>
-          <h3 className="text-base font-semibold text-[var(--color-navy)]">Direccion</h3>
-        </div>
-        <div className="space-y-4 pl-11">
-          <div>
-            <label className={labelClass}>Calle, numero, piso *</label>
-            <input
-              type="text" value={form.direccion_facturacion}
-              onChange={(e) => updateField("direccion_facturacion", e.target.value)}
-              onBlur={(e) => handleBlur("direccion_facturacion", e.target.value)}
-              className={fieldClass("direccion_facturacion", form.direccion_facturacion)}
-              placeholder="Calle Mayor 15, 2o B"
-            />
-            <FieldError name="direccion_facturacion" />
-            <FieldOk name="direccion_facturacion" value={form.direccion_facturacion} />
+      {/* Direccion (B2B only — B2C collects address at checkout) */}
+      {!isB2C && (
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-8 h-8 rounded-full bg-[var(--color-action)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{sectionDireccion}</span>
+            <h3 className="text-base font-semibold text-[var(--color-navy)]">Direccion</h3>
           </div>
-          <div>
-            <label className={labelClass}>Codigo postal *</label>
-            <input
-              type="text" value={form.codigo_postal}
-              onChange={(e) => updateField("codigo_postal", e.target.value)}
-              onBlur={(e) => handleBlur("codigo_postal", e.target.value)}
-              className={fieldClass("codigo_postal", form.codigo_postal)}
-              placeholder="50000" maxLength={5}
-            />
-            <FieldError name="codigo_postal" />
-            <FieldOk name="codigo_postal" value={form.codigo_postal} />
+          <div className="space-y-4 pl-11">
+            <div>
+              <label className={labelClass}>Calle, numero, piso *</label>
+              <input
+                type="text" value={form.direccion_facturacion}
+                onChange={(e) => updateField("direccion_facturacion", e.target.value)}
+                onBlur={(e) => handleBlur("direccion_facturacion", e.target.value)}
+                className={fieldClass("direccion_facturacion", form.direccion_facturacion)}
+                placeholder="Calle Mayor 15, 2o B"
+              />
+              <FieldError name="direccion_facturacion" />
+              <FieldOk name="direccion_facturacion" value={form.direccion_facturacion} />
+            </div>
+            <div>
+              <label className={labelClass}>Codigo postal *</label>
+              <input
+                type="text" value={form.codigo_postal}
+                onChange={(e) => updateField("codigo_postal", e.target.value)}
+                onBlur={(e) => handleBlur("codigo_postal", e.target.value)}
+                className={fieldClass("codigo_postal", form.codigo_postal)}
+                placeholder="50000" maxLength={5}
+              />
+              <FieldError name="codigo_postal" />
+              <FieldOk name="codigo_postal" value={form.codigo_postal} />
+            </div>
+            <div>
+              <label className={labelClass}>Ciudad *</label>
+              <input
+                type="text" value={form.ciudad}
+                onChange={(e) => updateField("ciudad", e.target.value)}
+                onBlur={(e) => handleBlur("ciudad", e.target.value)}
+                className={fieldClass("ciudad", form.ciudad)}
+                placeholder="Zaragoza"
+              />
+              <FieldError name="ciudad" />
+              <FieldOk name="ciudad" value={form.ciudad} />
+            </div>
+            <div>
+              <label className={labelClass}>Provincia *</label>
+              <select
+                value={form.provincia}
+                onChange={(e) => updateField("provincia", e.target.value)}
+                onBlur={(e) => handleBlur("provincia", e.target.value)}
+                className={fieldClass("provincia", form.provincia)}
+              >
+                <option value="">Seleccione provincia...</option>
+                {PROVINCIAS.map((prov) => (
+                  <option key={prov} value={prov}>{prov}</option>
+                ))}
+              </select>
+              <FieldError name="provincia" />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Ciudad *</label>
-            <input
-              type="text" value={form.ciudad}
-              onChange={(e) => updateField("ciudad", e.target.value)}
-              onBlur={(e) => handleBlur("ciudad", e.target.value)}
-              className={fieldClass("ciudad", form.ciudad)}
-              placeholder="Zaragoza"
-            />
-            <FieldError name="ciudad" />
-            <FieldOk name="ciudad" value={form.ciudad} />
-          </div>
-          <div>
-            <label className={labelClass}>Provincia *</label>
-            <select
-              value={form.provincia}
-              onChange={(e) => updateField("provincia", e.target.value)}
-              onBlur={(e) => handleBlur("provincia", e.target.value)}
-              className={fieldClass("provincia", form.provincia)}
-            >
-              <option value="">Seleccione provincia...</option>
-              {PROVINCIAS.map((prov) => (
-                <option key={prov} value={prov}>{prov}</option>
-              ))}
-            </select>
-            <FieldError name="provincia" />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Contrasena */}
       <section>
