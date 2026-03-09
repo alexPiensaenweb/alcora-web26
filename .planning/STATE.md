@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 3 of 5 (B2C Product Catalog and Pricing)
-Plan: 2 of 3 in current phase
-Status: Ready
-Last activity: 2026-03-09 — Completed 03-01 (B2C pricing and segmento filtering)
+Phase: 3 of 5 (B2C Product Catalog and Pricing) -- COMPLETE
+Plan: 3 of 3 in current phase
+Status: Phase Complete
+Last activity: 2026-03-09 — Completed 03-03 (Simplified B2C registration form)
 
-Progress: [██████░░░░] 55%
+Progress: [███████░░░] 65%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 3min
-- Total execution time: 18min
+- Total execution time: 21min
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [██████░░░░] 55%
 | 01-directus-schema-data-foundation | 3 | 7min | 2.3min |
 | 02-infrastructure-security-prerequisites | 2 | 6min | 3min |
 
-| 03-b2c-product-catalog-and-pricing | 1 | 5min | 5min |
+| 03-b2c-product-catalog-and-pricing | 2 | 8min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (2min), 02-01 (3min), 02-02 (3min), 03-01 (5min)
+- Last 5 plans: 01-03 (2min), 02-01 (3min), 02-02 (3min), 03-01 (5min), 03-03 (3min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -66,6 +66,8 @@ Recent decisions affecting current work:
 - Removed solo_profesional from products-api response; replaced by segmento_venta filtering
 - Added priceLabel field ('IVA incluido' or 'sin IVA') to products-api response for UI consumption
 - segmento_venta check in cart/submit coexists with solo_profesional check for backward compatibility
+- B2C address collected at checkout, not registration -- minimizes friction for particulares
+- Address fields conditionally sent to Directus only when provided -- prevents empty strings in DB
 
 ### Pending Todos
 
@@ -81,5 +83,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Completed 03-01-PLAN.md (B2C pricing and segmento filtering)
+Stopped at: Completed 03-03-PLAN.md (Simplified B2C registration form) -- Phase 3 complete
 Resume file: None

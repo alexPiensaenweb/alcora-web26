@@ -12,7 +12,7 @@ The existing B2B-only tienda (live in production) gains a consumer-facing layer 
 
 - [x] **Phase 1: Directus Schema and Data Foundation** - Add all new Directus fields and collections required by B2C before any frontend code ships
 - [x] **Phase 2: Infrastructure and Security Prerequisites** - Harden pre-existing vulnerabilities that become critical once unauthenticated users can initiate payments
-- [ ] **Phase 3: B2C Product Catalog and Pricing** - Make products visible with correct prices to consumers and enforce the B2B/B2C segmentation boundary
+- [x] **Phase 3: B2C Product Catalog and Pricing** - Make products visible with correct prices to consumers and enforce the B2B/B2C segmentation boundary
 - [ ] **Phase 4: B2C Checkout and Guest Orders** - Deliver the complete end-to-end B2C purchase path with guest checkout, payment restriction, and legal compliance
 - [ ] **Phase 5: SEO Content Infrastructure and Blog** - Build the technical blog and structured data layer that turns content investment into organic consumer acquisition
 
@@ -64,9 +64,9 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: Add `calculateB2CPrice()` and `isProfessionalUser()` utilities; update `products-api.ts` with segmento filter and dual pricing; add segmento filter to `search/suggest` and validation to `cart/submit`
-- [ ] 03-02: Update ProductCard, ProductGrid, InfiniteProductGrid with priceLabel; update all catalog pages with segmento filter; add B2B-product redirect to `/catalogo` on product detail
-- [ ] 03-03: Simplify Particular registration form (3 fields only); update register API to skip address for B2C users
+- [x] 03-01: Add `calculateB2CPrice()` and `isProfessionalUser()` utilities; update `products-api.ts` with segmento filter and dual pricing; add segmento filter to `search/suggest` and validation to `cart/submit`
+- [x] 03-02: Update ProductCard, ProductGrid, InfiniteProductGrid with priceLabel; update all catalog pages with segmento filter; add B2B-product redirect to `/catalogo` on product detail
+- [x] 03-03: Simplify Particular registration form (3 fields only); update register API to skip address for B2C users
 
 ### Phase 4: B2C Checkout and Guest Orders
 **Goal**: A consumer — with or without an account — can complete a purchase end-to-end: fill a cart, check out, pay by card or Bizum, and receive an order confirmation email; professionals retain all existing checkout options.
@@ -113,7 +113,7 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 |-------|----------------|--------|-----------|
 | 1. Directus Schema and Data Foundation | 3/3 | Complete | 2026-02-24 |
 | 2. Infrastructure and Security Prerequisites | 2/2 | Complete | 2026-02-24 |
-| 3. B2C Product Catalog and Pricing | 0/3 | Not started | - |
+| 3. B2C Product Catalog and Pricing | 3/3 | Complete | 2026-03-09 |
 | 4. B2C Checkout and Guest Orders | 0/4 | Not started | - |
 | 5. SEO Content Infrastructure and Blog | 0/2 | Not started | - |
 
@@ -160,11 +160,11 @@ Note: Phase 5 depends only on Phase 1 and can run in parallel with Phase 4 if ne
 | FR-8.1 | Phase 5 | Pending |
 | FR-8.2 | Phase 5 | Pending |
 | FR-8.3 | Phase 5 | Pending |
-| FR-9.1 | Phase 3 | Pending |
-| FR-9.2 | Phase 3 | Pending |
-| FR-9.3 | Phase 3 | Pending |
-| FR-9.4 | Phase 3 | Pending |
-| FR-9.5 | Phase 3 | Pending |
+| FR-9.1 | Phase 3 | Complete |
+| FR-9.2 | Phase 3 | Complete |
+| FR-9.3 | Phase 3 | Complete |
+| FR-9.4 | Phase 3 | Complete |
+| FR-9.5 | Phase 3 | Complete |
 | NFR-1.1 | Phase 2 | Complete |
 | NFR-1.2 | Phase 4 | Pending |
 | NFR-1.3 | Phase 3 | Pending |

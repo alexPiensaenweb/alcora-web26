@@ -157,11 +157,11 @@
 | FR-8.1 | Phase 5 | Pending |
 | FR-8.2 | Phase 5 | Pending |
 | FR-8.3 | Phase 5 | Pending |
-| FR-9.1 | Phase 3 | Pending |
-| FR-9.2 | Phase 3 | Pending |
-| FR-9.3 | Phase 3 | Pending |
-| FR-9.4 | Phase 3 | Pending |
-| FR-9.5 | Phase 3 | Pending |
+| FR-9.1 | Phase 3 | Complete |
+| FR-9.2 | Phase 3 | Complete |
+| FR-9.3 | Phase 3 | Complete |
+| FR-9.4 | Phase 3 | Complete |
+| FR-9.5 | Phase 3 | Complete |
 | NFR-1.1 | Phase 2 | Complete |
 | NFR-1.2 | Phase 4 | Pending |
 | NFR-1.3 | Phase 3 | Complete |
