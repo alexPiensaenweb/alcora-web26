@@ -4,11 +4,7 @@ import Breadcrumb from "../components/ui/Breadcrumb.astro";
 import CheckoutForm from "../components/checkout/CheckoutForm";
 
 const user = Astro.locals.user;
-
-if (!user) {
-  return Astro.redirect("/login?redirect=/checkout");
-}
-
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 ---
 
 <BaseLayout title="Checkout - Tienda Alcora">
@@ -17,7 +13,7 @@ if (!user) {
     <h1 class="text-2xl font-bold text-navy mt-4 mb-6">Finalizar pedido</h1>
     <CheckoutForm
       client:load
-      user={{
+      user={user ? {
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
@@ -27,7 +23,8 @@ if (!user) {
         direccion_envio: user.direccion_envio,
         direccion_facturacion: user.direccion_facturacion,
         grupo_cliente: user.grupo_cliente,
-      }}
+      } : null}
+      turnstileSiteKey={turnstileSiteKey}
     />
   </div>
 </BaseLayout>
