@@ -120,13 +120,13 @@
 |-------------|-------|--------|
 | FR-1.1 | Phase 1 | Complete |
 | FR-1.2 | Phase 1 | Complete |
-| FR-1.3 | Phase 3 | Pending |
-| FR-1.4 | Phase 3 | Pending |
+| FR-1.3 | Phase 3 | Complete |
+| FR-1.4 | Phase 3 | Complete |
 | FR-1.5 | Phase 1 | Complete |
-| FR-2.1 | Phase 3 | Pending |
+| FR-2.1 | Phase 3 | Complete |
 | FR-2.2 | Phase 3 | Pending |
-| FR-2.3 | Phase 3 | Pending |
-| FR-2.4 | Phase 3 | Pending |
+| FR-2.3 | Phase 3 | Complete |
+| FR-2.4 | Phase 3 | Complete |
 | FR-2.5 | Phase 3 | Pending |
 | FR-3.1 | Phase 3 | Pending |
 | FR-3.2 | Phase 3 | Pending |
@@ -164,7 +164,7 @@
 | FR-9.5 | Phase 3 | Pending |
 | NFR-1.1 | Phase 2 | Complete |
 | NFR-1.2 | Phase 4 | Pending |
-| NFR-1.3 | Phase 3 | Pending |
+| NFR-1.3 | Phase 3 | Complete |
 | NFR-1.4 | Phase 4 | Pending |
 | NFR-1.5 | Phase 2 | Complete |
 | NFR-2.1 | Phase 1 | Complete |

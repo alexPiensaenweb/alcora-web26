@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 3 of 5 (B2C Product Catalog and Pricing)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Ready
-Last activity: 2026-02-24 — Completed 02-02 (Cart/email hardening + B2B smoke test)
+Last activity: 2026-03-09 — Completed 03-01 (B2C pricing and segmento filtering)
 
-Progress: [████░░░░░░] 40%
+Progress: [██████░░░░] 55%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 2.6min
-- Total execution time: 13min
+- Total plans completed: 6
+- Average duration: 3min
+- Total execution time: 18min
 
 **By Phase:**
 
@@ -30,8 +30,10 @@ Progress: [████░░░░░░] 40%
 | 01-directus-schema-data-foundation | 3 | 7min | 2.3min |
 | 02-infrastructure-security-prerequisites | 2 | 6min | 3min |
 
+| 03-b2c-product-catalog-and-pricing | 1 | 5min | 5min |
+
 **Recent Trend:**
-- Last 5 plans: 01-02 (2min), 01-03 (2min), 02-01 (3min), 02-02 (3min)
+- Last 5 plans: 01-03 (2min), 02-01 (3min), 02-02 (3min), 03-01 (5min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -60,6 +62,10 @@ Recent decisions affecting current work:
 - Free Resend plan (100/day, 3,000/month) sufficient for current B2C volume -- upgrade deferred until traffic warrants it
 - Email retry: 30s delay, 1 retry max, never throws on final failure to protect order/payment flows
 - B2B smoke test is manual checklist only, no automation
+- Visitors/particulares see IVA-inclusive prices via calculateB2CPrice; professionals see tarifa prices sin IVA (unchanged)
+- Removed solo_profesional from products-api response; replaced by segmento_venta filtering
+- Added priceLabel field ('IVA incluido' or 'sin IVA') to products-api response for UI consumption
+- segmento_venta check in cart/submit coexists with solo_profesional check for backward compatibility
 
 ### Pending Todos
 
@@ -74,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Completed 02-02-PLAN.md (Cart/email hardening + B2B smoke test) -- Phase 2 complete
+Last session: 2026-03-09
+Stopped at: Completed 03-01-PLAN.md (B2C pricing and segmento filtering)
 Resume file: None

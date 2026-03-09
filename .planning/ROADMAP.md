@@ -52,21 +52,21 @@ Plans:
 - [x] 02-02-PLAN.md — Fix cart-clear-on-logout with clearCart() from Nano Stores, enhance email.ts with structured logging and 1-retry, create B2B smoke test checklist, verify Resend plan capacity
 
 ### Phase 3: B2C Product Catalog and Pricing
-**Goal**: Consumers and guests see correct IVA-inclusive prices on B2C-eligible products and are shown an informative, conversion-friendly screen when they reach a professional-only product.
+**Goal**: Consumers and guests see correct IVA-inclusive prices on B2C-eligible products; navigating to a professional-only product redirects to `/catalogo`.
 **Depends on**: Phase 1, Phase 2
 **Requirements**: FR-1.3, FR-1.4, FR-2.1, FR-2.2, FR-2.3, FR-2.4, FR-2.5, FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-9.1, FR-9.2, FR-9.3, FR-9.4, FR-9.5, NFR-1.3, NFR-2.3, NFR-3.1, NFR-4.1
 **Success Criteria** (what must be TRUE):
   1. An unauthenticated visitor browsing the catalog sees only `b2c` and `ambos` products; `b2b`-only products do not appear in listings
   2. A visitor viewing a B2C-eligible product sees the price with IVA included and the label "IVA incluido"; a logged-in professional sees their tarifa price with the label "sin IVA"
   3. A GET request to `/products-api` without authentication returns no `precio_profesional` or tarifa-related fields — only `pvp_con_iva`
-  4. When a guest or particular navigates directly to a `b2b`-only product URL, they see the product name and description plus the message "Este producto es de uso profesional" with a CTA to register as professional — no 403 or blank page
+  4. When a guest or particular navigates directly to a `b2b`-only product URL, they are redirected to `/catalogo` — no informative page, no 403, no blank page (per user decision: redirect instead of blocked product page)
   5. The registration page shows a "Particular / Profesional" type selector; selecting Particular activates the account immediately without admin validation
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: Add `calculateB2CPrice()` and `calculateB2CShipping()` utilities; update `getProductos()` with `segmento` filter param; update `products-api.ts` to restrict price fields per auth state
-- [ ] 03-02: Update `ProductCard.astro` and `ProductGrid.astro` to receive `userType` prop and show B2C price or B2B tarifa; add `ProfessionalLockOverlay` component for B2B-only products
-- [ ] 03-03: Update registration flow with Particular/Profesional type selector and differentiated field sets and activation logic
+- [ ] 03-01: Add `calculateB2CPrice()` and `isProfessionalUser()` utilities; update `products-api.ts` with segmento filter and dual pricing; add segmento filter to `search/suggest` and validation to `cart/submit`
+- [ ] 03-02: Update ProductCard, ProductGrid, InfiniteProductGrid with priceLabel; update all catalog pages with segmento filter; add B2B-product redirect to `/catalogo` on product detail
+- [ ] 03-03: Simplify Particular registration form (3 fields only); update register API to skip address for B2C users
 
 ### Phase 4: B2C Checkout and Guest Orders
 **Goal**: A consumer — with or without an account — can complete a purchase end-to-end: fill a cart, check out, pay by card or Bizum, and receive an order confirmation email; professionals retain all existing checkout options.
