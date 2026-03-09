@@ -1,15 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import {
   $cartList,
-  $cartSubtotal,
-  $shippingCost,
-  $cartTotal,
   updateQuantity,
   removeFromCart,
   clearCart,
 } from "../../stores/cart";
 import { FREE_SHIPPING_THRESHOLD } from "../../lib/shipping";
+import { computeCheckoutSummary } from "../../lib/pricing";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("es-ES", {
@@ -31,60 +29,25 @@ interface CartPageProps {
 }
 
 export default function CartPage({ isLoggedIn = false, grupoCliente = null }: CartPageProps) {
-  const isParticular = grupoCliente === "particular";
   const items = useStore($cartList);
-  const subtotal = useStore($cartSubtotal);
-  const shipping = useStore($shippingCost);
-  const total = useStore($cartTotal);
   const [presupuestoLoading, setPresupuestoLoading] = useState(false);
   const [presupuestoSent, setPresupuestoSent] = useState(false);
   const [presupuestoId, setPresupuestoId] = useState<number | null>(null);
   const [presupuestoError, setPresupuestoError] = useState("");
 
-  // If not logged in, don't show cart with prices - clear stale data
-  if (!isLoggedIn) {
-    // Clear any stale cart data from localStorage (prices are user-specific)
-    if (items.length > 0) {
-      clearCart();
-    }
-    return (
-      <div className="text-center py-16">
-        <svg
-          className="w-20 h-20 mx-auto mb-4 text-[var(--color-border)]"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1}
-            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-          />
-        </svg>
-        <h2 className="text-xl font-semibold text-[var(--color-navy)] mb-2">
-          Acceda para ver su carrito
-        </h2>
-        <p className="text-sm text-[var(--color-text-muted)] mb-6">
-          Inicie sesion para ver su carrito y realizar compras.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <a
-            href="/login"
-            className="inline-block bg-[var(--color-action)] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors"
-          >
-            Iniciar sesion
-          </a>
-          <a
-            href="/registro"
-            className="inline-block border border-[var(--color-border)] text-[var(--color-navy)] px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[var(--color-bg-light)] transition-colors"
-          >
-            Crear cuenta
-          </a>
-        </div>
-      </div>
-    );
-  }
+  // Determine if B2C (guest or particular) vs B2B (professional)
+  const isB2C = !isLoggedIn || grupoCliente === "particular" || !grupoCliente;
+  const isProfessional = isLoggedIn && !!grupoCliente && grupoCliente !== "particular";
+
+  // Compute checkout summary with IVA breakdown for B2C
+  const summary = useMemo(() => {
+    const mappedItems = items.map((item) => ({
+      precioUnitario: item.precioUnitario,
+      cantidad: item.cantidad,
+      tipoIva: (item.tipoIva || 21) as number,
+    }));
+    return computeCheckoutSummary(mappedItems, isB2C);
+  }, [items, isB2C]);
 
   if (items.length === 0) {
     return (
@@ -228,36 +191,75 @@ export default function CartPage({ isLoggedIn = false, grupoCliente = null }: Ca
           </h3>
 
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-[var(--color-text-muted)]">Subtotal</span>
-              <span className="font-medium">{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[var(--color-text-muted)]">Envio</span>
-              <span className={`font-medium ${shipping === 0 ? "text-green-600" : ""}`}>
-                {shipping === 0 ? "Gratis" : formatCurrency(shipping)}
-              </span>
-            </div>
-            {shipping > 0 && (
-              <p className="text-xs text-[var(--color-text-muted)]">
-                Envio gratuito a partir de {formatCurrency(FREE_SHIPPING_THRESHOLD)}
-              </p>
+            {isB2C ? (
+              <>
+                {/* B2C: IVA breakdown */}
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Base imponible</span>
+                  <span className="font-medium">{formatCurrency(summary.subtotalSinIva)}</span>
+                </div>
+                {summary.ivaGroups.map((group) => (
+                  <div key={group.rate} className="flex justify-between">
+                    <span className="text-[var(--color-text-muted)]">IVA {group.rate}%</span>
+                    <span className="font-medium">{formatCurrency(group.ivaAmount)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Envio</span>
+                  <span className={`font-medium ${summary.shipping === 0 ? "text-green-600" : ""}`}>
+                    {summary.shipping === 0
+                      ? "Gratis"
+                      : formatCurrency(summary.shipping + summary.shippingIva) + " (IVA incl.)"}
+                  </span>
+                </div>
+                {summary.shipping > 0 && (
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    Envio gratuito a partir de {formatCurrency(FREE_SHIPPING_THRESHOLD)}
+                  </p>
+                )}
+                <hr className="border-[var(--color-border)]" />
+                <div className="flex justify-between text-base font-bold">
+                  <span>Total</span>
+                  <span className="text-[var(--color-action)]">{formatCurrency(summary.total)}</span>
+                </div>
+                <p className="text-xs text-[var(--color-text-muted)]">* Precios IVA incluido</p>
+              </>
+            ) : (
+              <>
+                {/* B2B: existing behavior without IVA */}
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Subtotal</span>
+                  <span className="font-medium">{formatCurrency(summary.subtotalSinIva)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Envio</span>
+                  <span className={`font-medium ${summary.shipping === 0 ? "text-green-600" : ""}`}>
+                    {summary.shipping === 0 ? "Gratis" : formatCurrency(summary.shipping)}
+                  </span>
+                </div>
+                {summary.shipping > 0 && (
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    Envio gratuito a partir de {formatCurrency(FREE_SHIPPING_THRESHOLD)}
+                  </p>
+                )}
+                <hr className="border-[var(--color-border)]" />
+                <div className="flex justify-between text-base font-bold">
+                  <span>Total</span>
+                  <span className="text-[var(--color-action)]">{formatCurrency(summary.total)}</span>
+                </div>
+                <p className="text-xs text-[var(--color-text-muted)]">* Precios sin IVA</p>
+              </>
             )}
-            <hr className="border-[var(--color-border)]" />
-            <div className="flex justify-between text-base font-bold">
-              <span>Total</span>
-              <span className="text-[var(--color-action)]">{formatCurrency(total)}</span>
-            </div>
           </div>
 
           <a
             href="/checkout"
             className="block mt-6 w-full bg-[var(--color-action)] text-white text-center py-3 rounded-lg text-sm font-medium hover:bg-[var(--color-action-hover)] transition-colors"
           >
-            {isParticular ? "Finalizar Compra" : "Tramitar Pedido"}
+            {isB2C ? "Finalizar Compra" : "Tramitar Pedido"}
           </a>
 
-          {!isParticular && (
+          {isProfessional && (
             <>
               <button
                 onClick={async () => {
@@ -294,7 +296,7 @@ export default function CartPage({ isLoggedIn = false, grupoCliente = null }: Ca
                 {presupuestoLoading
                   ? "Enviando..."
                   : presupuestoSent
-                    ? "✓ Presupuesto solicitado"
+                    ? "Presupuesto solicitado"
                     : "Solicitar Presupuesto Personalizado"}
               </button>
 
@@ -307,7 +309,7 @@ export default function CartPage({ isLoggedIn = false, grupoCliente = null }: Ca
                       href={`/cuenta/pedidos/${presupuestoId}`}
                       className="inline-block mt-2 text-[var(--color-action)] hover:underline font-medium"
                     >
-                      Ver presupuesto →
+                      Ver presupuesto
                     </a>
                   )}
                 </div>

@@ -443,6 +443,7 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
         imagen: section.dataset.productImage || null,
         cantidad: parseInt(qtyInput.value) || 1,
         precioUnitario: parseFloat(section.dataset.productPrice!),
+        tipoIva: (parseInt(section.dataset.productTipoIva!) || 21) as 21 | 10 | 4,
         formato: section.dataset.productFormato || null,
       });
 
