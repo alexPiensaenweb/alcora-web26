@@ -6,7 +6,7 @@ import {
   getProductos,
   getTarifasForGrupo,
 } from "../lib/directus";
-import { calculatePrice, resolveDiscount } from "../lib/pricing";
+import { calculatePrice, calculateB2CPrice, isProfessionalUser, resolveDiscount } from "../lib/pricing";
 import type { Categoria } from "../lib/types";
 
 function collectDescendantIds(rootId: number, categorias: Categoria[]): number[] {
@@ -60,16 +60,20 @@ export const GET: APIRoute = async ({ url, locals }) => {
       }
     }
 
+    const user = locals.user;
+    const token = locals.token;
+    const isProfessional = isProfessionalUser(user);
+    const segmento = isProfessional ? undefined : 'b2c_ambos' as const;
+
     const { data: products, meta } = await getProductos({
       categoriaIds,
       marcaId,
       page,
       limit,
       search,
+      segmento,
     });
 
-    const user = locals.user;
-    const token = locals.token;
     let tarifas: any[] = [];
     if (user?.grupo_cliente && token) {
       tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
@@ -81,15 +85,23 @@ export const GET: APIRoute = async ({ url, locals }) => {
           ? product.categoria?.id
           : product.categoria;
 
-      // Only show price to authenticated users
       let price: number | null = null;
-      if (user) {
+      let priceLabel: string | null = null;
+
+      if (isProfessional && user) {
+        // B2B professional: tarifa price sin IVA (unchanged behavior)
         price = product.precio_base;
         if (tarifas.length > 0) {
           const descuento = resolveDiscount(tarifas, product.id, categoriaId || null);
           price = calculatePrice(product.precio_base, descuento);
         }
+        priceLabel = 'sin IVA';
+      } else if (product.segmento_venta !== 'b2b') {
+        // Visitor or particular: B2C price con IVA
+        price = calculateB2CPrice(product.precio_base, product.tipo_iva || 21);
+        priceLabel = 'IVA incluido';
       }
+      // b2b product for non-professional = no price (should not happen with segmento filter, but safe fallback)
 
       return {
         id: product.id,
@@ -104,7 +116,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
           fit: "contain",
         }),
         price,
-        solo_profesional: !!product.solo_profesional,
+        priceLabel,
       };
     });
 
