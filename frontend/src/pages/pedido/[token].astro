@@ -1,0 +1,210 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { directusAdmin, getAssetUrl } from "../../lib/directus";
+import { formatCurrency } from "../../lib/pricing";
+import { formatDate, estadoLabel, estadoColor } from "../../lib/utils";
+import type { Producto } from "../../lib/types";
+
+const { token } = Astro.params;
+const status = Astro.url.searchParams.get("status"); // "ok" or "ko" from Redsys redirect
+
+if (!token) {
+  return Astro.redirect("/catalogo");
+}
+
+// Fetch pedido by guest_token (secure: never by ID)
+let pedido: any = null;
+try {
+  const res = await directusAdmin(
+    `/items/pedidos?filter[guest_token][_eq]=${encodeURIComponent(token)}&fields=*,items.*,items.producto.nombre,items.producto.imagen_principal&limit=1`
+  );
+  const results = res.data;
+  if (results && results.length > 0) {
+    pedido = results[0];
+  }
+} catch (err) {
+  console.error("[pedido/token] Error fetching pedido:", err instanceof Error ? err.message : "Unknown");
+}
+
+// If no pedido found or not a guest order, redirect
+if (!pedido || pedido.tipo_cliente !== 'invitado') {
+  return Astro.redirect("/catalogo");
+}
+---
+
+<BaseLayout title={`Pedido #${pedido.id} - Tienda Alcora`}>
+  <section class="bg-bg-light min-h-[70vh]">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+      {/* Status banner based on Redsys redirect status */}
+      {status === "ok" && (
+        <div class="text-center mb-8">
+          <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-navy mb-2">
+            Pago realizado correctamente
+          </h1>
+          <p class="text-text-muted">
+            Pedido <strong>#{pedido.id}</strong> confirmado. Recibira un email de confirmacion en <strong>{pedido.guest_email}</strong>.
+          </p>
+        </div>
+      )}
+
+      {status === "ko" && (
+        <div class="text-center mb-8">
+          <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-navy mb-2">
+            El pago no se ha completado
+          </h1>
+          <p class="text-text-muted">
+            El pago del pedido <strong>#{pedido.id}</strong> no se ha podido procesar.
+            Puede intentarlo de nuevo o contactar con nosotros.
+          </p>
+        </div>
+      )}
+
+      {!status && (
+        <div class="text-center mb-8">
+          <h1 class="text-2xl lg:text-3xl font-bold text-navy mb-2">
+            Pedido #{pedido.id}
+          </h1>
+          <p class="text-text-muted">
+            Informacion de su pedido como invitado.
+          </p>
+        </div>
+      )}
+
+      {/* Order summary card */}
+      <div class="space-y-6">
+        <div class="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+          <div class="p-5 border-b border-border flex items-center justify-between">
+            <div>
+              <h2 class="font-semibold text-navy text-lg">Pedido #{pedido.id}</h2>
+              <p class="text-sm text-text-muted">{formatDate(pedido.date_created)}</p>
+            </div>
+            <span class={`px-3 py-1.5 text-sm rounded-full font-medium ${estadoColor(pedido.estado)}`}>
+              {estadoLabel(pedido.estado)}
+            </span>
+          </div>
+
+          {/* Items */}
+          <div class="divide-y divide-border">
+            {pedido.items.map((item: any) => {
+              const producto = typeof item.producto === "object" ? item.producto as Producto | null : null;
+              return (
+                <div class="flex items-center gap-4 p-4">
+                  <div class="w-14 h-14 bg-bg-light rounded-lg flex-shrink-0 overflow-hidden">
+                    {producto?.imagen_principal ? (
+                      <img
+                        src={getAssetUrl(producto.imagen_principal, { width: 80, height: 80 })}
+                        alt={item.nombre_producto}
+                        class="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div class="w-full h-full flex items-center justify-center text-border">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-navy truncate">{item.nombre_producto}</p>
+                    <p class="text-xs text-text-muted">{item.cantidad} x {formatCurrency(item.precio_unitario)}</p>
+                  </div>
+                  <div class="text-sm font-semibold text-navy">
+                    {formatCurrency(item.subtotal)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Totals */}
+          <div class="p-5 bg-bg-light border-t border-border">
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-text-muted">Subtotal</span>
+                <span class="font-medium">{formatCurrency(pedido.subtotal)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-text-muted">Envio</span>
+                <span class={`font-medium ${pedido.costo_envio === 0 ? "text-green-600" : ""}`}>
+                  {pedido.costo_envio === 0 ? "Gratis" : formatCurrency(pedido.costo_envio)}
+                </span>
+              </div>
+              <hr class="border-border" />
+              <div class="flex justify-between text-base font-bold">
+                <span>Total</span>
+                <span class="text-action">{formatCurrency(pedido.total)}</span>
+              </div>
+              <p class="text-xs text-text-muted">* Precios IVA incluido</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Guest info */}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-white border border-border rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-navy mb-2">Datos del pedido</h3>
+            <div class="text-sm text-text-muted space-y-1">
+              <p><span class="text-navy font-medium">{pedido.guest_nombre}</span></p>
+              <p>{pedido.guest_email}</p>
+              {pedido.guest_telefono && <p>{pedido.guest_telefono}</p>}
+            </div>
+          </div>
+          <div class="bg-white border border-border rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-navy mb-2">Direccion de envio</h3>
+            <p class="text-sm text-text-muted whitespace-pre-line">{pedido.guest_direccion || pedido.direccion_envio || "No especificada"}</p>
+          </div>
+        </div>
+
+        {/* Processing note */}
+        {pedido.estado === "aprobado_pendiente_pago" && (
+          <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+            <p class="text-sm text-yellow-800">
+              Su pago esta siendo procesado. El estado se actualizara en unos instantes.
+              Recibira un email de confirmacion en <strong>{pedido.guest_email}</strong>.
+            </p>
+          </div>
+        )}
+
+        {/* Register CTA */}
+        <div class="bg-bg-accent border border-border rounded-xl p-6 text-center">
+          <p class="text-sm text-navy mb-3">
+            Cree una cuenta para gestionar todos sus pedidos y acceder a mas funcionalidades.
+          </p>
+          <a
+            href="/registro"
+            class="inline-block text-sm font-medium text-action hover:underline"
+          >
+            Crear cuenta
+          </a>
+        </div>
+
+        {/* Actions */}
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a
+            href="/catalogo"
+            class="inline-flex items-center justify-center gap-2 bg-action text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-action-hover transition-colors"
+          >
+            Seguir comprando
+          </a>
+          <a
+            href="mailto:central@alcora.es"
+            class="inline-flex items-center justify-center gap-2 border border-border text-navy px-6 py-3 rounded-lg text-sm font-medium hover:bg-bg-light transition-colors"
+          >
+            Contactar soporte
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
