@@ -5,10 +5,11 @@ import type { Producto } from "../../lib/types";
 
 interface Props {
   product: Producto;
-  price?: number | null; // Calculated price (always available now)
+  price?: number | null;
+  priceLabel?: string | null; // "IVA incluido" | "sin IVA" | null
 }
 
-const { product, price } = Astro.props;
+const { product, price, priceLabel } = Astro.props;
 const imageUrl = getAssetUrl(product.imagen_principal, {
   width: 420,
   height: 420,
@@ -49,16 +50,14 @@ const imageUrl = getAssetUrl(product.imagen_principal, {
         <p class="text-xs text-text-muted mb-2">{product.formato}</p>
       )}
 
-      {/* Solo profesionales badge */}
-      {product.solo_profesional && (
-        <span class="inline-block mb-2 px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">
-          Solo profesionales
-        </span>
-      )}
-
-      {/* Price - always visible */}
+      {/* Price */}
       {price !== undefined && price !== null ? (
-        <p class="text-lg font-bold text-action">{formatCurrency(price)}</p>
+        <div>
+          <p class="text-lg font-bold text-action">{formatCurrency(price)}</p>
+          {priceLabel && (
+            <p class="text-xs text-text-muted">{priceLabel}</p>
+          )}
+        </div>
       ) : (
         <p class="text-sm text-text-muted">Consultar precio</p>
       )}

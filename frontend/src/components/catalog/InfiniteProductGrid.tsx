@@ -9,7 +9,7 @@ interface ProductListItem {
   formato: string | null;
   imageUrl: string;
   price: number | null;
-  solo_profesional?: boolean;
+  priceLabel: string | null;
 }
 
 interface Props {
@@ -118,15 +118,14 @@ export default function InfiniteProductGrid({
                 {product.formato && (
                   <p className="text-xs text-text-muted mb-2">{product.formato}</p>
                 )}
-                {/* Solo profesionales badge */}
-                {product.solo_profesional && (
-                  <span className="inline-block mb-2 px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-medium">
-                    Solo profesionales
-                  </span>
-                )}
-                {/* Price - always visible */}
+                {/* Price */}
                 {product.price !== null ? (
-                  <p className="text-lg font-bold text-action">{formatCurrency(product.price)}</p>
+                  <div>
+                    <p className="text-lg font-bold text-action">{formatCurrency(product.price)}</p>
+                    {product.priceLabel && (
+                      <p className="text-xs text-text-muted">{product.priceLabel}</p>
+                    )}
+                  </div>
                 ) : (
                   <p className="text-sm text-text-muted">Consultar precio</p>
                 )}
