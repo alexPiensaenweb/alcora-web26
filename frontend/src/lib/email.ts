@@ -348,6 +348,113 @@ export function buildPedidoHtml(data: {
 }
 
 /**
+ * Build guest order confirmation email HTML.
+ * Similar to buildPedidoHtml but:
+ * - Uses guest_nombre instead of user first/last name
+ * - Shows "IVA incluido" instead of "sin IVA"
+ * - CTA links to /pedido/[token] (not /cuenta/pedidos)
+ * - No company/CIF fields (guests are consumers)
+ */
+export function buildGuestPedidoHtml(data: {
+  pedidoId: number;
+  guestNombre: string;
+  guestEmail: string;
+  guestTelefono: string;
+  guestDireccion: string;
+  metodoPago: string;
+  notasCliente: string | null;
+  items: {
+    nombre: string;
+    sku: string;
+    cantidad: number;
+    precioUnitario: number; // IVA-inclusive for B2C
+  }[];
+  subtotal: number; // IVA-inclusive
+  costoEnvio: number; // IVA-inclusive
+  total: number;
+  guestToken: string;
+  cta?: { label: string; url: string };
+}): string {
+  const itemRows = data.items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${escapeHtml(item.nombre)}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#6b7589;">${escapeHtml(item.sku)}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:center;">${item.cantidad}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;">${Number(item.precioUnitario || 0).toFixed(2)} \u20AC</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:right;font-weight:600;">${(Number(item.precioUnitario || 0) * Number(item.cantidad || 0)).toFixed(2)} \u20AC</td>
+      </tr>`
+    )
+    .join("");
+
+  const metodoPagoLabels: Record<string, string> = {
+    tarjeta: "Pago con tarjeta",
+    bizum: "Pago con Bizum",
+  };
+  const metodoPagoLabel = metodoPagoLabels[data.metodoPago] || "Pago online";
+
+  const ctaUrl = data.cta?.url || `${PUBLIC_SITE_URL}/pedido/${data.guestToken}`;
+  const ctaLabel = data.cta?.label || "Ver mi pedido";
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;">
+  <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #c0c4ce;">
+    ${emailHeader(`Pedido #${data.pedidoId} Confirmado`, "Alcora Salud Ambiental")}
+
+    <div style="padding:24px 32px;">
+      <p style="font-size:15px;color:#222d54;margin:0 0 16px;line-height:1.6;">
+        Hola <strong>${escapeHtml(data.guestNombre)}</strong>,
+      </p>
+      <p style="font-size:14px;color:#222d54;margin:0 0 24px;line-height:1.6;">
+        Hemos recibido su pedido correctamente. A continuacion encontrara el resumen de su compra.
+      </p>
+
+      <h2 style="color:#222d54;font-size:16px;margin:0 0 16px;">Datos de envio</h2>
+      <table style="width:100%;font-size:14px;margin-bottom:24px;">
+        <tr><td style="padding:4px 0;color:#6b7589;width:140px;">Nombre:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${escapeHtml(data.guestNombre)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Email:</td><td style="padding:4px 0;"><a href="mailto:${escapeHtml(data.guestEmail)}" style="color:#2970ff;">${escapeHtml(data.guestEmail)}</a></td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Telefono:</td><td style="padding:4px 0;color:#222d54;">${data.guestTelefono ? escapeHtml(data.guestTelefono) : "\u2014"}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Direccion:</td><td style="padding:4px 0;color:#222d54;">${escapeHtml(data.guestDireccion)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7589;">Metodo de pago:</td><td style="padding:4px 0;color:#222d54;font-weight:600;">${escapeHtml(metodoPagoLabel)}</td></tr>
+      </table>
+      ${data.notasCliente ? `<div style="background:#eff4ff;border-left:3px solid #2970ff;padding:12px 16px;margin-bottom:24px;font-size:14px;color:#222d54;"><strong>Notas:</strong><br>${escapeHtml(data.notasCliente)}</div>` : ""}
+
+      <h2 style="color:#222d54;font-size:16px;margin:0 0 12px;">Productos</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+        <thead>
+          <tr style="background:#f4f6f9;">
+            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7589;font-weight:600;">Producto</th>
+            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#6b7589;font-weight:600;">SKU</th>
+            <th style="padding:8px 12px;text-align:center;font-size:12px;color:#6b7589;font-weight:600;">Uds.</th>
+            <th style="padding:8px 12px;text-align:right;font-size:12px;color:#6b7589;font-weight:600;">Precio ud.</th>
+            <th style="padding:8px 12px;text-align:right;font-size:12px;color:#6b7589;font-weight:600;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+
+      <table style="width:100%;font-size:14px;margin-bottom:24px;">
+        <tr><td style="padding:4px 0;text-align:right;color:#6b7589;">Subtotal:</td><td style="padding:4px 0 4px 16px;text-align:right;color:#222d54;width:100px;">${Number(data.subtotal || 0).toFixed(2)} \u20AC</td></tr>
+        <tr><td style="padding:4px 0;text-align:right;color:#6b7589;">Envio:</td><td style="padding:4px 0 4px 16px;text-align:right;color:#222d54;">${Number(data.costoEnvio || 0) === 0 ? "Gratis" : Number(data.costoEnvio || 0).toFixed(2) + " \u20AC"}</td></tr>
+        <tr><td style="padding:8px 0 0;text-align:right;font-weight:700;color:#222d54;font-size:16px;">TOTAL:</td><td style="padding:8px 0 0 16px;text-align:right;font-weight:700;color:#2970ff;font-size:16px;">${Number(data.total || 0).toFixed(2)} \u20AC</td></tr>
+      </table>
+
+      <p style="font-size:13px;color:#6b7589;line-height:1.5;">
+        * Precios IVA incluido. Si necesita factura, contacte con nosotros indicando su numero de pedido.
+      </p>
+    </div>
+
+    ${emailFooter({ label: ctaLabel, url: ctaUrl })}
+  </div>
+</body>
+</html>`;
+}
+
+/**
  * Build user activation notification email HTML (sent to user when admin activates their account)
  */
 export function buildActivacionHtml(data: {

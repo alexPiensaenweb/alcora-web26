@@ -16,7 +16,10 @@
 import type { APIRoute } from "astro";
 import { directusAdmin, purgeDirectusCache } from "../../lib/directus";
 import { verifyNotification, extractPedidoId } from "../../lib/redsys";
-import { sendMail, buildPedidoHtml, getCompanyEmail } from "../../lib/email";
+import { sendMail, buildPedidoHtml, buildGuestPedidoHtml, getCompanyEmail } from "../../lib/email";
+
+const PUBLIC_SITE_URL =
+  process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -72,7 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
     let pedido: any;
     try {
       const res = await directusAdmin(
-        `/items/pedidos/${pedidoId}?fields=id,estado,total,subtotal,costo_envio,user_created,metodo_pago,direccion_envio,direccion_facturacion,notas_cliente,items.*`
+        `/items/pedidos/${pedidoId}?fields=id,estado,total,subtotal,costo_envio,user_created,metodo_pago,direccion_envio,direccion_facturacion,notas_cliente,tipo_cliente,guest_email,guest_nombre,guest_telefono,guest_direccion,guest_token,items.*`
       );
       pedido = res.data;
     } catch (err) {
@@ -143,28 +146,45 @@ function ok() {
 /** Send payment confirmation emails after successful payment */
 async function sendPaymentEmails(pedido: any, redsysOrderId: string, authCode: string) {
   try {
-    // Fetch user info
-    const userId = typeof pedido.user_created === "object"
-      ? pedido.user_created.id
-      : pedido.user_created;
+    const isGuestOrder = pedido.tipo_cliente === "invitado";
 
-    let userInfo: any;
-    try {
-      const res = await directusAdmin(
-        `/users/${userId}?fields=first_name,last_name,email,telefono,razon_social`
-      );
-      userInfo = res.data;
-    } catch {
-      console.error("[webhook] Could not fetch user for email:", userId);
-      return;
+    let userName: string;
+    let userEmail: string;
+    let userPhone: string;
+    let userCompany: string;
+    let clientCtaUrl: string;
+
+    if (isGuestOrder) {
+      // Guest: use guest fields directly from pedido
+      userName = pedido.guest_nombre || "Cliente";
+      userEmail = pedido.guest_email;
+      userPhone = pedido.guest_telefono || "";
+      userCompany = "";
+      clientCtaUrl = `${PUBLIC_SITE_URL}/pedido/${pedido.guest_token}`;
+    } else {
+      // Authenticated: fetch user info from Directus
+      const userId = typeof pedido.user_created === "object"
+        ? pedido.user_created.id
+        : pedido.user_created;
+
+      let userInfo: any;
+      try {
+        const res = await directusAdmin(
+          `/users/${userId}?fields=first_name,last_name,email,telefono,razon_social`
+        );
+        userInfo = res.data;
+      } catch {
+        console.error("[webhook] Could not fetch user for email:", userId);
+        return;
+      }
+      if (!userInfo) return;
+
+      userName = [userInfo.first_name, userInfo.last_name].filter(Boolean).join(" ") || "Cliente";
+      userEmail = userInfo.email;
+      userPhone = userInfo.telefono || "";
+      userCompany = userInfo.razon_social || "";
+      clientCtaUrl = `${PUBLIC_SITE_URL}/cuenta/pedidos`;
     }
-
-    if (!userInfo) return;
-
-    const userName = [userInfo.first_name, userInfo.last_name].filter(Boolean).join(" ") || "Cliente";
-    const userEmail = userInfo.email;
-    const userPhone = userInfo.telefono || "";
-    const userCompany = userInfo.razon_social || "";
 
     const items = (pedido.items || []).map((item: any) => ({
       nombre: item.nombre_producto || "Producto",
@@ -191,15 +211,15 @@ async function sendPaymentEmails(pedido: any, redsysOrderId: string, authCode: s
 
     const companyEmail = await getCompanyEmail();
 
-    // Send to company
+    // Send to company (always use buildPedidoHtml for admin)
     try {
       const adminHtml = buildPedidoHtml({
         ...emailBaseData,
-        cta: { label: "Gestionar pedido", url: "https://tienda.alcora.es/gestion/pedidos" },
+        cta: { label: "Gestionar pedido", url: `${PUBLIC_SITE_URL}/gestion/pedidos` },
       });
       await sendMail({
         to: companyEmail,
-        subject: `Pedido #${pedido.id} PAGADO (${pedido.metodo_pago === "bizum" ? "Bizum" : "tarjeta"}) - ${userCompany || userName}`,
+        subject: `Pedido #${pedido.id} PAGADO (${pedido.metodo_pago === "bizum" ? "Bizum" : "tarjeta"}) - ${isGuestOrder ? `Invitado: ${userName}` : (userCompany || userName)}`,
         html: adminHtml,
         replyTo: userEmail,
       });
@@ -207,12 +227,33 @@ async function sendPaymentEmails(pedido: any, redsysOrderId: string, authCode: s
       console.error("[webhook] Error sending admin email:", emailErr);
     }
 
-    // Send to customer
+    // Send to customer (guest or auth)
     try {
-      const clientHtml = buildPedidoHtml({
-        ...emailBaseData,
-        cta: { label: "Ver mis pedidos", url: "https://tienda.alcora.es/cuenta/pedidos" },
-      });
+      let clientHtml: string;
+      if (isGuestOrder) {
+        // Guest: use dedicated guest email template (IVA-inclusive, token-based CTA)
+        clientHtml = buildGuestPedidoHtml({
+          pedidoId: pedido.id,
+          guestNombre: userName,
+          guestEmail: userEmail,
+          guestTelefono: userPhone,
+          guestDireccion: pedido.guest_direccion || pedido.direccion_envio || "",
+          metodoPago: pedido.metodo_pago || "tarjeta",
+          notasCliente: pedido.notas_cliente || null,
+          items,
+          subtotal: pedido.subtotal || 0,
+          costoEnvio: pedido.costo_envio || 0,
+          total: pedido.total || 0,
+          guestToken: pedido.guest_token,
+          cta: { label: "Ver mi pedido", url: clientCtaUrl },
+        });
+      } else {
+        // Auth: use standard pedido email template
+        clientHtml = buildPedidoHtml({
+          ...emailBaseData,
+          cta: { label: "Ver mis pedidos", url: clientCtaUrl },
+        });
+      }
       await sendMail({
         to: userEmail,
         subject: `Pago confirmado - Pedido #${pedido.id} - Alcora`,

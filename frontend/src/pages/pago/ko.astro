@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 const pedidoId = Astro.url.searchParams.get("pedido");
+const user = Astro.locals.user;
 ---
 
 <BaseLayout title="Pago no completado - Tienda Alcora">
@@ -60,15 +61,25 @@ const pedidoId = Astro.url.searchParams.get("pedido");
       {/* Help text */}
       <div class="bg-[var(--color-bg-accent)] border border-action/20 rounded-xl p-5 mb-8">
         <p class="text-sm text-navy">
-          Su pedido sigue registrado. Puede intentar el pago de nuevo desde
-          <a href="/cuenta/pedidos" class="text-action font-medium hover:underline"> sus pedidos</a>,
-          o ponerse en contacto con nosotros si necesita ayuda.
+          {user ? (
+            <>
+              Su pedido sigue registrado. Puede intentar el pago de nuevo desde
+              <a href="/cuenta/pedidos" class="text-action font-medium hover:underline"> sus pedidos</a>,
+              o ponerse en contacto con nosotros si necesita ayuda.
+            </>
+          ) : (
+            <>
+              Su pedido sigue registrado. Si necesita ayuda, contacte con nosotros en{" "}
+              <a href="mailto:central@alcora.es" class="text-action font-medium hover:underline">central@alcora.es</a>{" "}
+              indicando los datos de su pedido.
+            </>
+          )}
         </p>
       </div>
 
       {/* Actions */}
       <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        {pedidoId && (
+        {user && pedidoId && (
           <a
             href={`/cuenta/pedidos/${pedidoId}`}
             class="inline-flex items-center justify-center gap-2 bg-action text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-action-hover transition-colors"
@@ -76,12 +87,22 @@ const pedidoId = Astro.url.searchParams.get("pedido");
             Ver pedido #{pedidoId}
           </a>
         )}
-        <a
-          href="/cuenta/pedidos"
-          class="inline-flex items-center justify-center gap-2 border border-border text-navy px-6 py-3 rounded-lg text-sm font-medium hover:bg-bg-light transition-colors"
-        >
-          Ver todos mis pedidos
-        </a>
+        {user && (
+          <a
+            href="/cuenta/pedidos"
+            class="inline-flex items-center justify-center gap-2 border border-border text-navy px-6 py-3 rounded-lg text-sm font-medium hover:bg-bg-light transition-colors"
+          >
+            Ver todos mis pedidos
+          </a>
+        )}
+        {!user && (
+          <a
+            href="/catalogo"
+            class="inline-flex items-center justify-center gap-2 bg-action text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-action-hover transition-colors"
+          >
+            Volver a la tienda
+          </a>
+        )}
         <a
           href="mailto:central@alcora.es"
           class="inline-flex items-center justify-center gap-2 border border-border text-navy px-6 py-3 rounded-lg text-sm font-medium hover:bg-bg-light transition-colors"
