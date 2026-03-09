@@ -3,8 +3,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import { getProductoBySlug, getAssetUrl, getTarifasForGrupo } from "../../lib/directus";
 import { sanitizeHtml } from "../../lib/sanitize";
-import { resolveDiscount, calculatePrice, formatCurrency } from "../../lib/pricing";
-import type { TarifaEspecial, Categoria } from "../../lib/types";
+import { resolveDiscount, calculatePrice, calculateB2CPrice, formatCurrency, isProfessionalUser } from "../../lib/pricing";
+import type { Categoria } from "../../lib/types";
 
 const { slug } = Astro.params;
 let product;
@@ -20,23 +20,39 @@ if (!product) {
 
 const user = Astro.locals.user;
 const token = Astro.locals.token;
+const isProfessional = isProfessionalUser(user);
+
+// B2B-only products: redirect non-professionals to catalog (user decision: redirect, not 403)
+if (product.segmento_venta === 'b2b' && !isProfessional) {
+  return Astro.redirect('/catalogo');
+}
+
+let finalPrice: number | null = null;
+let priceLabel: string | null = null;
 let descuento = 0;
 
-// Only show price to authenticated users
-let finalPrice: number | null = null;
-if (user) {
+if (isProfessional && user) {
+  // Professional: tarifa price sin IVA (unchanged)
   finalPrice = product.precio_base;
+  priceLabel = 'sin IVA';
   if (user.grupo_cliente && token) {
     const tarifas = await getTarifasForGrupo(user.grupo_cliente, token);
     const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
     descuento = resolveDiscount(tarifas, product.id, categoriaId);
     finalPrice = calculatePrice(product.precio_base, descuento);
   }
+} else if (product.segmento_venta !== 'b2b') {
+  // Visitor or particular: B2C price con IVA
+  finalPrice = calculateB2CPrice(product.precio_base, product.tipo_iva || 21);
+  priceLabel = 'IVA incluido';
 }
 
-// Can add to cart only if logged in AND product is not professional-only for particulares
-const isParticular = user?.grupo_cliente === "particular";
-const canAddToCart = !!user && !(product.solo_profesional && isParticular);
+// B2C users (visitors/particulares) can add b2c/ambos products to cart
+// Professionals can add any product
+// Visitors (no user) still need to log in to add to cart
+const canAddToCart = isProfessional
+  ? !!user
+  : (!!user && product.segmento_venta !== 'b2b');
 
 const imageUrl = getAssetUrl(product.imagen_principal, { width: 600, height: 600 });
 const categoria = product.categoria as Categoria | null;
@@ -132,6 +148,14 @@ const productSchema: Record<string, any> = {
         name: "Alcora Salud Ambiental",
         url: siteUrl,
       },
+      ...(!isProfessional ? {
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          price: finalPrice.toString(),
+          priceCurrency: "EUR",
+          valueAddedTaxIncluded: true,
+        },
+      } : {}),
     },
   } : {
     offers: {
@@ -263,11 +287,11 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
           </p>
         )}
 
-        {/* Price - only visible to authenticated users */}
+        {/* Price */}
         <div class="border-t border-b border-border py-4 my-4">
           {finalPrice !== null ? (
             <div>
-              {descuento > 0 && (
+              {isProfessional && descuento > 0 && (
                 <p class="text-sm text-text-muted line-through">
                   PVP: {formatCurrency(product.precio_base)}
                 </p>
@@ -275,31 +299,24 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
               <p class="text-3xl font-bold text-action">
                 {formatCurrency(finalPrice)}
               </p>
-              {descuento > 0 && (
+              {isProfessional && descuento > 0 && (
                 <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
                   -{descuento}% dto. {user?.grupo_cliente}
                 </span>
               )}
-              <p class="text-xs text-text-muted mt-1">Precio sin IVA</p>
+              {priceLabel && (
+                <p class="text-xs text-text-muted mt-1">{priceLabel}</p>
+              )}
             </div>
           ) : (
             <div>
               <p class="text-2xl font-bold text-navy">Consultar precio</p>
               <p class="text-xs text-text-muted mt-1">
-                <a href="/login" class="text-action hover:underline">Inicie sesión</a> para ver precios
+                <a href="/login" class="text-action hover:underline">Inicie sesion</a> para ver precios
               </p>
             </div>
           )}
         </div>
-
-        {/* Solo profesionales badge */}
-        {product.solo_profesional && (
-          <div class="mb-4">
-            <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 text-xs rounded-full font-medium">
-              Solo profesionales
-            </span>
-          </div>
-        )}
 
         {/* Add to cart - only if logged in and allowed */}
         {canAddToCart ? (
@@ -309,8 +326,9 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
             data-product-sku={product.sku}
             data-product-slug={product.slug}
             data-product-image={product.imagen_principal || ""}
-            data-product-price={finalPrice!}
+            data-product-price={isProfessional ? finalPrice! : product.precio_base}
             data-product-formato={product.formato || ""}
+            data-product-tipo-iva={product.tipo_iva || 21}
           >
             <div class="flex items-center gap-3">
               <div class="flex items-center border border-border rounded-lg">
@@ -325,15 +343,6 @@ const ogProductMeta: { property?: string; name?: string; content: string }[] = [
                 Anadir al carrito
               </button>
             </div>
-          </div>
-        ) : product.solo_profesional && isParticular ? (
-          <div class="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-lg">
-            <p class="text-sm text-amber-800 font-medium">
-              Este producto esta disponible solo para clientes profesionales.
-            </p>
-            <p class="text-xs text-amber-600 mt-1">
-              Si necesita este producto, <a href="mailto:central@alcora.es" class="underline">contacte con nosotros</a>.
-            </p>
           </div>
         ) : (
           <div class="mb-6 bg-bg-accent p-4 rounded-lg">
