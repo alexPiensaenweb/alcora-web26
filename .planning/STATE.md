@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-09T12:49:43.998Z"
+last_updated: "2026-03-09T15:25:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,18 +23,18 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 4 of 5 (B2C Checkout and Guest Orders)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In Progress
-Last activity: 2026-03-09 — Completed 04-01 (Guest checkout foundation types, schemas, cart)
+Last activity: 2026-03-09 — Completed 04-02 (Unified checkout page, guest submit endpoint, payment validation)
 
-Progress: [████████░░] 75%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 3.8min
-- Total execution time: 34min
+- Total plans completed: 10
+- Average duration: 3.9min
+- Total execution time: 39min
 
 **By Phase:**
 
@@ -46,12 +46,13 @@ Progress: [████████░░] 75%
 | 03-b2c-product-catalog-and-pricing | 3 | 15min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (3min), 03-01 (5min), 03-03 (3min), 03-02 (7min), 04-01 (6min)
+- Last 5 plans: 03-01 (5min), 03-03 (3min), 03-02 (7min), 04-01 (6min), 04-02 (5min)
 - Trend: Stable
 
 *Updated after each plan completion*
 | Phase 03 P02 | 7min | 3 tasks | 8 files |
 | Phase 04 P01 | 6min | 3 tasks | 7 files |
+| Phase 04 P02 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,10 @@ Recent decisions affecting current work:
 - [Phase 04]: Shipping IVA at 21% for transport services (standard Spanish rate)
 - [Phase 04]: Presupuesto button restricted to professional users only (not particulares or guests)
 - [Phase 04]: tipoIva defaults to 21 via || fallback for backward compat with existing localStorage cart data
+- [Phase 04]: Guest checkout inline fork UI with three modes (choosing/guest/authenticated) in single CheckoutForm component
+- [Phase 04]: Guest orders use dedicated /cart/guest-submit endpoint (separate from auth submit)
+- [Phase 04]: Payment initiate for guests passes guest_token for Redsys return URL reconciliation
+- [Phase 04]: B2C shipping includes 21% IVA in cart/submit.ts (matching guest-submit behavior)
 
 ### Pending Todos
 
@@ -107,5 +112,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Completed 04-01-PLAN.md (Guest checkout foundation types, schemas, cart, IVA breakdown)
+Stopped at: Completed 04-02-PLAN.md (Unified checkout, guest submit, payment validation)
 Resume file: None
