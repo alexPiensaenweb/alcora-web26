@@ -79,13 +79,13 @@ Plans:
   4. The checkout order summary displays IVA breakdown (base imponible + IVA + shipping = total) and shipping cost before the payment step
   5. The checkout form includes and requires acceptance of: condiciones de venta, politica de devoluciones (14 days), and RGPD — links to each policy page are present and reachable
   6. The guest checkout form is protected by Cloudflare Turnstile; guest order confirmation URLs include a non-guessable token
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01: Verify Redsys guest order reconciliation behavior in staging (stateless pedidoId-in-return-URL pattern); document findings before implementation
-- [ ] 04-02: Build `GuestCheckoutForm.tsx` component and `checkout-guest-api/submit.ts` endpoint; update middleware to allow unauthenticated access to `/checkout`
-- [ ] 04-03: Add payment method restriction to `cart/submit.ts` (server-side enforcement per user type); add IVA breakdown to order summary; add legal checkboxes
-- [ ] 04-04: Create guest `pedido-confirmado` page with token validation; implement `buildPedidoGuestHtml()` email template; create placeholder legal pages (condiciones, devoluciones, privacidad)
+- [ ] 04-01: Update types (guest_token, CartItem.tipoIva), schemas (acepta_legal), middleware (/checkout open), cart store (IVA-aware), CartPage (B2C guests), pricing utils (getAllowedPaymentMethods, computeIvaBreakdown)
+- [ ] 04-02: Build unified CheckoutForm.tsx with guest/particular/professional branching; create cart/guest-submit.ts endpoint; update cart/submit.ts with payment method validation + B2C IVA totals
+- [ ] 04-03: Update pago-api/initiate.ts for guest token verification; update webhook.ts for guest email handling; update pago/ok and pago/ko for guest access
+- [ ] 04-04: Create /pedido/[token].astro guest order page; add buildGuestPedidoHtml() email template; create /condiciones-venta and /politica-devoluciones legal pages
 
 ### Phase 5: SEO Content Infrastructure and Blog
 **Goal**: The blog and product structured data infrastructure is live so that content published by Alcora immediately benefits from Article and Product schema.org markup, a working RSS feed, and correct sitemap entries.

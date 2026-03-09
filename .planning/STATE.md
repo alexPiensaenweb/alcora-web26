@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-09T12:44:27.106Z"
+last_updated: "2026-03-09T12:49:43.998Z"
 progress:
-  total_phases: 3
+  total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 12
+  completed_plans: 9
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Professionals order and quote efficiently; consumers buy B2C-eligible products without friction — one store, professional tone, dual audience.
-**Current focus:** Phase 3 — B2C Product Catalog and Pricing
+**Current focus:** Phase 4 — B2C Checkout and Guest Orders
 
 ## Current Position
 
-Phase: 3 of 5 (B2C Product Catalog and Pricing) -- COMPLETE
-Plan: 3 of 3 in current phase
-Status: Phase Complete
-Last activity: 2026-03-09 — Completed 03-02 (B2C catalog pages and dual pricing UI)
+Phase: 4 of 5 (B2C Checkout and Guest Orders)
+Plan: 1 of 4 in current phase
+Status: In Progress
+Last activity: 2026-03-09 — Completed 04-01 (Guest checkout foundation types, schemas, cart)
 
-Progress: [███████░░░] 65%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 3.5min
-- Total execution time: 28min
+- Total plans completed: 9
+- Average duration: 3.8min
+- Total execution time: 34min
 
 **By Phase:**
 
@@ -46,11 +46,12 @@ Progress: [███████░░░] 65%
 | 03-b2c-product-catalog-and-pricing | 3 | 15min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3min), 02-02 (3min), 03-01 (5min), 03-03 (3min), 03-02 (7min)
+- Last 5 plans: 02-02 (3min), 03-01 (5min), 03-03 (3min), 03-02 (7min), 04-01 (6min)
 - Trend: Stable
 
 *Updated after each plan completion*
 | Phase 03 P02 | 7min | 3 tasks | 8 files |
+| Phase 04 P01 | 6min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,10 @@ Recent decisions affecting current work:
 - Solo profesionales badge removed from all catalog components per user decision (NO badges)
 - B2B product detail redirect uses Astro.redirect('/catalogo') not 403, per user decision
 - [Phase 03]: Cart stores sin-IVA precio_base for B2C users; IVA breakdown computed at checkout (Phase 4)
+- [Phase 04]: IVA breakdown computed via computeCheckoutSummary (single source of truth for cart and checkout)
+- [Phase 04]: Shipping IVA at 21% for transport services (standard Spanish rate)
+- [Phase 04]: Presupuesto button restricted to professional users only (not particulares or guests)
+- [Phase 04]: tipoIva defaults to 21 via || fallback for backward compat with existing localStorage cart data
 
 ### Pending Todos
 
@@ -102,5 +107,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Completed 03-02-PLAN.md (B2C catalog pages and dual pricing UI) -- Phase 3 fully complete (all 3 plans done)
+Stopped at: Completed 04-01-PLAN.md (Guest checkout foundation types, schemas, cart, IVA breakdown)
 Resume file: None
