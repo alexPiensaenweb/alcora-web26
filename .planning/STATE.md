@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-03-09T12:44:27.106Z"
+progress:
+  total_phases: 3
+  completed_phases: 3
+  total_plans: 8
+  completed_plans: 8
+---
+
 # Project State
 
 ## Project Reference
@@ -12,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 Phase: 3 of 5 (B2C Product Catalog and Pricing) -- COMPLETE
 Plan: 3 of 3 in current phase
 Status: Phase Complete
-Last activity: 2026-03-09 — Completed 03-03 (Simplified B2C registration form)
+Last activity: 2026-03-09 — Completed 03-02 (B2C catalog pages and dual pricing UI)
 
 Progress: [███████░░░] 65%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 3min
-- Total execution time: 21min
+- Total plans completed: 8
+- Average duration: 3.5min
+- Total execution time: 28min
 
 **By Phase:**
 
@@ -30,13 +43,14 @@ Progress: [███████░░░] 65%
 | 01-directus-schema-data-foundation | 3 | 7min | 2.3min |
 | 02-infrastructure-security-prerequisites | 2 | 6min | 3min |
 
-| 03-b2c-product-catalog-and-pricing | 2 | 8min | 4min |
+| 03-b2c-product-catalog-and-pricing | 3 | 15min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (2min), 02-01 (3min), 02-02 (3min), 03-01 (5min), 03-03 (3min)
+- Last 5 plans: 02-01 (3min), 02-02 (3min), 03-01 (5min), 03-03 (3min), 03-02 (7min)
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 03 P02 | 7min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -68,6 +82,11 @@ Recent decisions affecting current work:
 - segmento_venta check in cart/submit coexists with solo_profesional check for backward compatibility
 - B2C address collected at checkout, not registration -- minimizes friction for particulares
 - Address fields conditionally sent to Directus only when provided -- prevents empty strings in DB
+- Cart stores sin-IVA precio_base for B2C users; IVA breakdown computed at checkout time (Phase 4)
+- data-product-tipo-iva attribute added to cart section for future Phase 4 IVA calculation
+- Solo profesionales badge removed from all catalog components per user decision (NO badges)
+- B2B product detail redirect uses Astro.redirect('/catalogo') not 403, per user decision
+- [Phase 03]: Cart stores sin-IVA precio_base for B2C users; IVA breakdown computed at checkout (Phase 4)
 
 ### Pending Todos
 
@@ -83,5 +102,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Completed 03-03-PLAN.md (Simplified B2C registration form) -- Phase 3 complete
+Stopped at: Completed 03-02-PLAN.md (B2C catalog pages and dual pricing UI) -- Phase 3 fully complete (all 3 plans done)
 Resume file: None
