@@ -2,8 +2,8 @@
  * POST /pago-api/initiate
  *
  * Initiates a Redsys payment (card or Bizum) for a pedido.
- * - Requires authentication
- * - Verifies pedido ownership
+ * - Auth orders: requires authentication + user ownership check
+ * - Guest orders: requires guest_token for ownership verification
  * - Verifies pedido is in "aprobado_pendiente_pago" state
  * - Returns Redsys form parameters for redirect
  */
@@ -22,13 +22,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const rl = await rateLimit(`pago-init:${clientIp}`, 5, 900_000);
     if (!rl.allowed) return rateLimitResponse(rl.retryAfterMs);
 
-    if (!locals.user || !locals.token) {
-      return new Response(
-        JSON.stringify({ error: "Debe iniciar sesion" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
     if (!isRedsysConfigured()) {
       return new Response(
         JSON.stringify({ error: "El pago online no esta disponible en este momento" }),
@@ -36,6 +29,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    // Parse body first (needed for both guest and auth flows)
     let body: any;
     try {
       body = await request.json();
@@ -46,7 +40,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { pedidoId } = body;
+    const { pedidoId, guest_token } = body;
     if (!pedidoId) {
       return new Response(
         JSON.stringify({ error: "pedidoId requerido" }),
@@ -54,11 +48,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Fetch pedido and verify ownership + state
+    // Fetch pedido with guest fields for ownership verification
     let pedido: any;
     try {
       const res = await directusAdmin(
-        `/items/pedidos/${pedidoId}?fields=id,total,estado,user_created,metodo_pago`
+        `/items/pedidos/${pedidoId}?fields=id,total,estado,user_created,metodo_pago,tipo_cliente,guest_token`
       );
       pedido = res.data;
     } catch {
@@ -75,16 +69,34 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Verify ownership
-    const pedidoUserId = typeof pedido.user_created === "object"
-      ? pedido.user_created.id
-      : pedido.user_created;
+    // Verify ownership: branch on guest vs authenticated
+    const isGuestOrder = pedido.tipo_cliente === "invitado";
 
-    if (pedidoUserId !== locals.user.id) {
-      return new Response(
-        JSON.stringify({ error: "No autorizado" }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
-      );
+    if (isGuestOrder) {
+      // Guest ownership: verify via guest_token
+      if (!guest_token || pedido.guest_token !== guest_token) {
+        return new Response(
+          JSON.stringify({ error: "No autorizado" }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Authenticated ownership: verify via user ID
+      if (!locals.user || !locals.token) {
+        return new Response(
+          JSON.stringify({ error: "Debe iniciar sesion" }),
+          { status: 401, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      const pedidoUserId = typeof pedido.user_created === "object"
+        ? pedido.user_created.id
+        : pedido.user_created;
+      if (pedidoUserId !== locals.user.id) {
+        return new Response(
+          JSON.stringify({ error: "No autorizado" }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Verify state
@@ -107,13 +119,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Map our metodo_pago to Redsys pay method
     const payMethod: RedsysPayMethod = pedido.metodo_pago === "bizum" ? "bizum" : "card";
 
+    // URL routing based on order type
+    let urlOk: string;
+    let urlKo: string;
+
+    if (isGuestOrder) {
+      // Guest: token-based URLs (non-guessable, NFR-1.4)
+      urlOk = `${PUBLIC_SITE_URL}/pedido/${pedido.guest_token}?status=ok`;
+      urlKo = `${PUBLIC_SITE_URL}/pedido/${pedido.guest_token}?status=ko`;
+    } else {
+      // Auth: existing numeric ID URLs
+      urlOk = `${PUBLIC_SITE_URL}/pago/ok?pedido=${pedido.id}`;
+      urlKo = `${PUBLIC_SITE_URL}/pago/ko?pedido=${pedido.id}`;
+    }
+
     // Create Redsys payment request
     const result = createPaymentRequest({
       pedidoId: pedido.id,
       totalEur: pedido.total,
       merchantUrl: `${PUBLIC_SITE_URL}/pago-api/webhook`,
-      urlOk: `${PUBLIC_SITE_URL}/pago/ok?pedido=${pedido.id}`,
-      urlKo: `${PUBLIC_SITE_URL}/pago/ko?pedido=${pedido.id}`,
+      urlOk,
+      urlKo,
       payMethod,
     });
 
