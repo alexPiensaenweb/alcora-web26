@@ -51,3 +51,20 @@ export function formatCurrency(amount: number): string {
     currency: "EUR",
   }).format(amount);
 }
+
+/**
+ * Calculate B2C price with IVA included.
+ * Used for visitors and particulares viewing B2C/ambos products.
+ * Spanish law (Ley 7/1996) requires consumer prices include IVA.
+ */
+export function calculateB2CPrice(precioBase: number, tipoIva: 21 | 10 | 4 = 21): number {
+  return Math.round(precioBase * (1 + tipoIva / 100) * 100) / 100;
+}
+
+/**
+ * Determine if a user is a professional (B2B pricing).
+ * Professionals: any grupo_cliente except 'particular' and null.
+ */
+export function isProfessionalUser(user: { grupo_cliente: string | null } | null): boolean {
+  return !!user?.grupo_cliente && user.grupo_cliente !== 'particular';
+}
