@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { directusAuth, directusAdmin, getTarifasForGrupo } from "../../lib/directus";
-import { resolveDiscount, calculatePrice, isProfessionalUser } from "../../lib/pricing";
+import { resolveDiscount, calculatePrice, calculateB2CPrice, isProfessionalUser, getAllowedPaymentMethods, resolveUserType } from "../../lib/pricing";
 import { calculateShipping } from "../../lib/shipping";
 import { rateLimit, rateLimitResponse } from "../../lib/rateLimit";
 import { sendMail, buildPedidoHtml, getCompanyEmail } from "../../lib/email";
@@ -33,6 +33,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const { items, direccion_envio, direccion_facturacion, metodo_pago, notas_cliente } = validation.data;
 
+    // Validate payment method for user type (FR-5.1, FR-5.2)
+    const userType = resolveUserType(locals.user);
+    const allowedMethods = getAllowedPaymentMethods(userType);
+    if (!allowedMethods.includes(metodo_pago as any)) {
+      return new Response(
+        JSON.stringify({ error: "Metodo de pago no disponible para su tipo de cuenta" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const isB2C = !isProfessionalUser(locals.user);
+
     const grupoCliente = locals.user.grupo_cliente;
     let tarifas: any[] = [];
     if (grupoCliente) {
@@ -47,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       let product: any;
       try {
         const productRes = await directusAdmin(
-          `/items/productos/${encodeURIComponent(item.productoId)}?fields=id,nombre,sku,precio_base,categoria,solo_profesional,segmento_venta`
+          `/items/productos/${encodeURIComponent(item.productoId)}?fields=id,nombre,sku,precio_base,categoria,solo_profesional,segmento_venta,tipo_iva`
         );
         product = productRes.data;
       } catch {
@@ -85,8 +97,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
           ? product.categoria?.id
           : product.categoria;
 
-      const descuento = resolveDiscount(tarifas, product.id, categoriaId);
-      const precioUnitario = calculatePrice(product.precio_base, descuento);
+      let precioUnitario: number;
+      if (isB2C) {
+        // B2C: IVA-inclusive price, no tarifa discounts
+        precioUnitario = calculateB2CPrice(product.precio_base, product.tipo_iva || 21);
+      } else {
+        // B2B: tarifa discount price sin IVA (existing behavior)
+        const descuento = resolveDiscount(tarifas, product.id, categoriaId);
+        precioUnitario = calculatePrice(product.precio_base, descuento);
+      }
       const lineSubtotal = precioUnitario * item.cantidad;
 
       subtotal += lineSubtotal;
@@ -102,11 +121,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     subtotal = Math.round(subtotal * 100) / 100;
-    const costoEnvio = calculateShipping(subtotal);
-    const total = Math.round((subtotal + costoEnvio) * 100) / 100;
+    const costoEnvioSinIva = calculateShipping(subtotal);
+    let costoEnvio: number;
+    let total: number;
 
-    // Estado: tarjeta/bizum → "aprobado_pendiente_pago" (awaiting Redsys payment)
-    //         other methods → "solicitado" (awaiting manual confirmation)
+    if (isB2C) {
+      // B2C: shipping includes 21% IVA
+      const shippingIva = costoEnvioSinIva > 0 ? Math.round(costoEnvioSinIva * 0.21 * 100) / 100 : 0;
+      costoEnvio = Math.round((costoEnvioSinIva + shippingIva) * 100) / 100;
+      total = Math.round((subtotal + costoEnvio) * 100) / 100;
+    } else {
+      // B2B: shipping sin IVA (existing behavior)
+      costoEnvio = costoEnvioSinIva;
+      total = Math.round((subtotal + costoEnvio) * 100) / 100;
+    }
+
+    // Estado: tarjeta/bizum -> "aprobado_pendiente_pago" (awaiting Redsys payment)
+    //         other methods -> "solicitado" (awaiting manual confirmation)
     const isRedsysPayment = metodo_pago === "tarjeta" || metodo_pago === "bizum";
     const initialEstado = isRedsysPayment ? "aprobado_pendiente_pago" : "solicitado";
     let pedidoRes: any;
@@ -116,6 +147,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       costo_envio: costoEnvio,
       total,
       metodo_pago: metodo_pago || "pendiente",
+      tipo_cliente: isProfessionalUser(locals.user) ? "profesional" : "particular",
       direccion_envio: direccion_envio || locals.user.direccion_envio,
       direccion_facturacion:
         direccion_facturacion || locals.user.direccion_facturacion,
