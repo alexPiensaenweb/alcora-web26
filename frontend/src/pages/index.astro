@@ -3,7 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import ProductCard from "../components/catalog/ProductCard.astro";
 import CategoryIcon from "../components/catalog/CategoryIcon.astro";
 import { getCategorias, getProductos, getTarifasForGrupo, getAssetUrl } from "../lib/directus";
-import { resolveDiscount, calculatePrice } from "../lib/pricing";
+import { resolveDiscount, calculatePrice, calculateB2CPrice, isProfessionalUser } from "../lib/pricing";
 import { formatCategoryName } from "../lib/utils";
 import type { TarifaEspecial, Categoria } from "../lib/types";
 
@@ -29,16 +29,18 @@ const rootCategorias = rootRaw.filter((cat, index, all) => {
   );
 });
 
+const user = Astro.locals.user;
+const token = Astro.locals.token;
+const isProfessional = isProfessionalUser(user);
+const segmento = isProfessional ? undefined : 'b2c_ambos' as const;
+
 let featuredProducts: any[] = [];
 try {
-  const result = await getProductos({ limit: 8 });
+  const result = await getProductos({ limit: 8, segmento });
   featuredProducts = result.data;
 } catch (error) {
   console.error("[index] Error fetching featured products:", error);
 }
-
-const user = Astro.locals.user;
-const token = Astro.locals.token;
 let tarifas: TarifaEspecial[] = [];
 
 if (user?.grupo_cliente && token) {
@@ -207,13 +209,24 @@ function subcategoryCount(categoryId: number): number {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {featuredProducts.map((product) => {
             const categoriaId = typeof product.categoria === "object" ? (product.categoria as Categoria)?.id : product.categoria;
-            const descuento = user ? resolveDiscount(tarifas, product.id, categoriaId ?? null) : 0;
-            const finalPrice = user ? calculatePrice(product.precio_base, descuento) : null;
+
+            let finalPrice: number | null = null;
+            let priceLabel: string | null = null;
+
+            if (isProfessional && user) {
+              const descuento = resolveDiscount(tarifas, product.id, categoriaId ?? null);
+              finalPrice = calculatePrice(product.precio_base, descuento);
+              priceLabel = 'sin IVA';
+            } else if (product.segmento_venta !== 'b2b') {
+              finalPrice = calculateB2CPrice(product.precio_base, product.tipo_iva || 21);
+              priceLabel = 'IVA incluido';
+            }
 
             return (
               <ProductCard
                 product={product}
                 price={finalPrice}
+                priceLabel={priceLabel}
               />
             );
           })}

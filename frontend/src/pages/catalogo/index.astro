@@ -3,24 +3,26 @@ import CatalogLayout from "../../layouts/CatalogLayout.astro";
 import InfiniteProductGrid from "../../components/catalog/InfiniteProductGrid";
 import { getAssetUrl, getProductos, getTarifasForGrupo } from "../../lib/directus";
 import type { TarifaEspecial } from "../../lib/types";
-import { calculatePrice, resolveDiscount } from "../../lib/pricing";
+import { calculatePrice, calculateB2CPrice, resolveDiscount, isProfessionalUser } from "../../lib/pricing";
 
 const url = Astro.url;
 const search = url.searchParams.get("search") || "";
 const limit = 24;
 
+const user = Astro.locals.user;
+const token = Astro.locals.token;
+const isProfessional = isProfessionalUser(user);
+const segmento = isProfessional ? undefined : 'b2c_ambos' as const;
+
 let products: any[] = [];
 let meta: { total_count: number } = { total_count: 0 };
 try {
-  const result = await getProductos({ page: 1, limit, search });
+  const result = await getProductos({ page: 1, limit, search, segmento });
   products = result.data;
   meta = result.meta;
 } catch (error) {
   console.error("[catalogo] Error fetching products:", error);
 }
-
-const user = Astro.locals.user;
-const token = Astro.locals.token;
 let tarifas: TarifaEspecial[] = [];
 
 if (user?.grupo_cliente && token) {
@@ -33,14 +35,19 @@ const initialItems = products.map((product: any) => {
       ? product.categoria?.id
       : product.categoria;
 
-  // Only show price to authenticated users
   let price: number | null = null;
-  if (user) {
+  let priceLabel: string | null = null;
+
+  if (isProfessional && user) {
     price = product.precio_base;
     if (tarifas.length > 0) {
       const descuento = resolveDiscount(tarifas, product.id, categoriaId || null);
       price = calculatePrice(product.precio_base, descuento);
     }
+    priceLabel = 'sin IVA';
+  } else if (product.segmento_venta !== 'b2b') {
+    price = calculateB2CPrice(product.precio_base, product.tipo_iva || 21);
+    priceLabel = 'IVA incluido';
   }
 
   return {
@@ -56,7 +63,7 @@ const initialItems = products.map((product: any) => {
       fit: "contain",
     }),
     price,
-    solo_profesional: !!product.solo_profesional,
+    priceLabel,
   };
 });
 
