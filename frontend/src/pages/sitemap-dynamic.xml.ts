@@ -43,6 +43,30 @@ export const GET: APIRoute = async () => {
     console.error("[sitemap] Error fetching productos:", e);
   }
 
+  // Blog index
+  urls.push({ loc: `${SITE_URL}/blog`, changefreq: "daily", priority: "0.8" });
+
+  // Blog category pages
+  for (const cat of ["guia", "consejo", "producto", "noticia"]) {
+    urls.push({ loc: `${SITE_URL}/blog/${cat}`, changefreq: "weekly", priority: "0.7" });
+  }
+
+  // Blog articles
+  try {
+    const artRes = await directusPublic(
+      "/items/articulos?filter[status][_eq]=published&fields=slug&sort=-fecha_publicacion&limit=-1"
+    );
+    for (const art of artRes.data || []) {
+      urls.push({
+        loc: `${SITE_URL}/blog/${art.slug}`,
+        changefreq: "monthly",
+        priority: "0.6",
+      });
+    }
+  } catch (e) {
+    console.error("[sitemap] Error fetching articulos:", e);
+  }
+
   // Dynamic: brands
   try {
     const marcaRes = await directusPublic(
