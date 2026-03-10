@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-10T07:58:00.000Z"
+status: complete
+last_updated: "2026-03-10T08:07:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Professionals order and quote efficiently; consumers buy B2C-eligible products without friction — one store, professional tone, dual audience.
-**Current focus:** Phase 5 — SEO Content Infrastructure and Blog
+**Current focus:** All phases complete -- milestone v1.0 delivered
 
 ## Current Position
 
 Phase: 5 of 5 (SEO Content Infrastructure and Blog)
-Plan: 1 of 2 in current phase
-Status: Plan 05-01 Complete
-Last activity: 2026-03-10 — Completed 05-01 (SEO content infrastructure - structured data and sanitizer)
+Plan: 2 of 2 in current phase (COMPLETE)
+Status: All plans complete -- milestone v1.0 delivered
+Last activity: 2026-03-10 — Completed 05-02 (Blog pages, RSS feed, sitemap extension)
 
-Progress: [█████████░] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 3.8min
-- Total execution time: 50min
+- Total plans completed: 14
+- Average duration: 4.0min
+- Total execution time: 56min
 
 **By Phase:**
 
@@ -46,7 +46,7 @@ Progress: [█████████░] 93%
 | 03-b2c-product-catalog-and-pricing | 3 | 15min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (6min), 04-02 (5min), 04-03 (4min), 04-04 (3min), 05-01 (4min)
+- Last 5 plans: 04-02 (5min), 04-03 (4min), 04-04 (3min), 05-01 (4min), 05-02 (6min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -56,6 +56,7 @@ Progress: [█████████░] 93%
 | Phase 04 P03 | 4min | 2 tasks | 5 files |
 | Phase 04 P04 | 3min | 2 tasks | 3 files |
 | Phase 05 P01 | 4min | 2 tasks | 3 files |
+| Phase 05 P02 | 6min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,10 @@ Recent decisions affecting current work:
 - [Phase 04]: Legal pages contain substantive Spanish law references (LGDCU RDL 1/2007, RGPD) with advisory disclaimer
 - [Phase 05]: JSON-LD builders use Record<string, unknown> return types (stricter than Record<string, any>)
 - [Phase 05]: Sanitizer core extracted to _sanitize() private fn shared by sanitizeHtml (strict) and sanitizeBlogHtml (extended)
+- [Phase 05]: Blog listing pages SSR initial 9 articles with React island only for pages 2+ (NFR-2.2 compliance)
+- [Phase 05]: RSS feed includes title + excerpt only (not full content) to drive click-through to site
+- [Phase 05]: [categoria].astro validates against 4 known category slugs and redirects invalid to /blog (route collision avoidance)
+- [Phase 05]: Related products in article detail filtered by segmento_venta !== 'b2b' with B2C pricing for public readers
 
 ### Pending Todos
 
@@ -124,5 +129,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-10
-Stopped at: Completed 05-01-PLAN.md (SEO content infrastructure - structured data builders and sanitizer)
+Stopped at: Completed 05-02-PLAN.md (Blog pages, RSS feed, sitemap extension) -- ALL PLANS COMPLETE
 Resume file: None
