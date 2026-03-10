@@ -1,0 +1,128 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ArticleCard from "../../components/blog/ArticleCard.astro";
+import InfiniteArticleGrid from "../../components/blog/InfiniteArticleGrid.tsx";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import { getArticulos } from "../../lib/directus";
+import { buildBreadcrumbSchema } from "../../lib/structuredData";
+
+const { categoria } = Astro.params;
+
+const VALID_CATEGORIAS = ["guia", "consejo", "producto", "noticia"] as const;
+type ValidCategoria = typeof VALID_CATEGORIAS[number];
+
+const categoryLabels: Record<string, string> = {
+  guia: "Guia",
+  consejo: "Consejo",
+  producto: "Producto",
+  noticia: "Noticia",
+};
+
+// Validate category param - redirect to /blog if invalid
+if (!categoria || !VALID_CATEGORIAS.includes(categoria as ValidCategoria)) {
+  return Astro.redirect("/blog");
+}
+
+const validCategoria = categoria as ValidCategoria;
+const categoryLabel = categoryLabels[validCategoria];
+
+const { data: articles, meta } = await getArticulos({ page: 1, limit: 9, categoria: validCategoria });
+const hasMore = meta.total_count > 9;
+
+const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+
+// Breadcrumb schema
+const breadcrumbItems = [
+  { name: "Inicio", url: siteUrl },
+  { name: "Blog", url: `${siteUrl}/blog` },
+  { name: categoryLabel, url: `${siteUrl}/blog/${validCategoria}` },
+];
+const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbItems);
+
+// Breadcrumb nav items for component
+const breadcrumbNavItems = [
+  { label: "Blog", href: "/blog" },
+  { label: categoryLabel },
+];
+
+const categories = [
+  { slug: "guia", label: "Guia" },
+  { slug: "consejo", label: "Consejo" },
+  { slug: "producto", label: "Producto" },
+  { slug: "noticia", label: "Noticia" },
+];
+---
+
+<BaseLayout
+  title={`${categoryLabel} - Blog Alcora Salud Ambiental`}
+  description={`Articulos de ${categoryLabel.toLowerCase()} sobre salud ambiental, control de plagas y limpieza profesional`}
+>
+  {/* Breadcrumb JSON-LD */}
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {/* Breadcrumb */}
+    <div class="mb-6">
+      <Breadcrumb items={breadcrumbNavItems} />
+    </div>
+
+    {/* Page header */}
+    <h1 class="text-2xl font-bold text-navy mb-2">{categoryLabel}</h1>
+    <p class="text-sm text-text-muted mb-6">Articulos de {categoryLabel.toLowerCase()} en el blog de Alcora</p>
+
+    {/* Category navigation */}
+    <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
+      <a
+        href="/blog"
+        class="px-3 py-1.5 text-sm rounded-full border border-border text-text-muted hover:text-action hover:border-action transition-colors flex-shrink-0"
+      >
+        Todos
+      </a>
+      {categories.map((cat) => (
+        <a
+          href={`/blog/${cat.slug}`}
+          class:list={[
+            "px-3 py-1.5 text-sm rounded-full border transition-colors flex-shrink-0",
+            cat.slug === validCategoria
+              ? "bg-action text-white border-action"
+              : "border-border text-text-muted hover:text-action hover:border-action",
+          ]}
+        >
+          {cat.label}
+        </a>
+      ))}
+    </div>
+
+    {/* Article grid */}
+    {articles.length > 0 ? (
+      <>
+        {/* Initial SSR grid */}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.map((article) => (
+            <ArticleCard article={article} />
+          ))}
+        </div>
+
+        {/* Infinite scroll for pages 2+ */}
+        {hasMore && (
+          <div class="mt-8">
+            <InfiniteArticleGrid
+              client:load
+              apiUrl={`/blog-api?categoria=${validCategoria}`}
+              initialItems={[]}
+              initialPage={1}
+              initialHasMore={hasMore}
+            />
+          </div>
+        )}
+      </>
+    ) : (
+      <div class="text-center py-16">
+        <svg class="w-16 h-16 mx-auto mb-4 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+        </svg>
+        <p class="text-sm text-text-muted">No hay articulos en esta categoria</p>
+      </div>
+    )}
+  </div>
+</BaseLayout>

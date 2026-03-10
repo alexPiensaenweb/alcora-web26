@@ -1,0 +1,136 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumb from "../../components/ui/Breadcrumb.astro";
+import ProductCard from "../../components/catalog/ProductCard.astro";
+import { getArticuloBySlug, getAssetUrl } from "../../lib/directus";
+import { sanitizeBlogHtml } from "../../lib/sanitize";
+import { buildArticleSchema, buildBreadcrumbSchema } from "../../lib/structuredData";
+import { formatDate } from "../../lib/utils";
+import { calculateB2CPrice } from "../../lib/pricing";
+import type { Producto } from "../../lib/types";
+
+const { slug } = Astro.params;
+
+const article = await getArticuloBySlug(slug!);
+if (!article) {
+  return Astro.redirect("/blog");
+}
+
+const siteUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || "https://tienda.alcora.es";
+const imageUrl = article.imagen_principal ? getAssetUrl(article.imagen_principal) : null;
+
+// JSON-LD structured data
+const articleSchema = buildArticleSchema({ article, siteUrl, imageUrl });
+
+const categoryLabels: Record<string, string> = {
+  guia: "Guia",
+  consejo: "Consejo",
+  producto: "Producto",
+  noticia: "Noticia",
+};
+
+// Breadcrumb
+const breadcrumbItems = [
+  { name: "Inicio", url: siteUrl },
+  { name: "Blog", url: `${siteUrl}/blog` },
+  ...(article.categoria_blog
+    ? [{ name: categoryLabels[article.categoria_blog] || article.categoria_blog, url: `${siteUrl}/blog/${article.categoria_blog}` }]
+    : []),
+  { name: article.titulo, url: `${siteUrl}/blog/${article.slug}` },
+];
+const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbItems);
+
+// Breadcrumb items for Breadcrumb.astro component (uses label/href)
+const breadcrumbNavItems = [
+  { label: "Blog", href: "/blog" },
+  ...(article.categoria_blog
+    ? [{ label: categoryLabels[article.categoria_blog] || article.categoria_blog, href: `/blog/${article.categoria_blog}` }]
+    : []),
+  { label: article.titulo },
+];
+
+// Related products: filter to get actual Producto objects, exclude b2b-only
+const relatedProducts: (Producto & { b2cPrice: number })[] = [];
+if (article.productos_relacionados) {
+  for (const rel of article.productos_relacionados) {
+    if (typeof rel.productos_id === "object" && rel.productos_id) {
+      const p = rel.productos_id as Producto;
+      if (p.segmento_venta !== "b2b") {
+        relatedProducts.push({
+          ...p,
+          b2cPrice: calculateB2CPrice(p.precio_base, p.tipo_iva || 21),
+        });
+      }
+    }
+  }
+}
+
+// Sanitize content
+const sanitizedContent = sanitizeBlogHtml(article.contenido || "");
+---
+
+<BaseLayout
+  title={article.seo_title || article.titulo}
+  description={article.meta_description || article.extracto || ""}
+  ogImage={imageUrl || undefined}
+  ogType="article"
+>
+  {/* JSON-LD */}
+  <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {/* Breadcrumb */}
+    <div class="mb-6">
+      <Breadcrumb items={breadcrumbNavItems} />
+    </div>
+
+    {/* Featured image */}
+    {article.imagen_principal && (
+      <img
+        src={getAssetUrl(article.imagen_principal)}
+        alt={article.titulo}
+        class="w-full max-h-96 object-cover rounded-lg mb-6"
+      />
+    )}
+
+    {/* Article header */}
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-navy mb-4">{article.titulo}</h1>
+      <div class="flex items-center gap-3">
+        {article.categoria_blog && (
+          <a
+            href={`/blog/${article.categoria_blog}`}
+            class="text-[10px] font-semibold uppercase tracking-wider text-action bg-bg-accent px-2 py-0.5 rounded hover:bg-action hover:text-white transition-colors"
+          >
+            {categoryLabels[article.categoria_blog] || article.categoria_blog}
+          </a>
+        )}
+        <time class="text-sm text-text-muted" datetime={article.fecha_publicacion || article.date_created}>
+          {formatDate(article.fecha_publicacion || article.date_created)}
+        </time>
+      </div>
+    </header>
+
+    {/* Article body */}
+    <div class="prose prose-lg max-w-none prose-headings:text-navy prose-a:text-action prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg prose-blockquote:border-action" set:html={sanitizedContent} />
+
+    {/* Related products */}
+    {relatedProducts.length > 0 && (
+      <section class="mt-12 border-t border-border pt-8">
+        <h2 class="text-xl font-bold text-navy mb-6">Productos relacionados</h2>
+        <div class="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 snap-x">
+          {relatedProducts.map((p) => (
+            <div class="flex-shrink-0 w-64 snap-start">
+              <ProductCard
+                product={p}
+                price={p.b2cPrice}
+                priceLabel="IVA incluido"
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>

@@ -1,0 +1,65 @@
+---
+import { getAssetUrl } from "../../lib/directus";
+import { formatDate } from "../../lib/utils";
+import type { ArticuloBlog } from "../../lib/types";
+
+interface Props {
+  article: ArticuloBlog;
+}
+
+const { article } = Astro.props;
+
+const categoryLabels: Record<string, string> = {
+  guia: "Guia",
+  consejo: "Consejo",
+  producto: "Producto",
+  noticia: "Noticia",
+};
+---
+
+<article class="bg-white border border-border rounded-lg overflow-hidden hover:shadow-card transition-shadow group">
+  <a href={`/blog/${article.slug}`} class="block">
+    {/* Image */}
+    <div class="aspect-[16/9] bg-bg-light overflow-hidden">
+      {article.imagen_principal ? (
+        <img
+          src={getAssetUrl(article.imagen_principal)}
+          alt={article.titulo}
+          class="w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div class="w-full h-full flex items-center justify-center text-text-muted">
+          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+      )}
+    </div>
+
+    {/* Content */}
+    <div class="p-4">
+      {/* Category badge + date */}
+      <div class="flex items-center gap-2 mb-2">
+        {article.categoria_blog && (
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-action bg-bg-accent px-2 py-0.5 rounded">
+            {categoryLabels[article.categoria_blog] || article.categoria_blog}
+          </span>
+        )}
+        <time class="text-xs text-text-muted" datetime={article.fecha_publicacion || article.date_created}>
+          {formatDate(article.fecha_publicacion || article.date_created)}
+        </time>
+      </div>
+
+      {/* Title */}
+      <h3 class="text-sm font-semibold text-navy line-clamp-2 mb-2 group-hover:text-action transition-colors">
+        {article.titulo}
+      </h3>
+
+      {/* Excerpt */}
+      {article.extracto && (
+        <p class="text-xs text-text-muted line-clamp-3">{article.extracto}</p>
+      )}
+    </div>
+  </a>
+</article>
