@@ -4,6 +4,7 @@ import Breadcrumb from "../../components/ui/Breadcrumb.astro";
 import { getProductoBySlug, getAssetUrl, getTarifasForGrupo } from "../../lib/directus";
 import { sanitizeHtml } from "../../lib/sanitize";
 import { resolveDiscount, calculatePrice, calculateB2CPrice, formatCurrency, isProfessionalUser } from "../../lib/pricing";
+import { buildProductSchema, buildBreadcrumbSchema } from "../../lib/structuredData";
 import type { Categoria } from "../../lib/types";
 
 const { slug } = Astro.params;
@@ -121,112 +122,27 @@ if (product.galeria && Array.isArray(product.galeria)) {
   }
 }
 
-// ─── SEO: JSON-LD Product schema (complete) ───
-const productSchema: Record<string, any> = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  name: product.nombre,
-  description: product.extracto || plainDescription.slice(0, 500) || `${product.nombre} - producto profesional de salud ambiental`,
-  sku: product.sku,
-  mpn: product.sku,
-  url: `${siteUrl}/catalogo/${product.slug}`,
-  ...(schemaImages.length === 1 ? { image: schemaImages[0] } : {}),
-  ...(schemaImages.length > 1 ? { image: schemaImages } : {}),
-  ...(marcaNombre ? { brand: { "@type": "Brand", name: marcaNombre, ...(marcaObj?.web ? { url: marcaObj.web } : {}) } } : {}),
-  ...(categoria ? { category: categoria.nombre } : {}),
-  ...(finalPrice !== null ? {
-    offers: {
-      "@type": "Offer",
-      priceCurrency: "EUR",
-      price: finalPrice.toString(),
-      priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-      itemCondition: "https://schema.org/NewCondition",
-      url: `${siteUrl}/catalogo/${product.slug}`,
-      seller: {
-        "@type": "Organization",
-        name: "Alcora Salud Ambiental",
-        url: siteUrl,
-      },
-      ...(!isProfessional ? {
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: finalPrice.toString(),
-          priceCurrency: "EUR",
-          valueAddedTaxIncluded: true,
-        },
-      } : {}),
-    },
-  } : {
-    offers: {
-      "@type": "Offer",
-      availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-      itemCondition: "https://schema.org/NewCondition",
-      url: `${siteUrl}/catalogo/${product.slug}`,
-      seller: {
-        "@type": "Organization",
-        name: "Alcora Salud Ambiental",
-        url: siteUrl,
-      },
-    },
-  }),
-};
+// ─── SEO: JSON-LD Product schema (via shared builder) ───
+const productSchema = buildProductSchema({
+  product,
+  siteUrl,
+  finalPrice,
+  isProfessional,
+  marcaNombre: marcaNombre || null,
+  marcaUrl: marcaObj?.web || null,
+  categoria,
+  schemaImages,
+  plainDescription,
+});
 
-// Additional properties: formato, unidad_venta, fichas
-const additionalProperties: Record<string, any>[] = [];
-if (product.formato) {
-  additionalProperties.push({
-    "@type": "PropertyValue",
-    name: "Formato",
-    value: product.formato,
-  });
-}
-if (product.unidad_venta) {
-  additionalProperties.push({
-    "@type": "PropertyValue",
-    name: "Unidad de venta",
-    value: product.unidad_venta,
-  });
-}
-if (product.ficha_tecnica) {
-  additionalProperties.push({
-    "@type": "PropertyValue",
-    name: "Ficha tecnica",
-    value: "Disponible (PDF)",
-  });
-}
-if (product.ficha_seguridad) {
-  additionalProperties.push({
-    "@type": "PropertyValue",
-    name: "Ficha de seguridad",
-    value: "Disponible (PDF)",
-  });
-}
-if (additionalProperties.length > 0) {
-  productSchema.additionalProperty = additionalProperties;
-}
-
-// BreadcrumbList schema
-const breadcrumbSchema = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
-    { "@type": "ListItem", position: 2, name: "Catalogo", item: `${siteUrl}/catalogo` },
-    ...(categoria ? [{
-      "@type": "ListItem",
-      position: 3,
-      name: categoria.nombre,
-      item: `${siteUrl}/categoria/${categoria.slug}`,
-    }] : []),
-    {
-      "@type": "ListItem",
-      position: categoria ? 4 : 3,
-      name: product.nombre,
-      item: `${siteUrl}/catalogo/${product.slug}`,
-    },
-  ],
-};
+// BreadcrumbList schema (via shared builder)
+const breadcrumbItems = [
+  { name: "Inicio", url: siteUrl },
+  { name: "Catalogo", url: `${siteUrl}/catalogo` },
+  ...(categoria ? [{ name: categoria.nombre, url: `${siteUrl}/categoria/${categoria.slug}` }] : []),
+  { name: product.nombre, url: `${siteUrl}/catalogo/${product.slug}` },
+];
+const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbItems);
 
 // ─── SEO: Open Graph product meta tags ───
 const ogProductMeta: { property?: string; name?: string; content: string }[] = [
