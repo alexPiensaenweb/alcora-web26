@@ -97,11 +97,11 @@ Plans:
   3. Every article page includes valid Article JSON-LD that Google Rich Results Test accepts without errors
   4. Every product detail page includes valid Product + Offer JSON-LD with the correct B2C IVA-inclusive price for public pages
   5. `/blog/rss.xml` returns a valid RSS 2.0 feed; the sitemap includes all blog URLs and product category pages with BreadcrumbList JSON-LD
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Build `lib/structuredData.ts` with typed JSON-LD builder functions (Product, Offer, Article, BreadcrumbList); add Product JSON-LD to existing product detail pages; add BreadcrumbList JSON-LD to category pages
-- [ ] 05-02: Build `blog/index.astro`, `blog/[slug].astro`, `ArticleCard.astro`, `ArticleContent.astro`; wire to Directus `articulos`; add Article JSON-LD; implement RSS feed; extend sitemap with blog URLs
+- [ ] 05-01-PLAN.md — Create `lib/structuredData.ts` with typed JSON-LD builders (Product, Article, BreadcrumbList); refactor Product JSON-LD out of `catalogo/[slug].astro`; extend `sanitize.ts` with `sanitizeBlogHtml()`
+- [ ] 05-02-PLAN.md — Build blog pages (`/blog`, `/blog/[slug]`, `/blog/[categoria]`), ArticleCard component, InfiniteArticleGrid, blog-api endpoint, RSS feed via @astrojs/rss, extend sitemap, add Blog navigation link
 
 ## Progress
 

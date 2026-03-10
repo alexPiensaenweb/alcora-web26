@@ -154,9 +154,9 @@
 | FR-7.4 | Phase 5 | Pending |
 | FR-7.5 | Phase 5 | Pending |
 | FR-7.6 | Phase 5 | Pending |
-| FR-8.1 | Phase 5 | Pending |
-| FR-8.2 | Phase 5 | Pending |
-| FR-8.3 | Phase 5 | Pending |
+| FR-8.1 | Phase 5 | Complete |
+| FR-8.2 | Phase 5 | Complete |
+| FR-8.3 | Phase 5 | Complete |
 | FR-9.1 | Phase 3 | Complete |
 | FR-9.2 | Phase 3 | Complete |
 | FR-9.3 | Phase 3 | Complete |

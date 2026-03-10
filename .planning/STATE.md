@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-09T15:31:00.000Z"
+last_updated: "2026-03-10T07:58:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 14
+  completed_plans: 13
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Professionals order and quote efficiently; consumers buy B2C-eligible products without friction — one store, professional tone, dual audience.
-**Current focus:** Phase 4 — B2C Checkout and Guest Orders
+**Current focus:** Phase 5 — SEO Content Infrastructure and Blog
 
 ## Current Position
 
-Phase: 4 of 5 (B2C Checkout and Guest Orders) -- COMPLETE
-Plan: 4 of 4 in current phase
-Status: Phase 04 Complete
-Last activity: 2026-03-09 — Completed 04-04 (Guest order confirmation page and legal pages)
+Phase: 5 of 5 (SEO Content Infrastructure and Blog)
+Plan: 1 of 2 in current phase
+Status: Plan 05-01 Complete
+Last activity: 2026-03-10 — Completed 05-01 (SEO content infrastructure - structured data and sanitizer)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 3.8min
-- Total execution time: 46min
+- Total execution time: 50min
 
 **By Phase:**
 
@@ -46,7 +46,7 @@ Progress: [██████████] 100%
 | 03-b2c-product-catalog-and-pricing | 3 | 15min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (7min), 04-01 (6min), 04-02 (5min), 04-03 (4min), 04-04 (3min)
+- Last 5 plans: 04-01 (6min), 04-02 (5min), 04-03 (4min), 04-04 (3min), 05-01 (4min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -55,6 +55,7 @@ Progress: [██████████] 100%
 | Phase 04 P02 | 5min | 2 tasks | 4 files |
 | Phase 04 P03 | 4min | 2 tasks | 5 files |
 | Phase 04 P04 | 3min | 2 tasks | 3 files |
+| Phase 05 P01 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 04]: pago/ok and pago/ko no longer redirect unauthenticated users to login
 - [Phase 04]: Guest order page fetches by guest_token filter (not numeric ID) for security -- prevents enumeration attacks
 - [Phase 04]: Legal pages contain substantive Spanish law references (LGDCU RDL 1/2007, RGPD) with advisory disclaimer
+- [Phase 05]: JSON-LD builders use Record<string, unknown> return types (stricter than Record<string, any>)
+- [Phase 05]: Sanitizer core extracted to _sanitize() private fn shared by sanitizeHtml (strict) and sanitizeBlogHtml (extended)
 
 ### Pending Todos
 
@@ -120,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-09
-Stopped at: Completed 04-03-PLAN.md (Guest payment flow - initiation, webhook, email, result pages)
+Last session: 2026-03-10
+Stopped at: Completed 05-01-PLAN.md (SEO content infrastructure - structured data builders and sanitizer)
 Resume file: None
